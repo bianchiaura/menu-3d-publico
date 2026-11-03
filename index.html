@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Menú digital con platos en 3D y pedidos desde la mesa.">
+<meta name="theme-color" content="#b5832f">
+<meta property="og:title" content="Brasa &amp; Grano · Menú digital 3D">
+<meta property="og:description" content="Mirá cada plato en 3D sobre tu mesa y pedí desde el celular.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">
+<title>Brasa & Grano · Menú digital</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf6ee;--card:#fff;--ink:#2b2018;--mut:#7a6b5d;--gold:#b5832f;--gold2:#8f6420;--line:#eadfce;--on:#fff;--sh:0 2px 14px rgba(70,45,10,.09);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17120e;--card:#221b15;--ink:#f4ecdf;--mut:#b2a493;--gold:#d6a24b;--gold2:#e6b863;--line:#3a2f25;--on:#1b1410;--sh:none;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17120e;--card:#221b15;--ink:#f4ecdf;--mut:#b2a493;--gold:#d6a24b;--gold2:#e6b863;--line:#3a2f25;--on:#1b1410;--sh:none;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:150px}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 'DM Sans',system-ui,sans-serif;max-width:640px;margin:0 auto;padding-bottom:110px}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding:14px 16px 0;border-bottom:1px solid var(--line)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top h1{font-size:1.4rem;line-height:1.1}.top small{color:var(--mut);display:block;font-family:'DM Sans',sans-serif;font-weight:400;font-size:.8rem}
+.quick{display:flex;gap:8px}
+.q{border:1.5px solid var(--gold);color:var(--gold2);border-radius:999px;padding:7px 12px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:8px 16px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:500;color:var(--mut)}
+.tab[aria-selected=true]{background:var(--gold);border-color:var(--gold);color:var(--on);font-weight:700}
+main{padding:18px 16px;display:grid;gap:16px}
+main>h2{font-size:1.5rem}
+.card{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--line)}
+.ph{height:150px;display:grid;place-items:center;font-size:4.6rem;position:relative}
+.ph img{width:100%;height:100%;object-fit:cover}
+.bd{padding:14px 16px 16px;display:grid;gap:8px}
+.bd h3{font-size:1.2rem}.bd p{color:var(--mut);font-size:.92rem}
+.tg{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(181,131,47,.15);color:var(--gold2)}
+.tag.v{background:rgba(70,140,70,.16);color:#3f8a3f}.tag.s{background:rgba(70,110,170,.16);color:#4a78c0}
+.ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px}
+.ft b{font-family:Fraunces,serif;font-size:1.25rem}
+.btn{background:var(--gold);color:var(--on);padding:10px 16px;border-radius:12px;font-weight:700}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(20,12,5,.55);display:none;align-items:flex-end;justify-content:center}
+.ov.open{display:flex}
+.sh{background:var(--bg);width:100%;max-width:640px;max-height:94%;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sh{animation:none}}
+.sh-h{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--line)}
+.sh-h h2{font-size:1.25rem}
+.x{width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-size:1.1rem}
+.sb{overflow-y:auto;padding:16px;display:grid;gap:18px}
+.sf{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;background:var(--bg)}
+.sf .btn{flex:1;padding:14px}
+.grp h4{font-family:Fraunces,serif;font-size:1.02rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.grp h4 span{font:700 .72rem 'DM Sans',sans-serif;color:var(--gold2);background:rgba(181,131,47,.15);padding:2px 9px;border-radius:999px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);min-height:48px}
+.row span.n{flex:1}.row em{font-style:normal;color:var(--mut);font-size:.88rem}
+.row input{width:22px;height:22px;accent-color:var(--gold);flex:none}
+.ct{display:flex;align-items:center;gap:4px}
+.ct button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);color:var(--gold2);font-size:1.2rem;font-weight:700;line-height:1}
+.ct b{min-width:24px;text-align:center}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));display:none;max-width:640px;margin:0 auto}
+.bar.on{display:block}
+.bar button{width:100%;display:flex;justify-content:space-between;background:var(--ink);color:var(--bg);padding:15px 20px;border-radius:16px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.line{padding:12px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.line small{color:var(--mut);grid-column:1/-1;font-size:.82rem}
+.line .rm{color:#b3402f;font-size:.82rem;font-weight:700}
+.tot{display:flex;justify-content:space-between;font-family:Fraunces,serif;font-size:1.3rem}
+.mesa label{font-weight:700;display:block;margin-bottom:6px}
+.mesa input{width:100%;padding:14px;font-size:1.1rem;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.mesa input.err{border-color:#c0392b}
+.mesa p{color:#c0392b;font-size:.85rem;margin-top:4px;display:none}.mesa input.err+p{display:block}
+.empty{text-align:center;color:var(--mut);padding:30px 0}
+.ok{text-align:center;padding:30px 10px;display:grid;gap:10px}.ok div{font-size:3.2rem}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;z-index:60;font-size:.92rem;display:none;max-width:90%;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Brasa &amp; Grano<small>Escaneá, elegí y pedí desde tu mesa</small></h1>
+    <div class="quick">
+      <button class="q" onclick="call('mozo')">Llamar al mozo</button>
+      <button class="q" onclick="call('cuenta')">Pedir la cuenta</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Categorías"></nav>
+</header>
+<main id="list"></main>
+
+<div class="bar" id="bar"><button onclick="openCart()"><span id="bn">Ver pedido</span><span id="bt"></span></button></div>
+
+<div class="ov" id="md" onclick="if(event.target===this)closeAll()"><div class="sh" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="sh-h"><h2 id="mt"></h2><button class="x" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
+  <div class="sb" id="mb"></div>
+  <div class="sf"><div class="ct"><button onclick="dq(-1)" aria-label="Menos">−</button><b id="mq">1</b><button onclick="dq(1)" aria-label="Más">+</button></div><button class="btn" id="add" onclick="addCart()"></button></div>
+</div></div>
+
+<div class="ov" id="cv" onclick="if(event.target===this)closeAll()"><div class="sh" role="dialog" aria-modal="true" aria-labelledby="ct">
+  <div class="sh-h"><h2 id="ct">Tu pedido</h2><button class="x" onclick="closeAll()" aria-label="Cerrar">✕</button></div>
+  <div class="sb" id="cb"></div>
+  <div class="sf" id="cf"><button class="btn" onclick="send()">Enviar pedido a cocina</button></div>
+</div></div>
+<div id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),f=n=>'$ '+n.toLocaleString('es-AR');
+const CATS=[['carnes','Carnes rojas','linear-gradient(135deg,#e9c9a0,#c98b5a)'],['pastas','Pastas','linear-gradient(135deg,#f6e3a8,#e1b552)'],['burgers','Hamburguesas','linear-gradient(135deg,#f3cf9b,#d9903f)'],['cafe','Cafetería','linear-gradient(135deg,#dcc3a6,#a7794f)'],['bebidas','Bebidas','linear-gradient(135deg,#cfe6d8,#8cc3a2)'],['postres','Postres','linear-gradient(135deg,#f0d0d6,#d99aa8)']];
+const COC={k:'Punto de cocción',req:1,o:[['Jugoso',0],['A punto',0],['Bien cocido',0]]};
+const GU=(x=0)=>({k:'Guarnición',req:1,o:[['Papas fritas',0],['Ensalada mixta',0],['Puré de papa',0],['Papas rústicas al romero',x||1200]]});
+const D=[
+{id:1,c:'carnes',n:'Bife de chorizo',e:'🥩',p:14500,t:['s','c'],d:'350 g de bife de lomo de novillo grillado a las brasas, con sal gruesa y chimichurri casero (perejil, ajo, ají molido, vinagre de vino y aceite de oliva).',g:[GU(),COC],i:['Chimichurri casero','Sal gruesa','Limón'],x:[{n:'Huevo frito',p:900,d:0,max:3},{n:'Provoleta',p:2200,d:0,max:2}]},
+{id:2,c:'carnes',n:'Ojo de bife',e:'🥩',p:16900,t:['s'],d:'400 g de ojo de bife marmoleado, sellado en hierro y terminado con manteca de hierbas (romero, tomillo y ajo).',g:[GU(),COC],i:['Manteca de hierbas','Flor de sal'],x:[{n:'Salsa de malbec',p:1100,d:0,max:2}]},
+{id:3,c:'carnes',n:'Entraña a la parrilla',e:'🍖',p:13800,t:['s'],d:'300 g de entraña tierna con marinada de ajo y limón. Se sirve con salsa criolla de tomate, cebolla morrón y ají.',g:[GU(),COC],i:['Salsa criolla','Limón'],x:[{n:'Provoleta',p:2200,d:0,max:2}]},
+{id:4,c:'pastas',n:'Ravioles de osobuco',e:'🍝',p:11200,t:['c'],d:'Pasta fresca rellena de osobuco braseado 8 horas, con salsa de tomates asados, parmesano rallado y albahaca. Contiene gluten, huevo y lácteos.',g:[{k:'Salsa',req:1,o:[['Tomates asados',0],['Crema y panceta',900],['Manteca y salvia',0]]}],i:['Parmesano rallado','Albahaca fresca'],x:[{n:'Porción extra de queso',p:600,d:0,max:3}]},
+{id:5,c:'pastas',n:'Sorrentinos veganos',e:'🍅',p:10400,t:['v'],d:'Masa sin huevo rellena de calabaza asada, nueces y tofu ahumado, con salsa pomodoro y aceite de oliva. No contiene lácteos ni huevo.',g:[],i:['Nueces tostadas','Albahaca','Aceite de oliva'],x:[]},
+{id:6,c:'burgers',n:'Mequinesse Burger',e:'🍔',p:9800,t:['c'],d:'Pan de papa brioche, medallones smash de carne vacuna (120 g c/u), queso cheddar, bacon crocante y nuestra salsa Mequinesse (mayonesa, mostaza, pickles y pimentón ahumado).',g:[GU(900)],i:['Pan','Salsa Mequinesse','Bacon','Lechuga','Tomate','Pickles'],x:[{n:'Carne',p:2800,d:2,min:1,max:4},{n:'Queso cheddar',p:700,d:2,max:4},{n:'Cebolla crispy',p:500,d:0,max:1}]},
+{id:7,c:'burgers',n:'Veggie Garden',e:'🥬',p:9200,t:['v'],d:'Medallón de lentejas, avena y remolacha, pan de papa vegano, palta, rúcula, tomate y mayonesa de anacardos.',g:[GU(900)],i:['Pan vegano','Palta','Rúcula','Tomate','Mayonesa de anacardos'],x:[{n:'Cebolla crispy',p:500,d:0,max:1}]},
+{id:8,c:'cafe',n:'Cappuccino',e:'☕',p:3600,t:['c'],d:'Doble espresso de blend de granos 100% arábica (Colombia y Brasil) con leche texturizada y espuma cremosa.',g:[{k:'Tipo de leche',req:1,o:[['Entera',0],['Descremada',0],['Almendras',700],['Avena',700]]},{k:'Tamaño',req:1,o:[['Chico',0],['Grande',800]]}],i:['Canela'],x:[{n:'Shot extra de espresso',p:800,d:0,max:2}]},
+{id:9,c:'cafe',n:'Medialunas de manteca',e:'🥐',p:3200,t:[],d:'Tres medialunas de hojaldre y manteca, horneadas cada mañana y bañadas con almíbar. Contienen gluten, huevo y lácteos.',g:[],i:['Almíbar'],x:[{n:'Jamón y queso',p:1200,d:0,max:3}]},
+{id:10,c:'bebidas',n:'Limonada con menta y jengibre',e:'🍋',p:4200,t:['v','s'],d:'Limones exprimidos al momento, menta fresca, jengibre rallado y soda. Endulzada con azúcar de caña, a elección.',g:[],i:['Azúcar de caña','Hielo','Menta'],x:[]},
+{id:11,c:'bebidas',n:'Cerveza artesanal IPA',e:'🍺',p:5200,t:[],d:'Pinta de 473 ml de IPA de elaboración local, con notas cítricas y amargor medio. Contiene cebada.',g:[{k:'Formato',req:1,o:[['Vaso 330 ml',-1000],['Pinta 473 ml',0]]}],i:[],x:[]},
+{id:12,c:'postres',n:'Flan casero con dulce de leche',e:'🍮',p:5400,t:['s','c'],d:'Flan de huevos y vainilla con caramelo, dulce de leche repostero y crema chantilly. Contiene lácteos y huevo.',g:[],i:['Crema chantilly','Dulce de leche'],x:[{n:'Dulce de leche extra',p:500,d:0,max:3}]},
+{id:13,c:'postres',n:'Brownie tibio',e:'🍫',p:6100,t:['c'],d:'Brownie de chocolate semiamargo 70% y nueces, servido tibio con helado de crema americana y salsa de chocolate.',g:[],i:['Nueces','Helado de crema','Salsa de chocolate'],x:[]}
+];
+const TG={s:['Sin TACC','s'],v:['Vegano','v'],c:['Recom. del Chef','']};
+let cat='carnes',cur=null,cart=[],uid=0;
+
+function tabs(){$('#tabs').innerHTML=CATS.map(c=>`<button class="tab" role="tab" aria-selected="${c[0]===cat}" onclick="setCat('${c[0]}')">${c[1]}</button>`).join('')}
+function setCat(c){cat=c;tabs();list();scrollTo({top:0,behavior:'smooth'})}
+function list(){const C=CATS.find(c=>c[0]===cat);
+$('#list').innerHTML=`<h2>${C[1]}</h2>`+D.filter(d=>d.c===cat).map(d=>`<article class="card"><div class="ph" style="background:${C[2]}">${d.img?`<img src="${d.img}" alt="${d.n}" loading="lazy">`:`<span aria-hidden="true">${d.e}</span>`}</div><div class="bd"><div class="tg">${d.t.map(t=>`<span class="tag ${TG[t][1]}">${TG[t][0]}</span>`).join('')}</div><h3>${d.n}</h3><p>${d.d}</p><div class="ft"><b>${f(d.p)}</b><button class="btn" onclick="openD(${d.id})">Personalizar / Pedir</button></div></div></article>`).join('')}
+
+function openD(id){const d=D.find(x=>x.id===id);
+cur={d,s:{},i:{},x:{},q:1};d.g.forEach((g,gi)=>cur.s[gi]=0);d.i.forEach((_,i)=>cur.i[i]=true);d.x.forEach((x,i)=>cur.x[i]=x.d);
+$('#mt').textContent=d.n;$('#mq').textContent=1;
+$('#mb').innerHTML=`<p style="color:var(--mut)">${d.d}</p>`+d.g.map((g,gi)=>`<div class="grp"><h4>${g.k}<span>Obligatorio</span></h4>${g.o.map((o,oi)=>`<label class="row"><input type="radio" name="g${gi}" ${oi===0?'checked':''} onchange="cur.s[${gi}]=${oi};upd()"><span class="n">${o[0]}</span>${o[1]?`<em>${o[1]>0?'+':'−'} ${f(Math.abs(o[1]))}</em>`:''}</label>`).join('')}</div>`).join('')
++(d.i.length?`<div class="grp"><h4>Ingredientes<span>Desmarcá para quitar</span></h4>${d.i.map((n,i)=>`<label class="row"><input type="checkbox" checked onchange="cur.i[${i}]=this.checked"><span class="n">${n}</span></label>`).join('')}</div>`:'')
++(d.x.length?`<div class="grp"><h4>Extras y cantidades<span>Opcional</span></h4>${d.x.map((x,i)=>x.max===1?`<label class="row"><input type="checkbox" ${x.d?'checked':''} onchange="cur.x[${i}]=this.checked?1:0;upd()"><span class="n">${x.n}</span><em>+ ${f(x.p)}</em></label>`:`<div class="row"><span class="n">${x.n}<br><em>${x.p?'+ '+f(x.p)+' c/u':''}${x.d?' · '+x.d+' incluidas':''}</em></span><div class="ct"><button onclick="cx(${i},-1)" aria-label="Menos ${x.n}">−</button><b id="x${i}">${x.d}</b><button onclick="cx(${i},1)" aria-label="Más ${x.n}">+</button></div></div>`).join('')}</div>`:'');
+$('#mb').scrollTop=0;upd();show('md')}
+function cx(i,n){const x=cur.d.x[i];cur.x[i]=Math.min(x.max,Math.max(x.min||0,cur.x[i]+n));$('#x'+i).textContent=cur.x[i];upd()}
+function dq(n){cur.q=Math.max(1,cur.q+n);$('#mq').textContent=cur.q;upd()}
+function unit(c){let t=c.d.p;c.d.x.forEach((x,i)=>t+=(c.x[i]-x.d)*x.p);c.d.g.forEach((g,gi)=>t+=g.o[c.s[gi]][1]);return t}
+function upd(){$('#add').textContent='Agregar al pedido · '+f(unit(cur)*cur.q)}
+function sum(c){const a=[];c.d.g.forEach((g,gi)=>a.push(g.o[c.s[gi]][0]));c.d.i.forEach((n,i)=>{if(!c.i[i])a.push('Sin '+n.toLowerCase())});c.d.x.forEach((x,i)=>{if(c.x[i]!==x.d)a.push(x.max===1?(c.x[i]?'Con '+x.n.toLowerCase():'Sin '+x.n.toLowerCase()):x.n+' ×'+c.x[i])});return a.join(' · ')}
+function addCart(){cart.push({u:++uid,d:cur.d,s:{...cur.s},i:{...cur.i},x:{...cur.x},q:cur.q});closeAll();bar();toast(cur.d.n+' agregado al pedido')}
+
+function bar(){const n=cart.reduce((a,c)=>a+c.q,0),t=cart.reduce((a,c)=>a+unit(c)*c.q,0);$('#bar').classList.toggle('on',n>0);$('#bn').textContent='Ver pedido ('+n+')';$('#bt').textContent=f(t)}
+function openCart(){renderCart();show('cv')}
+function renderCart(){const t=cart.reduce((a,c)=>a+unit(c)*c.q,0),m=$('#mesa')?$('#mesa').value:'';
+if(!cart.length){$('#cb').innerHTML='<p class="empty">Todavía no agregaste nada. Elegí un plato del menú para empezar.</p>';$('#cf').style.display='none';return}
+$('#cf').style.display='flex';
+$('#cb').innerHTML=cart.map(c=>`<div class="line"><b>${c.d.n}</b><b>${f(unit(c)*c.q)}</b><small>${sum(c)}</small><div class="ct"><button onclick="cq(${c.u},-1)" aria-label="Menos">−</button><b>${c.q}</b><button onclick="cq(${c.u},1)" aria-label="Más">+</button></div><button class="rm" onclick="cq(${c.u},-99)">Quitar</button></div>`).join('')
++`<div class="tot"><span>Total</span><span>${f(t)}</span></div><div class="mesa"><label for="mesa">Número de mesa</label><input id="mesa" type="number" inputmode="numeric" min="1" max="99" placeholder="Ej: 12" value="${m||window._m||''}" oninput="window._m=this.value;this.classList.remove('err')"><p>Ingresá el número de tu mesa para enviar el pedido.</p></div><div class="mesa" style="margin-top:12px"><label for="nota">Notas para la cocina (opcional)</label><input id="nota" type="text" maxlength="140" placeholder="Ej: la carne bien cocida" value="${window._n||''}" oninput="window._n=this.value"></div>`}
+function cq(u,n){const c=cart.find(x=>x.u===u);c.q+=n;if(c.q<1)cart=cart.filter(x=>x.u!==u);renderCart();bar();if(!cart.length)bar()}
+function mesa(){const v=parseInt(window._m);return v>0?v:0}
+function needMesa(){if(!cart.length&&!$('#cv').classList.contains('open'))renderEmptyMesa();const i=$('#mesa');if(i){i.classList.add('err');i.focus()}}
+function send(){if(!mesa()){needMesa();return}
+const n=Math.floor(Math.random()*900+100),t=cart.reduce((a,c)=>a+unit(c)*c.q,0);cart=[];bar();$('#cf').style.display='none';
+$('#cb').innerHTML=`<div class="ok"><div>👨‍🍳</div><h2>¡Pedido enviado a cocina!</h2><p>Pedido #${n} · Mesa ${mesa()} · ${f(t)}</p><p style="color:var(--mut)">Te lo llevamos a la mesa en cuanto esté listo. Podés seguir pidiendo desde el menú.</p><button class="btn" onclick="closeAll()">Volver al menú</button></div>`}
+function renderEmptyMesa(){$('#cb').innerHTML='<div class="mesa"><label for="mesa">Número de mesa</label><input id="mesa" type="number" inputmode="numeric" min="1" max="99" placeholder="Ej: 12" value="'+(window._m||'')+'" oninput="window._m=this.value;this.classList.remove(\'err\')"><p>Ingresá el número de tu mesa.</p></div><div class="sf" style="border:0;padding:12px 0 0"><button class="btn" onclick="call(window._k)">Avisar al personal</button></div>';$('#cf').style.display='none';show('cv')}
+function call(k){window._k=k;if(!mesa()){renderEmptyMesa();$('#mesa').classList.add('err');$('#mesa').focus();return}
+closeAll();toast(k==='mozo'?'Avisamos al mozo: va camino a la mesa '+mesa():'Pedimos la cuenta para la mesa '+mesa())}
+function show(id){$('#'+id).classList.add('open');document.body.style.overflow='hidden'}
+function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open'));document.body.style.overflow=''}
+let tm;function toast(s){const t=$('#toast');t.textContent=s;t.style.display='block';clearTimeout(tm);tm=setTimeout(()=>t.style.display='none',2600)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+tabs();list();
+</script>
+<script>
+/* Brasa & Grano · Vista 3D con cámara
+   Capa independiente: no modifica el código del menú.
+   - Agrega un botón "Ver en 3D" a cada plato.
+   - Abre la cámara trasera y muestra el plato en 3D sobre la imagen.
+   Gestos: 1 dedo = girar / inclinar · 2 dedos = agrandar y mover · rueda = zoom. */
+(function () {
+  'use strict';
+  var THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+  var THREE_URL2 = 'https://unpkg.com/three@0.160.0/build/three.module.js';
+  var THREE = null, ov, vid, cv, msg, ttl, S = null, stream = null, curId = null, lastEv = null, oriOn = false;
+
+  /* ---------- sensores de movimiento: el plato queda fijo en el espacio ---------- */
+  function onOri(e) { lastEv = e; }
+  function startOri() {
+    lastEv = null;
+    function listen() { if (!oriOn) { addEventListener('deviceorientation', onOri, true); oriOn = true; } }
+    var DOE = window.DeviceOrientationEvent;
+    if (DOE && typeof DOE.requestPermission === 'function') {
+      return DOE.requestPermission().then(function (r) { if (r === 'granted') listen(); }).catch(function () {});
+    }
+    listen(); return Promise.resolve();
+  }
+  function stopOri() { if (oriOn) { removeEventListener('deviceorientation', onOri, true); oriOn = false; } lastEv = null; }
+  function devQuat(e, out) {
+    var d = Math.PI / 180, o = ((screen.orientation && screen.orientation.angle) || window.orientation || 0) * d;
+    out.setFromEuler(new THREE.Euler(e.beta * d, e.alpha * d, -e.gamma * d, 'YXZ'));
+    out.multiply(new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)));
+    out.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -o));
+  }
+  /* tamaño, sombra y luz siguen al plato donde esté */
+  function applyScale() {
+    var k = S.base * S.scale;
+    S.holder.scale.setScalar(k);
+    S.sun.position.copy(S.holder.position).add(new THREE.Vector3(2.5 * k, 5 * k, 3 * k));
+    S.sun.target.position.copy(S.holder.position);
+    var c = S.sun.shadow.camera; c.left = -2.2 * k; c.right = 2.2 * k; c.top = 2.2 * k; c.bottom = -2.2 * k; c.near = .5 * k; c.far = 14 * k;
+    c.updateProjectionMatrix();
+  }
+  /* el cliente toca la mesa en la pantalla y el plato se apoya ahí */
+  function placeAt(cx, cy) {
+    var rc = new THREE.Raycaster();
+    S.cam.updateMatrixWorld();
+    rc.setFromCamera(new THREE.Vector2(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1), S.cam);
+    var dir = rc.ray.direction.clone();
+    if (dir.y > -.12) { dir.y = -.12; dir.normalize(); }
+    var d = (S.dist * .5) / -dir.y;
+    S.holder.position.copy(dir.multiplyScalar(d));
+    S.base = clamp(d / S.dist, .4, 3); S.scale = 1;
+    S.holder.visible = true; S.placed = true; applyScale();
+    msg.hidden = true;
+  }
+  /* fija el "frente" según hacia dónde apunta el celular y espera que toquen la mesa */
+  function calibrate() {
+    var eu = new THREE.Euler().setFromQuaternion(S.qd, 'YXZ');
+    S.Y0.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -eu.y);
+    S.placed = false; S.holder.visible = false;
+    msg.textContent = 'Apuntá a tu mesa y tocá la pantalla para colocar el plato'; msg.hidden = false;
+  }
+
+  /* ---------- estilos ---------- */
+  var st = document.createElement('style');
+  st.textContent =
+    '.btn3d{width:100%;margin-top:2px;padding:10px 16px;border-radius:12px;border:1.5px solid var(--gold);color:var(--gold2);font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}' +
+    '.btn3d:active{transform:scale(.98)}' +
+    '#ar3d{position:fixed;inset:0;z-index:70;background:#14100c;display:none;touch-action:none;overflow:hidden}' +
+    '#ar3d.open{display:block}' +
+    '#ar3d video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}' +
+    '#ar3d canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}' +
+    '#ar3d.nocam{background:radial-gradient(circle at 50% 40%,#4a3a2b,#14100c 75%)}' +
+    '#ar3d .a-top{position:absolute;top:0;left:0;right:0;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 28px;display:flex;gap:12px;align-items:center;background:linear-gradient(rgba(0,0,0,.6),transparent);color:#fff;pointer-events:none}' +
+    '#ar3d .a-top button{pointer-events:auto}' +
+    '#ar3d .a-x{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:1.1rem;flex:none}' +
+    '#ar3d .a-top b{font-family:Fraunces,Georgia,serif;font-size:1.15rem;display:block;line-height:1.2}' +
+    '#ar3d .a-top small{opacity:.85;font-size:.78rem}' +
+    '#ar3d .a-msg{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-50%);text-align:center;color:#fff;background:rgba(0,0,0,.6);padding:14px;border-radius:14px;font-size:.95rem;pointer-events:none}' +
+    '#ar3d .a-msg[hidden]{display:none}' +
+    '#ar3d .a-bot{position:absolute;left:0;right:0;bottom:0;padding:26px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.6))}' +
+    '#ar3d .a-bot button{padding:12px 16px;border-radius:12px;font-weight:700;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(6px)}' +
+    '#ar3d .a-bot button.p{background:var(--gold);border-color:var(--gold);color:var(--on);flex:1;max-width:240px}' +
+    '#ar3d .a-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}' +
+    '#ar3d.photo .a-bg{display:block}' +
+    '#ar3d #a-photo{display:none}' +
+    '#ar3d.nocam #a-photo{display:block}' +
+    '@media (prefers-reduced-motion:reduce){#ar3d *{scroll-behavior:auto}}';
+  document.head.appendChild(st);
+
+  /* ---------- overlay ---------- */
+  ov = document.createElement('div');
+  ov.id = 'ar3d';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.setAttribute('aria-label', 'Vista 3D del plato');
+  ov.innerHTML =
+    '<video playsinline muted autoplay></video><img class="a-bg" alt=""><canvas></canvas>' +
+    '<input type="file" id="a-file" accept="image/*" capture="environment" hidden>' +
+    '<div class="a-top"><button class="a-x" aria-label="Cerrar vista 3D">✕</button><div><b id="a-t"></b><small>Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Pellizcá para agrandar</small></div></div>' +
+    '<div class="a-msg" hidden></div>' +
+    '<div class="a-bot"><button id="a-photo">📷 Foto de tu mesa</button><button id="a-auto">⟳ Girar</button><button id="a-reset">Centrar</button><button class="p" id="a-order">Pedir este plato</button></div>';
+  document.body.appendChild(ov);
+  vid = ov.querySelector('video'); cv = ov.querySelector('canvas'); msg = ov.querySelector('.a-msg'); ttl = ov.querySelector('#a-t');
+  ov.querySelector('.a-x').onclick = close3D;
+  ov.querySelector('#a-order').onclick = function () { var id = curId; close3D(); if (window.openD) openD(id); };
+  var bg = ov.querySelector('.a-bg'), fileIn = ov.querySelector('#a-file'), photoUrl = null;
+  ov.querySelector('#a-photo').onclick = function () { fileIn.click(); };
+  fileIn.onchange = function () {
+    var f = fileIn.files && fileIn.files[0]; if (!f) return;
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    photoUrl = URL.createObjectURL(f); bg.src = photoUrl;
+    ov.classList.add('photo'); msg.hidden = true; fileIn.value = '';
+  };
+  ov.querySelector('#a-auto').onclick = function () { if (S) S.auto = !S.auto; };
+  ov.querySelector('#a-reset').onclick = function () { if (S) resetView(); };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov.classList.contains('open')) close3D(); });
+
+  /* ---------- inyectar botones sin tocar el código original ---------- */
+  function inject() {
+    document.querySelectorAll('#list .card').forEach(function (card) {
+      if (card.querySelector('.btn3d')) return;
+      var b = card.querySelector('.ft .btn');
+      var m = b && /openD\((\d+)\)/.exec(b.getAttribute('onclick') || '');
+      if (!m) return;
+      var id = +m[1], x = document.createElement('button');
+      x.type = 'button'; x.className = 'btn3d';
+      x.innerHTML = '<span aria-hidden="true">🧊</span> Ver en 3D';
+      x.addEventListener('click', function () { open3D(id); });
+      card.querySelector('.bd').appendChild(x);
+    });
+  }
+  var _list = window.list;
+  if (typeof _list === 'function') {
+    window.list = function () { var r = _list.apply(this, arguments); inject(); return r; };
+  }
+  inject();
+
+  /* ---------- helpers de modelado ---------- */
+  var TOP = .07;
+  var seed = 42;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  function mat(c, r, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r == null ? .7 : r, metalness: 0 }, o || {})); }
+  function mesh(g, m, x, y, z) { var o = new THREE.Mesh(g, m); o.position.set(x || 0, y || 0, z || 0); return o; }
+  function ell(rx, ry, rz, m, x, y, z) { var o = mesh(new THREE.SphereGeometry(1, 20, 14), m, x, y, z); o.scale.set(rx, ry, rz); return o; }
+  function cyl(rt, rb, h, m, x, y, z, seg) { return mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 40), m, x, y, z); }
+
+  function plate(sc, c) {
+    var pts = [[0, 0], [.55, 0], [.62, .03], [.95, .1], [1, .115], [.97, .125], [.9, .1], [.62, .05], [0, .05]]
+      .map(function (a) { return new THREE.Vector2(a[0], a[1]); });
+    var m = mesh(new THREE.LatheGeometry(pts, 64), mat(c || 0xf7f4ee, .35, { side: THREE.DoubleSide }));
+    m.scale.setScalar(sc || 1);
+    return m;
+  }
+
+  function steak(w, d, h, col) {
+    var g = new THREE.SphereGeometry(1, 56, 28), pos = g.attributes.position, cols = [];
+    var base = new THREE.Color(col), sear = new THREE.Color(0x4e2412), dark = new THREE.Color(0x1d0d06);
+    for (var i = 0; i < pos.count; i++) {
+      var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      var c = base.clone().lerp(sear, Math.max(0, y) * .85);
+      if (y > .35 && Math.sin((x + z * .45) * 15) > .72) c = dark;
+      cols.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    var m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55 }));
+    m.scale.set(w, h, d);
+    return m;
+  }
+
+  function fries(g, cx, cz, n) {
+    var m = mat(0xe8b94a, .6);
+    for (var i = 0; i < n; i++) {
+      var b = mesh(new THREE.BoxGeometry(.07, .07, .5), m, cx + (rnd() - .5) * .4, TOP + .05 + rnd() * .12, cz + (rnd() - .5) * .35);
+      b.rotation.set((rnd() - .5) * .5, rnd() * 3.14, (rnd() - .5) * .4);
+      g.add(b);
+    }
+  }
+  function leaf(g, x, y, z, s, col) {
+    var l = ell(s, s * .18, s * .55, mat(col || 0x3f8a3a, .7), x, y, z);
+    l.rotation.y = rnd() * 6.28; l.rotation.z = (rnd() - .5) * .5; g.add(l);
+  }
+
+  /* ---------- platos ---------- */
+  function dishSteak(kind) {
+    var g = new THREE.Group(); g.add(plate());
+    if (kind === 1) {
+      var s = steak(.62, .52, .1, 0xa5502e); s.position.set(-.15, TOP + .09, 0); s.rotation.y = .3; g.add(s);
+      for (var i = 0; i < 9; i++) g.add(ell(.05, .03, .05, mat(0x3f8a3a, .8), -.15 + (rnd() - .5) * .6, TOP + .2, (rnd() - .5) * .4));
+      g.add(cyl(.08, .08, .02, mat(0xe9d6a0, .8), .55, TOP + .01, -.55));
+      fries(g, .5, .25, 22);
+    } else if (kind === 2) {
+      var s2 = steak(.5, .48, .13, 0x9a4a2c); s2.position.set(-.1, TOP + .12, 0); g.add(s2);
+      g.add(cyl(.13, .13, .04, mat(0xe8dc8a, .5), -.1, TOP + .25, 0));
+      for (var j = 0; j < 3; j++) { var r = cyl(.012, .012, .35, mat(0x3f6a2c, .8), .3 + j * .05, TOP + .22, -.2 + j * .05); r.rotation.z = 1.3; r.rotation.y = j; g.add(r); }
+      fries(g, .55, .3, 18);
+    } else {
+      var s3 = steak(.85, .3, .08, 0x9c4a2a); s3.position.set(-.05, TOP + .07, -.1); s3.rotation.y = -.2; g.add(s3);
+      var cc = [0xd63a2a, 0x3f8a3a, 0xf0e2b0];
+      for (var k = 0; k < 18; k++) { var cb = mesh(new THREE.BoxGeometry(.07, .06, .07), mat(cc[k % 3], .6), .1 + rnd() * .5, TOP + .04, .3 + rnd() * .3); cb.rotation.y = rnd() * 3; g.add(cb); }
+      fries(g, -.4, .5, 12);
+    }
+    return g;
+  }
+
+  function dishPasta(veg) {
+    var g = new THREE.Group(); g.add(plate());
+    g.add(cyl(.74, .74, .03, mat(veg ? 0xd9442f : 0xc23a24, .45), 0, TOP + .015, 0, 48));
+    var n = veg ? 4 : 5, dough = mat(veg ? 0xf3e2b3 : 0xefd79c, .6);
+    for (var i = 0; i < n; i++) {
+      var a = i / n * 6.28 + .3, p = ell(veg ? .26 : .21, veg ? .13 : .08, veg ? .26 : .21, dough, Math.cos(a) * .36, TOP + .1, Math.sin(a) * .36);
+      p.rotation.y = a; g.add(p);
+    }
+    for (var k = 0; k < 26; k++) g.add(mesh(new THREE.BoxGeometry(.03, .015, .03), mat(veg ? 0x8a5a2a : 0xf7f3e6, .8), (rnd() - .5) * .8, TOP + .22, (rnd() - .5) * .8));
+    for (var q = 0; q < 4; q++) leaf(g, Math.cos(q * 1.6) * .12, TOP + .22, Math.sin(q * 1.6) * .12, .09, 0x2f7a30);
+    return g;
+  }
+
+  function bun(top) {
+    var g = new THREE.Group(), c = 0xe5ab5c;
+    if (top) {
+      var d = mesh(new THREE.SphereGeometry(.52, 40, 20, 0, 6.2832, 0, 1.5708), mat(c, .5, { side: THREE.DoubleSide }));
+      d.scale.y = .8; g.add(d);
+      for (var i = 0; i < 34; i++) {
+        var th = rnd() * 1.1, ph = rnd() * 6.28, s = ell(.025, .012, .012, mat(0xf6e8c8, .6), .5 * Math.sin(th) * Math.cos(ph), .52 * .8 * Math.cos(th) + .01, .5 * Math.sin(th) * Math.sin(ph));
+        s.rotation.y = ph; g.add(s);
+      }
+    } else g.add(cyl(.52, .48, .16, mat(c, .55), 0, .08, 0));
+    return g;
+  }
+
+  function dishBurger(veg) {
+    var g = new THREE.Group(); g.add(plate(1.05)); var y = TOP, b = bun(false); b.position.y = y; g.add(b); y += .16;
+    function layer(m, h, r) { var c = cyl(r || .5, r || .5, h, m, 0, y + h / 2, 0); g.add(c); y += h; return c; }
+    function lettuce(col) {
+      for (var i = 0; i < 2; i++) { var t = mesh(new THREE.TorusGeometry(.46, .05, 8, 36), mat(col, .7), 0, y + .04 + i * .02, 0); t.rotation.x = Math.PI / 2; t.scale.set(1, 1, .6); g.add(t); }
+      g.add(cyl(.46, .46, .02, mat(col, .7), 0, y + .02, 0)); y += .08;
+    }
+    function cheese() { var c = mesh(new THREE.BoxGeometry(.95, .02, .95), mat(0xf2b22b, .4), 0, y + .01, 0); c.rotation.y = .78; g.add(c); y += .03; }
+    function tomato() { for (var i = 0; i < 2; i++) g.add(cyl(.27, .27, .04, mat(0xd2352a, .4), (i - .5) * .4, y + .02, (i - .5) * .1)); y += .05; }
+    if (!veg) {
+      lettuce(0x4e9a3a); tomato();
+      layer(mat(0x55291a, .8), .13, .49); cheese();
+      layer(mat(0x55291a, .8), .13, .49); cheese();
+      for (var k = 0; k < 3; k++) { var bc = mesh(new THREE.BoxGeometry(.8, .015, .09), mat(0x8a2a1a, .6), 0, y + .01 + k * .004, -.2 + k * .2); bc.rotation.y = (k - 1) * .2; g.add(bc); }
+      y += .03;
+      for (var p = 0; p < 4; p++) g.add(cyl(.07, .07, .015, mat(0x8aa83a, .5), Math.cos(p * 1.7) * .28, y + .01, Math.sin(p * 1.7) * .28));
+      y += .02; fries(g, .6, .55, 10);
+    } else {
+      for (var i = 0; i < 12; i++) leaf(g, (rnd() - .5) * .7, y + .04, (rnd() - .5) * .7, .15, 0x2e7a2c); y += .07;
+      tomato();
+      var pt = layer(mat(0x6b3345, .85), .14, .48);
+      for (var j = 0; j < 4; j++) { var av = ell(.38, .02, .11, mat(0xb6d27a, .5), 0, y + .02 + j * .01, (j - 1.5) * .17); g.add(av); } y += .06;
+    }
+    var t = bun(true); t.position.y = y; g.add(t);
+    return g;
+  }
+
+  function dishCapp() {
+    var g = new THREE.Group(); g.add(plate(.85, 0xfaf7f1));
+    var pr = [[0, 0], [.22, 0], [.3, .06], [.38, .3], [.43, .5], [.45, .52], [.43, .52], [.41, .5], [.36, .28], [.28, .1], [0, .08]]
+      .map(function (a) { return new THREE.Vector2(a[0], a[1]); });
+    var cup = mesh(new THREE.LatheGeometry(pr, 56), mat(0xffffff, .25, { side: THREE.DoubleSide }), 0, TOP, 0); cup.scale.setScalar(1.15); g.add(cup);
+    g.add(cyl(.42, .42, .02, mat(0x6b3f23, .4), 0, TOP + .5, 0));
+    g.add(cyl(.36, .36, .02, mat(0xf2e4cb, .9), 0, TOP + .515, 0));
+    [[.06, .13], [.15, .21], [.24, .3]].forEach(function (r) {
+      var rg = mesh(new THREE.RingGeometry(r[0], r[1], 40, 1, .5, 5.2), mat(0xc9a77a, .9, { side: THREE.DoubleSide }), 0, TOP + .527, 0); rg.rotation.x = -Math.PI / 2; g.add(rg);
+    });
+    var h = mesh(new THREE.TorusGeometry(.17, .045, 12, 24, Math.PI * 1.2), mat(0xffffff, .25), .55, TOP + .3, 0); h.rotation.z = -Math.PI * .6; g.add(h);
+    return g;
+  }
+
+  function dishMedialunas() {
+    var g = new THREE.Group(); g.add(plate(1.05));
+    var gold = new THREE.MeshPhysicalMaterial({ color: 0xd9953a, roughness: .35, clearcoat: .6, clearcoatRoughness: .3 });
+    [[0, -.35, .2], [-.5, .35, 1.9], [.5, .3, -1.9]].forEach(function (c) {
+      var cr = new THREE.Group(), A = Math.PI * .55;
+      for (var i = 0; i <= 12; i++) {
+        var a = -A + 2 * A * i / 12, rr = .045 + .1 * Math.cos(a / A * Math.PI / 2);
+        var s = ell(rr, rr, rr * 1.15, gold, .34 * Math.sin(a), rr * .9, .34 * Math.cos(a) - .34); s.rotation.y = a; cr.add(s);
+      }
+      cr.position.set(c[0], TOP, c[1]); cr.rotation.y = c[2]; g.add(cr);
+    });
+    return g;
+  }
+
+  function glassMat() { return new THREE.MeshPhysicalMaterial({ color: 0xe3f4f6, roughness: .05, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false }); }
+
+  function dishLemonade() {
+    var g = new THREE.Group(); g.add(plate(.75, 0xefe8da)); var y = TOP;
+    g.add(cyl(.38, .3, 1.2, glassMat(), 0, y + .6, 0));
+    var liq = cyl(.36, .29, 1.0, mat(0xf4e56b, .2, { transparent: true, opacity: .85 }), 0, y + .55, 0); g.add(liq);
+    for (var i = 0; i < 5; i++) { var ic = mesh(new THREE.BoxGeometry(.2, .2, .2), mat(0xffffff, .1, { transparent: true, opacity: .55 }), (rnd() - .5) * .3, y + .7 + rnd() * .2, (rnd() - .5) * .3); ic.rotation.set(rnd(), rnd(), rnd()); g.add(ic); }
+    for (var m = 0; m < 6; m++) leaf(g, (rnd() - .5) * .4, y + 1.07, (rnd() - .5) * .4, .12, 0x2f8a3a);
+    var ls = mesh(new THREE.TorusGeometry(.2, .03, 10, 30), mat(0xf1c40f, .5), .38, y + 1.12, 0); ls.rotation.y = Math.PI / 2; g.add(ls);
+    var ld = cyl(.19, .19, .02, mat(0xf8ec9a, .6), .38, y + 1.12, 0); ld.rotation.z = Math.PI / 2; g.add(ld);
+    var sw = cyl(.025, .025, 1.45, mat(0x2fa05a, .5), .1, y + .78, .05); sw.rotation.z = -.18; g.add(sw);
+    return g;
+  }
+
+  function dishBeer() {
+    var g = new THREE.Group(); g.add(plate(.75, 0xefe8da)); var y = TOP;
+    g.add(cyl(.43, .31, 1.15, glassMat(), 0, y + .58, 0));
+    g.add(cyl(.41, .3, .85, mat(0xd88a1b, .15, { transparent: true, opacity: .92 }), 0, y + .45, 0));
+    g.add(cyl(.42, .41, .2, mat(0xfaf4e4, .9), 0, y + 1.0, 0));
+    for (var i = 0; i < 7; i++) g.add(ell(.1, .06, .1, mat(0xfaf4e4, .9), (rnd() - .5) * .5, y + 1.1, (rnd() - .5) * .5));
+    return g;
+  }
+
+  function dishFlan() {
+    var g = new THREE.Group(); g.add(plate());
+    g.add(cyl(.78, .78, .02, mat(0xb35a14, .25, { transparent: true, opacity: .9 }), 0, TOP + .01, 0, 56));
+    g.add(cyl(.42, .55, .5, mat(0xf2c25e, .55), 0, TOP + .25, 0, 56));
+    g.add(cyl(.44, .44, .03, mat(0x93440e, .2), 0, TOP + .515, 0, 56));
+    for (var i = 0; i < 10; i++) { var a = i / 10 * 6.28, d = ell(.05, .1 + rnd() * .08, .04, mat(0x93440e, .2), Math.cos(a) * .45, TOP + .43, Math.sin(a) * .45); d.rotation.y = -a; g.add(d); }
+    var dl = new THREE.MeshPhysicalMaterial({ color: 0x8a4a1c, roughness: .3, clearcoat: .5 });
+    g.add(ell(.16, .09, .16, dl, 0, TOP + .58, 0));
+    for (var k = 0; k < 4; k++) g.add(ell(.11, .08, .11, mat(0xffffff, .9), Math.cos(k * 1.6 + .5) * .25, TOP + .56, Math.sin(k * 1.6 + .5) * .25));
+    return g;
+  }
+
+  function dishBrownie() {
+    var g = new THREE.Group(); g.add(plate());
+    g.add(cyl(.8, .8, .02, new THREE.MeshPhysicalMaterial({ color: 0x1f0e07, roughness: .2, clearcoat: .8 }), 0, TOP + .01, 0, 56));
+    var br = mesh(new THREE.BoxGeometry(.85, .34, .85), mat(0x3b2012, .85), 0, TOP + .17, 0); br.rotation.y = .3; g.add(br);
+    var tl = mesh(new THREE.BoxGeometry(.8, .03, .8), mat(0x4e2c17, .9), 0, TOP + .35, 0); tl.rotation.y = .3; g.add(tl);
+    for (var i = 0; i < 7; i++) { var n = mesh(new THREE.BoxGeometry(.1, .05, .08), mat(0xc59a62, .8), (rnd() - .5) * .6, TOP + .38, (rnd() - .5) * .6); n.rotation.y = rnd() * 3; g.add(n); }
+    g.add(ell(.3, .28, .3, mat(0xf6e8c8, .7), 0, TOP + .62, 0));
+    var dk = new THREE.MeshPhysicalMaterial({ color: 0x2a140a, roughness: .25, clearcoat: .7 });
+    [[.2, .74], [.27, .62], [.24, .5]].forEach(function (r) { var t = mesh(new THREE.TorusGeometry(r[0], .02, 8, 28), dk, 0, TOP + r[1] - .02, 0); t.rotation.x = Math.PI / 2; g.add(t); });
+    return g;
+  }
+
+  var BUILD = {
+    1: function () { return dishSteak(1); }, 2: function () { return dishSteak(2); }, 3: function () { return dishSteak(3); },
+    4: function () { return dishPasta(false); }, 5: function () { return dishPasta(true); },
+    6: function () { return dishBurger(false); }, 7: function () { return dishBurger(true); },
+    8: dishCapp, 9: dishMedialunas, 10: dishLemonade, 11: dishBeer, 12: dishFlan, 13: dishBrownie
+  };
+
+  /* ---------- escena ---------- */
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function camDist() { var asp = innerWidth / innerHeight; return Math.max(3.6, 3.45 / asp); }
+
+  function resetView() {
+    S.elev = .55; S.holder.position.set(0, 0, 0); S.scale = 1; S.base = 1; S.holder.visible = true;
+    S.spin.rotation.y = 0; S.auto = true; S.calib = true; applyScale();
+  }
+  function onResize() {
+    if (!S) return;
+    var w = innerWidth, h = innerHeight;
+    S.renderer.setSize(w, h, false); S.cam.aspect = w / h; S.cam.updateProjectionMatrix(); S.dist = camDist();
+  }
+
+  function buildScene(id) {
+    var r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
+    r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    r.setSize(innerWidth, innerHeight, false);
+    r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+    r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+    var scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .1, 60);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a68, 1.25));
+    var sun = new THREE.DirectionalLight(0xfff2dc, 2.2); sun.position.set(2.5, 5, 3); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    var sc = sun.shadow.camera; sc.left = -2; sc.right = 2; sc.top = 2; sc.bottom = -2; sc.near = 1; sc.far = 14; sun.shadow.bias = -.0005;
+    scene.add(sun); scene.add(sun.target);
+    var holder = new THREE.Group(), spin = new THREE.Group();
+    seed = 42;
+    var model = (BUILD[id] || BUILD[1])();
+    model.traverse(function (o) { if (o.isMesh) { o.castShadow = !(o.material && o.material.transparent); o.receiveShadow = true; } });
+    spin.add(model); holder.add(spin); scene.add(holder);
+    var ground = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.ShadowMaterial({ opacity: .38 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -.001; ground.receiveShadow = true; holder.add(ground);
+    S = { renderer: r, scene: scene, cam: cam, holder: holder, spin: spin, elev: .55, dist: camDist(), scale: 1, auto: true, raf: 0, ptr: new Map(), sun: sun, base: 1, placed: false, gyro: false, calib: true, qd: new THREE.Quaternion(), Y0: new THREE.Quaternion() };
+    resetView(); bindGestures();
+    (function loop() {
+      if (!S) return;
+      S.raf = requestAnimationFrame(loop);
+      if (S.auto) S.spin.rotation.y += .006;
+      if (lastEv && lastEv.beta != null) {
+        devQuat(lastEv, S.qd);
+        if (S.calib || !S.gyro) { S.gyro = true; S.calib = false; calibrate(); }
+        S.cam.position.set(0, 0, 0);
+        S.cam.quaternion.copy(S.Y0).multiply(S.qd);
+      } else {
+        if (S.gyro) { S.gyro = false; S.holder.visible = true; S.holder.position.set(0, 0, 0); S.base = 1; applyScale(); }
+        S.cam.position.set(0, Math.sin(S.elev) * S.dist, Math.cos(S.elev) * S.dist);
+        S.cam.lookAt(0, .25, 0);
+      }
+      S.renderer.render(S.scene, S.cam);
+    })();
+  }
+
+  function bindGestures() {
+    var P = S.ptr;
+    cv.onpointerdown = function (e) {
+      cv.setPointerCapture(e.pointerId);
+      P.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: Date.now(), multi: false });
+      if (P.size > 1) P.forEach(function (v) { v.multi = true; });
+    };
+    cv.onpointermove = function (e) {
+      var p = P.get(e.pointerId); if (!p || !S) return;
+      var dx = e.clientX - p.x, dy = e.clientY - p.y;
+      if (P.size === 1) {
+        S.spin.rotation.y += dx * .01; if (!S.gyro) S.elev = clamp(S.elev + dy * .006, .12, 1.35);
+      } else if (P.size === 2) {
+        var o = null; P.forEach(function (v, k) { if (k !== e.pointerId) o = v; });
+        var d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y);
+        if (d0 > 0) { S.scale = clamp(S.scale * d1 / d0, .4, 2.6); applyScale(); }
+        if (!S.gyro) {
+          var k2 = 2 * S.dist * Math.tan(Math.PI / 8) / innerHeight / 2;
+          S.holder.position.x = clamp(S.holder.position.x + dx * k2, -4, 4);
+          S.holder.position.z = clamp(S.holder.position.z + dy * k2, -4, 4);
+          applyScale();
+        }
+      }
+      p.x = e.clientX; p.y = e.clientY;
+    };
+    cv.onpointerup = function (e) {
+      var p = P.get(e.pointerId); P.delete(e.pointerId);
+      if (p && S && S.gyro && !p.multi && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) < 10 && Date.now() - p.t < 500) placeAt(e.clientX, e.clientY);
+    };
+    cv.onpointercancel = function (e) { P.delete(e.pointerId); };
+    cv.onwheel = function (e) { e.preventDefault(); if (!S) return; S.scale = clamp(S.scale * Math.exp(-e.deltaY * .001), .4, 2.6); applyScale(); };
+  }
+
+  /* ---------- cámara ---------- */
+  function startCam() {
+    var md = navigator.mediaDevices;
+    if (!md || !md.getUserMedia) { noCam(); return Promise.resolve(); }
+    return md.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      .then(function (s) {
+        if (!ov.classList.contains('open')) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        stream = s; vid.srcObject = s; var p = vid.play(); if (p && p.catch) p.catch(function () {});
+      })
+      .catch(noCam);
+  }
+  function noCam() {
+    ov.classList.add('nocam');
+    msg.textContent = 'No pudimos abrir la cámara en vivo. Tocá "Foto de tu mesa", sacá una foto y ponemos el plato encima.';
+    msg.hidden = false; setTimeout(function () { msg.hidden = true; }, 6000);
+  }
+
+  /* ---------- abrir / cerrar ---------- */
+  function loadThree() {
+    if (THREE) return Promise.resolve(THREE);
+    return import(THREE_URL).catch(function () { return import(THREE_URL2); })
+      .then(function (m) { THREE = m; return m; });
+  }
+
+  function open3D(id) {
+    var d = (window.D || (typeof D !== 'undefined' ? D : [])).find(function (x) { return x.id === id; });
+    curId = id; ttl.textContent = d ? d.n : 'Vista 3D';
+    ov.classList.remove('nocam'); ov.classList.add('open'); document.body.style.overflow = 'hidden';
+    msg.textContent = 'Preparando el plato en 3D…'; msg.hidden = false;
+    var cam = startOri().then(startCam);
+    loadThree().then(function () {
+      if (!ov.classList.contains('open')) return;
+      buildScene(id);
+      if (!ov.classList.contains('nocam')) msg.hidden = true;
+      return cam;
+    }).catch(function () {
+      msg.textContent = 'No se pudo cargar el visor 3D. Revisá tu conexión e intentá de nuevo.'; msg.hidden = false;
+    });
+  }
+
+  function close3D() {
+    ov.classList.remove('open', 'nocam', 'photo'); document.body.style.overflow = '';
+    if (photoUrl) { URL.revokeObjectURL(photoUrl); photoUrl = null; } bg.removeAttribute('src');
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    vid.srcObject = null; stopOri();
+    if (S) {
+      cancelAnimationFrame(S.raf);
+      S.scene.traverse(function (o) {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) { m.dispose(); });
+      });
+      S.renderer.dispose();
+      if (S.renderer.forceContextLoss) S.renderer.forceContextLoss();
+      S = null;
+    }
+    msg.hidden = true;
+  }
+
+  addEventListener('resize', onResize);
+  addEventListener('orientationchange', function () { setTimeout(onResize, 250); });
+  window.open3D = open3D;
+})();
+
+</script>
+</body>
+</html>
