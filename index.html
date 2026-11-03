@@ -268,7 +268,7 @@ tabs();list();
   ov.innerHTML =
     '<video playsinline muted autoplay></video><img class="a-bg" alt=""><canvas></canvas>' +
     '<input type="file" id="a-file" accept="image/*" capture="environment" hidden>' +
-    '<div class="a-top"><button class="a-x" aria-label="Cerrar vista 3D">✕</button><div><b id="a-t"></b><small>Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Pellizcá para agrandar</small></div></div>' +
+    '<div class="a-top"><button class="a-x" aria-label="Cerrar vista 3D">✕</button><div><b id="a-t"></b><small>Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Arrastrá en cualquier dirección para girarlo · Pellizcá para agrandar</small></div></div>' +
     '<div class="a-msg" hidden></div>' +
     '<div class="a-bot"><button id="a-photo">📷 Foto de tu mesa</button><button id="a-auto">⟳ Girar</button><button id="a-reset">Centrar</button><button class="p" id="a-order">Pedir este plato</button></div>';
   document.body.appendChild(ov);
@@ -515,12 +515,18 @@ tabs();list();
 
   function resetView() {
     S.elev = .55; S.holder.position.set(0, 0, 0); S.scale = 1; S.base = 1; S.holder.visible = true;
-    S.spin.rotation.y = 0; S.auto = true; S.calib = true; applyScale();
+    S.spin.quaternion.identity(); S.auto = true; S.calib = true; applyScale();
   }
   function onResize() {
     if (!S) return;
     var w = innerWidth, h = innerHeight;
     S.renderer.setSize(w, h, false); S.cam.aspect = w / h; S.cam.updateProjectionMatrix(); S.dist = camDist();
+  }
+
+  /* cada vez se usa un canvas nuevo: un canvas cuyo contexto WebGL ya se cerró no se puede reutilizar */
+  function freshCanvas() {
+    var n = document.createElement('canvas');
+    cv.replaceWith(n); cv = n;
   }
 
   function buildScene(id) {
@@ -542,12 +548,12 @@ tabs();list();
     spin.add(model); holder.add(spin); scene.add(holder);
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.ShadowMaterial({ opacity: .38 }));
     ground.rotation.x = -Math.PI / 2; ground.position.y = -.001; ground.receiveShadow = true; holder.add(ground);
-    S = { renderer: r, scene: scene, cam: cam, holder: holder, spin: spin, elev: .55, dist: camDist(), scale: 1, auto: true, raf: 0, ptr: new Map(), sun: sun, base: 1, placed: false, gyro: false, calib: true, qd: new THREE.Quaternion(), Y0: new THREE.Quaternion() };
+    S = { renderer: r, scene: scene, cam: cam, holder: holder, spin: spin, elev: .55, dist: camDist(), scale: 1, auto: true, raf: 0, ptr: new Map(), sun: sun, qa: new THREE.Quaternion(), base: 1, placed: false, gyro: false, calib: true, qd: new THREE.Quaternion(), Y0: new THREE.Quaternion() };
     resetView(); bindGestures();
     (function loop() {
       if (!S) return;
       S.raf = requestAnimationFrame(loop);
-      if (S.auto) S.spin.rotation.y += .006;
+      if (S.auto) S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(0, 1, 0), .006));
       if (lastEv && lastEv.beta != null) {
         devQuat(lastEv, S.qd);
         if (S.calib || !S.gyro) { S.gyro = true; S.calib = false; calibrate(); }
@@ -573,7 +579,9 @@ tabs();list();
       var p = P.get(e.pointerId); if (!p || !S) return;
       var dx = e.clientX - p.x, dy = e.clientY - p.y;
       if (P.size === 1) {
-        S.spin.rotation.y += dx * .01; if (!S.gyro) S.elev = clamp(S.elev + dy * .006, .12, 1.35);
+        /* girar libre: izquierda/derecha sobre el eje vertical, arriba/abajo inclinando hacia vos */
+        S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * .01));
+        S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(1, 0, 0).applyQuaternion(S.cam.quaternion), dy * .01));
       } else if (P.size === 2) {
         var o = null; P.forEach(function (v, k) { if (k !== e.pointerId) o = v; });
         var d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y);
@@ -627,11 +635,18 @@ tabs();list();
     var cam = startOri().then(startCam);
     loadThree().then(function () {
       if (!ov.classList.contains('open')) return;
-      buildScene(id);
+      try {
+        freshCanvas();
+        buildScene(id);
+      } catch (err) {
+        if (window.console) console.error(err);
+        msg.textContent = 'No se pudo iniciar el visor 3D en este dispositivo.'; msg.hidden = false;
+        return;
+      }
       if (!ov.classList.contains('nocam')) msg.hidden = true;
       return cam;
-    }).catch(function () {
-      msg.textContent = 'No se pudo cargar el visor 3D. Revisá tu conexión e intentá de nuevo.'; msg.hidden = false;
+    }, function () {
+      msg.textContent = 'No se pudo descargar el visor 3D. Revisá tu conexión e intentá de nuevo.'; msg.hidden = false;
     });
   }
 
