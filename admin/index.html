@@ -53,7 +53,11 @@
         '<form class="form" id="ftoken" style="margin-top:12px" onsubmit="return false"><label>Token<input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></label>' +
         '<div><button class="b p" id="conectar">Conectar</button> <span id="tmsg" style="margin-left:8px;font-size:.88rem"></span></div></form>';
     var d = document.getElementById('desconectar');
-    if (d) d.onclick = function () { if (confirm('¿Desconectar GitHub de este navegador?')) { GitHub.guardarToken(''); conexion(); } };
+    if (d) d.onclick = function () {
+      /* sin ventanita del navegador: el primer toque pregunta, el segundo desconecta */
+      if (!d.dataset.seguro) { d.dataset.seguro = '1'; d.textContent = '¿Seguro? Tocá de nuevo'; setTimeout(function () { delete d.dataset.seguro; d.textContent = 'Desconectar'; }, 4000); return; }
+      GitHub.guardarToken(''); conexion();
+    };
     var b = document.getElementById('conectar');
     if (b) b.onclick = function () {
       var t = document.getElementById('token').value.trim(), m = document.getElementById('tmsg');

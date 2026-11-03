@@ -91,6 +91,12 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function img(r) { return /^(https?:|data:|blob:|\/)/.test(r) ? r : link() + r; }
   function slug(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/&/g, 'y').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  /* confirmación sin ventanitas del navegador: el primer toque pregunta, el segundo hace la acción */
+  function confirmar(boton, pregunta, accion) {
+    if (boton.dataset.seguro) { delete boton.dataset.seguro; boton.textContent = boton.dataset.texto; accion(); return; }
+    boton.dataset.texto = boton.textContent; boton.dataset.seguro = '1'; boton.textContent = pregunta;
+    setTimeout(function () { if (boton.dataset.seguro) { delete boton.dataset.seguro; boton.textContent = boton.dataset.texto; } }, 4000);
+  }
   function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
   /* achica una foto elegida en el celular/compu para que pese poco */
   function achicar(file, max, calidad) {
@@ -154,8 +160,16 @@
     $('#vista').innerHTML = h;
   }
   function plato(el) { var f = el.closest('[data-id]'); return f && M.platos.filter(function (p) { return String(p.id) === f.dataset.id; })[0]; }
-  function nuevaCategoria() {
-    var nom = prompt('Nombre de la nueva categoría (ej. Principales, Postres, Bebidas)'); if (!nom) return;
+  /* el nombre se escribe en la misma página (algunos navegadores bloquean las ventanitas de prompt) */
+  function pedirCategoria(boton) {
+    var cont = boton.parentNode;
+    cont.innerHTML = '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      '<input type="text" class="precio" style="width:240px;text-align:left" maxlength="40" placeholder="Ej. Principales, Postres, Bebidas" aria-label="Nombre de la nueva categoría" data-cat-nueva>' +
+      '<button type="button" class="b p" data-ok-cat>Agregar</button><button type="button" class="b" data-cancel-cat>Cancelar</button></span>';
+    cont.querySelector('input').focus();
+  }
+  function nuevaCategoria(nom) {
+    nom = String(nom || '').trim(); if (!nom) return;
     var id = slug(nom) || 'cat';
     while (M.categorias.some(function (k) { return k.id === id; })) id += '-2';
     M.categorias.push({ id: id, nombre: nom, fondo: 'linear-gradient(135deg,#eadfce,#c9b49a)' });
@@ -188,7 +202,7 @@
     logoPrev();
     $('#fdatos').oninput = function (e) {
       var t = e.target, n = t.name;
-      if (t.type === 'file') return;
+      if (t.type === 'file' || t.hasAttribute('data-cat-nueva')) return;
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
@@ -273,18 +287,27 @@
     guardar(); mostrar(); toast('Plato guardado');
   };
   $('#borrar').onclick = function () {
-    if (!editando || !confirm('¿Borrar "' + editando.nombre + '" del menú?')) return;
-    M.platos = M.platos.filter(function (p) { return p !== editando; });
-    $('#dlg').close(); guardar(); mostrar();
+    if (!editando) return;
+    confirmar(this, '¿Seguro? Tocá de nuevo', function () {
+      M.platos = M.platos.filter(function (p) { return p !== editando; });
+      $('#dlg').close(); guardar(); mostrar(); toast('Plato borrado');
+    });
   };
   [].forEach.call(document.querySelectorAll('[data-cerrar]'), function (b) { b.onclick = function () { $('#dlg').close(); }; });
 
   /* ---------- eventos de la lista ---------- */
   $('#vista').addEventListener('click', function (e) {
     var t = e.target;
-    if (t.closest('[data-nueva-cat]')) nuevaCategoria();
+    if (t.closest('[data-nueva-cat]')) pedirCategoria(t.closest('[data-nueva-cat]'));
+    else if (t.closest('[data-ok-cat]')) nuevaCategoria(t.closest('span').querySelector('[data-cat-nueva]').value);
+    else if (t.closest('[data-cancel-cat]')) mostrar();
     else if (t.closest('[data-nuevo]')) abrir(null, t.closest('[data-nuevo]').dataset.nuevo);
     else if (t.closest('[data-editar]')) abrir(plato(t));
+  });
+  $('#vista').addEventListener('keydown', function (e) {
+    if (!e.target.hasAttribute('data-cat-nueva')) return;
+    if (e.key === 'Enter') { e.preventDefault(); nuevaCategoria(e.target.value); }
+    if (e.key === 'Escape') { e.preventDefault(); mostrar(); }
   });
   $('#vista').addEventListener('change', function (e) {
     var t = e.target, p = plato(t); if (!p) return;
@@ -365,8 +388,9 @@
     a.download = 'menu.json'; a.click();
   };
   $('#descartar').onclick = function () {
-    if (!confirm(nuevo ? '¿Borrar todo lo cargado de este local nuevo?' : '¿Descartar todos los cambios sin publicar?')) return;
-    M = JSON.parse(original); guardar(); cabecera(); mostrar();
+    confirmar(this, '¿Seguro? Tocá de nuevo', function () {
+      M = JSON.parse(original); guardar(); cabecera(); mostrar(); toast(nuevo ? 'Se borró lo cargado' : 'Cambios descartados');
+    });
   };
 
   /* ---------- carga ---------- */
