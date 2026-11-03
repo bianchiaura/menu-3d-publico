@@ -350,11 +350,17 @@
       '<link rel="stylesheet" href="../motor/menu.css">\n</head>\n<body data-menu="menu.json">\n' +
       '<script src="../motor/menu.js"></' + 'script>\n<script src="../motor/cargar-three.js"></' + 'script>\n<script src="../motor/relieve.js"></' + 'script>\n<script src="../motor/visor3d.js"></' + 'script>\n</body>\n</html>\n';
   }
+  /* lo que falta para publicar queda escrito en la barra de abajo (no solo en un aviso que se va) */
+  function falta(t, irA) {
+    $('#estado').textContent = '⚠ ' + t; $('#estado').classList.add('sucio'); toast(t);
+    if (irA && vista !== irA) { vista = irA; marcarTab(); mostrar(); }
+  }
   $('#publicar').onclick = function () {
     var dirLocal = M._carpeta || carpeta;
-    if (!M.nombre) { toast('Falta el nombre del local'); vista = 'datos'; marcarTab(); mostrar(); return; }
-    if (!/^[a-z0-9][a-z0-9-]*$/.test(dirLocal) || /^(admin|panel|motor|plantilla)$/.test(dirLocal)) { toast('Revisá la carpeta: solo minúsculas, números y guiones'); return; }
-    if (!M.categorias.length) { toast('Agregá al menos una categoría'); return; }
+    if (!M.nombre) { falta('Falta el nombre del local', 'datos'); return; }
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(dirLocal) || /^(admin|panel|motor|plantilla)$/.test(dirLocal)) { falta('Revisá la carpeta del link: solo minúsculas, números y guiones', 'datos'); return; }
+    if (!M.categorias.length) { falta('Para publicar, agregá al menos una categoría (en Platos → "+ Agregar categoría")', 'platos'); return; }
+    if (!M.platos.length) { falta('Para publicar, agregá al menos un plato', 'platos'); return; }
     var bot = this; bot.disabled = true; $('#estado').textContent = 'Publicando…';
     var paq = empaquetar();
     (nuevo ? GitHub.leer(dirLocal + '/menu.json') : Promise.resolve(null)).then(function (existe) {
@@ -374,7 +380,7 @@
       paq.menu._estado = M._estado; M = paq.menu; original = JSON.stringify(M); guardar(); mostrar();
       toast('¡Publicado! En 1 o 2 minutos se ve en el menú.');
     }).catch(function (e) {
-      console.error(e); toast('No se pudo publicar: ' + e.message); guardar();
+      console.error(e); falta('No se pudo publicar: ' + e.message);
     }).then(function () { bot.disabled = false; });
   };
   $('#previa').onclick = function () {
