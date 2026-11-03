@@ -7,7 +7,7 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 *{box-sizing:border-box;margin:0}
 html{scroll-padding-top:150px}
 body{background:var(--fondo);color:var(--texto);font:16px/1.5 'DM Sans',system-ui,sans-serif;max-width:640px;margin:0 auto;padding-bottom:40px}
-h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700}
+h1,h2,h3{font-family:var(--titulos,Fraunces,Georgia,serif);font-weight:700}
 button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
 button:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
 .proto{background:#c2410c;color:#fff;text-align:center;font-weight:700;font-size:.85rem;padding:6px 16px;letter-spacing:.02em;margin:-14px -16px 12px}
@@ -24,14 +24,16 @@ main>h2{font-size:1.5rem}
 .aviso{color:var(--suave);text-align:center;padding:40px 0}
 .card{background:var(--tarjeta);border-radius:18px;overflow:hidden;box-shadow:var(--sombra);border:1px solid var(--linea)}
 .ph{height:150px;display:grid;place-items:center;font-size:4.6rem;position:relative;background:linear-gradient(135deg,#eadfce,#c9b49a)}
-.ph img{width:100%;height:100%;object-fit:cover}
+.ph{overflow:hidden}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .sin{z-index:1}
 .bd{padding:14px 16px 16px;display:grid;gap:8px}
 .bd h3{font-size:1.2rem}.bd p{color:var(--suave);font-size:.92rem}
 .tg{display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(181,131,47,.15);color:var(--acento2)}
 .tag.v{background:rgba(70,140,70,.16);color:#3f8a3f}.tag.s{background:rgba(70,110,170,.16);color:#4a78c0}
 .ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px;min-height:44px}
-.ft b{font-family:Fraunces,serif;font-size:1.25rem}
+.ft b{font-family:var(--titulos,Fraunces,serif);font-size:1.25rem}
 .btn{background:var(--acento);color:var(--sobre-acento);padding:10px 18px;border-radius:12px;font-weight:700}
 .btn:active{transform:scale(.97)}
 .proto.borr{background:#1d4ed8}

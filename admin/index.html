@@ -12,34 +12,24 @@
 <body>
 <div class="barra"><div class="wrap">
   <h1>Menú 3D<small>Panel del administrador</small></h1>
-  <a class="b" href="../" target="_blank" rel="noopener">Ver menú principal</a>
+  <a class="b p" href="../panel/?nuevo">+ Nuevo local</a>
 </div></div>
 
 <div class="wrap">
-  <p class="aviso-demo">Versión de muestra: esta pantalla todavía no pide usuario y contraseña. Muestra los datos reales del repositorio, pero los cambios se hacen desde el repo.</p>
+  <p class="aviso-demo" id="aviso"></p>
 
   <div class="kpis" id="kpis"></div>
 
   <div class="seccion"><h2>Locales</h2><p>Cada local tiene su link, su QR y su panel.</p></div>
   <div class="grilla" id="locales"><p>Cargando…</p></div>
 
-  <div class="seccion"><h2>Biblioteca de modelos 3D</h2><p>Entre paréntesis: cuántos platos lo usan.</p></div>
-  <div class="modelos" id="modelos"></div>
-
-  <div class="seccion"><h2>Sumar un local</h2></div>
-  <div class="caja">
-    <ol class="pasos">
-      <li>Copiar la carpeta <b>plantilla</b> con el nombre del local (minúsculas y guiones, ej. <i>la-esquina</i>).</li>
-      <li>Cargar nombre, colores y platos en su <b>menu.json</b> (o desde su panel, y descargar el archivo).</li>
-      <li>Agregar el local a <b>locales.json</b> para que aparezca acá.</li>
-      <li>Si usa la marca de un local real: dejar la franja de prototipo y publicarlo solo con su permiso.</li>
-    </ol>
-  </div>
+  <div class="seccion"><h2>Conexión para publicar</h2><p>Necesaria para crear locales y publicar cambios desde acá.</p></div>
+  <div class="caja" id="conexion"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="../motor/qr.js"></script>
-<script src="../motor/modelos.js"></script>
+<script src="../motor/github.js"></script>
 <script>
 (function () {
   'use strict';
@@ -48,42 +38,62 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function json(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u); return r.json(); }); }
 
+  /* ---------- conexión con GitHub (el token queda solo en este navegador) ---------- */
+  function conexion() {
+    var c = document.getElementById('conexion'), hay = !!GitHub.token();
+    document.getElementById('aviso').innerHTML = hay
+      ? 'Conectado: desde acá podés crear locales y publicar cambios. Todavía no hay usuario y contraseña para cada local (eso viene con Supabase).'
+      : 'Para crear y publicar locales desde acá, conectá tu GitHub una vez (abajo de todo). Sin conexión, los paneles solo guardan en este navegador.';
+    c.innerHTML = hay
+      ? '<p><b style="color:var(--ok)">✓ Conectado a ' + esc(GitHub.REPO) + '</b> en este navegador.</p><p style="margin-top:10px"><button class="b mal" id="desconectar">Desconectar</button></p>'
+      : '<ol class="pasos"><li>Entrá a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → crear token</a> (con tu sesión de GitHub).</li>' +
+        '<li>Nombre: <i>Menú 3D</i>. En <b>Repository access</b> elegí <b>Only select repositories</b> → <b>menu-3d-publico</b>.</li>' +
+        '<li>En <b>Permissions → Repository permissions → Contents</b> elegí <b>Read and write</b>. Tocá <b>Generate token</b> y copialo.</li>' +
+        '<li>Pegalo acá abajo y tocá <b>Conectar</b>. Queda guardado solo en este navegador; no lo compartas.</li></ol>' +
+        '<form class="form" id="ftoken" style="margin-top:12px" onsubmit="return false"><label>Token<input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></label>' +
+        '<div><button class="b p" id="conectar">Conectar</button> <span id="tmsg" style="margin-left:8px;font-size:.88rem"></span></div></form>';
+    var d = document.getElementById('desconectar');
+    if (d) d.onclick = function () { if (confirm('¿Desconectar GitHub de este navegador?')) { GitHub.guardarToken(''); conexion(); } };
+    var b = document.getElementById('conectar');
+    if (b) b.onclick = function () {
+      var t = document.getElementById('token').value.trim(), m = document.getElementById('tmsg');
+      if (!t) return;
+      GitHub.guardarToken(t); m.textContent = 'Probando…';
+      GitHub.probar().then(function () { conexion(); }).catch(function (e) {
+        GitHub.guardarToken(''); m.textContent = 'No funcionó: ' + e.message; m.style.color = 'var(--mal)';
+      });
+    };
+  }
+  conexion();
+
+  /* ---------- locales ---------- */
   json(raiz + 'locales.json').then(function (locs) {
     return Promise.all(locs.map(function (l) {
       return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
     }));
   }).then(function (locs) {
-    var platos = 0, con3d = 0, uso = {};
-    locs.forEach(function (l) {
-      (l.menu ? l.menu.platos : []).forEach(function (p) {
-        platos++; if (p.modelo) { con3d++; uso[p.modelo] = (uso[p.modelo] || 0) + 1; }
-      });
-    });
-    document.getElementById('kpis').innerHTML = [
-      [locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D'], [Menu3DModelos.nombres.length, 'modelos en la biblioteca']
-    ].map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+    var platos = 0, con3d = 0;
+    locs.forEach(function (l) { (l.menu ? l.menu.platos : []).forEach(function (p) { platos++; if (p.modelo) con3d++; }); });
+    document.getElementById('kpis').innerHTML = [[locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D']]
+      .map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
 
     document.getElementById('locales').innerHTML = locs.map(function (l, i) {
-      var link = raiz + l.carpeta + '/', m = l.menu;
-      return '<article class="caja local"><div><h3>' + esc(m ? m.nombre : l.nombre) + '<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></h3>' +
-        (l.nota ? '<p class="nota">' + esc(l.nota) + '</p>' : '') +
-        '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ No se pudo leer su menu.json') + '</p>' +
+      var link = raiz + l.carpeta + '/', m = l.menu, color = m && m.colores && m.colores.claro && m.colores.claro.acento;
+      return '<article class="caja local"' + (color ? ' style="border-top:4px solid ' + esc(color) + '"' : '') + '><div><h3>' + esc(m ? m.nombre : l.nombre) + '<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></h3>' +
+        (m && m.identidad || l.nota ? '<p class="nota">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
+        '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
         '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p></div>' +
         '<div class="qr" aria-label="QR del menú">' + QR.svg(link) + '</div>' +
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
-        '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Panel del local</a>' +
+        '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
         '<button class="b" data-qr="' + i + '">Descargar QR</button>' +
         '<button class="b" data-copiar="' + i + '">Copiar link</button></div></article>';
-    }).join('');
+    }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
     document.getElementById('locales').onclick = function (e) {
       var q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
       if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
       if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
     };
-
-    document.getElementById('modelos').innerHTML = Menu3DModelos.nombres.map(function (n) {
-      return '<span>' + esc(n) + '<em>(' + (uso[n] || 0) + ')</em></span>';
-    }).join('');
   }).catch(function (e) {
     console.error(e);
     document.getElementById('locales').innerHTML = '<p>No se pudo leer locales.json.</p>';

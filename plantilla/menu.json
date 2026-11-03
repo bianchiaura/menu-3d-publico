@@ -1,6 +1,8 @@
 {
   "nombre": "NOMBRE DEL LOCAL",
   "subtitulo": "Tocá \"Ver en 3D\" y mirá tu plato sobre la mesa",
+  "identidad": "",
+  "tipografia": "clasica",
   "logo": "",
   "prototipo": true,
   "moneda": "$",
@@ -10,13 +12,10 @@
     "oscuro": { "acento": "#d6a24b", "acento2": "#e6b863" }
   },
   "categorias": [
-    { "id": "principales", "nombre": "Principales", "fondo": "linear-gradient(135deg,#e9c9a0,#c98b5a)" },
-    { "id": "postres", "nombre": "Postres", "fondo": "linear-gradient(135deg,#f0d0d6,#d99aa8)" }
+    { "id": "principales", "nombre": "Principales", "fondo": "linear-gradient(135deg,#e9c9a0,#c98b5a)" }
   ],
   "platos": [
-    { "id": 1, "categoria": "principales", "nombre": "Plato de ejemplo", "emoji": "🥩", "precio": 10000, "etiquetas": ["chef"], "modelo": "bife-de-chorizo", "foto": "",
-      "descripcion": "Descripción del plato: ingredientes, gramaje y alérgenos." },
-    { "id": 2, "categoria": "postres", "nombre": "Postre de ejemplo", "emoji": "🍮", "precio": 5000, "etiquetas": ["sin-tacc"], "modelo": "flan", "foto": "",
-      "descripcion": "Descripción del postre." }
+    { "id": 1, "categoria": "principales", "nombre": "Plato de ejemplo", "emoji": "🍽", "precio": 10000, "etiquetas": [], "foto": "", "modelo": null,
+      "descripcion": "Descripción del plato: ingredientes, gramaje y alérgenos." }
   ]
 }

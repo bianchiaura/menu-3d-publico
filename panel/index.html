@@ -11,16 +11,17 @@
 </head>
 <body>
 <div class="barra"><div class="wrap">
+  <a class="b" id="volver" href="../admin/" hidden>← Administrador</a>
   <h1 id="titulo">Panel del local<small>Cargando…</small></h1>
   <div class="qr" id="qr" style="width:52px;height:52px" aria-label="QR del menú"></div>
   <a class="b" id="ver" href="#" target="_blank" rel="noopener">Ver mi menú</a>
 </div></div>
 
 <div class="wrap">
-  <p class="aviso-demo">Versión de muestra: los cambios se guardan solo en este navegador y se ven con <b>Vista previa</b>. Para publicarlos, descargá el menu.json y mandáselo al administrador. Más adelante esto va a tener usuario y contraseña y se va a publicar solo.</p>
+  <p class="aviso-demo" id="aviso"></p>
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-vista="platos">Platos</button>
-    <button role="tab" aria-selected="false" data-vista="datos">Datos del local</button>
+    <button role="tab" aria-selected="false" data-vista="datos">Datos e identidad</button>
   </div>
   <div id="vista"></div>
 </div>
@@ -28,7 +29,8 @@
 <div class="pie-fijo"><div class="wrap">
   <span class="estado" id="estado">Sin cambios</span>
   <a class="b" id="previa" href="#" target="_blank" rel="noopener">Vista previa</a>
-  <button class="b p" id="bajar">Descargar menu.json</button>
+  <button class="b p" id="publicar" hidden>Publicar</button>
+  <button class="b" id="bajar">Descargar menu.json</button>
   <button class="b mal" id="descartar">Descartar cambios</button>
 </div></div>
 
@@ -47,52 +49,92 @@
       <label><input type="checkbox" name="et" value="chef"> Recom. del Chef</label>
     </div></div>
     <div class="fila2">
-      <label>Modelo 3D<select name="modelo"></select></label>
+      <label>Foto de portada<small>La que se ve en el menú</small><input type="file" name="foto" accept="image/*"></label>
       <label>Emoji<small>Se ve si no hay foto</small><input type="text" name="emoji" maxlength="4"></label>
     </div>
-    <label>Foto<small>Opcional. Se achica sola para que cargue rápido.</small><input type="file" name="foto" accept="image/*"></label>
     <div id="foto-prev"></div>
+    <div class="caja" style="display:grid;gap:10px">
+      <b>Modelo 3D</b>
+      <div id="estado3d"></div>
+      <label>Fotos para el 3D<small>1 a 4 fotos del plato entero, desde arriba o un poco inclinadas, con buena luz. Si no subís ninguna, se usa la de portada.</small><input type="file" name="fotos3d" accept="image/*" multiple></label>
+      <div><button type="button" class="b p" id="crear3d">Crear 3D</button></div>
+    </div>
   </div>
-  <div class="pie"><button type="button" class="b mal" id="borrar">Borrar plato</button><span style="display:flex;gap:8px"><button type="button" class="b" data-cerrar>Cancelar</button><button class="b p" value="ok">Guardar</button></span></div>
+  <div class="pie"><button type="button" class="b mal" id="borrar">Borrar plato</button><span style="display:flex;gap:8px"><button type="button" class="b" data-cerrar>Cancelar</button><button class="b p" value="ok">Guardar plato</button></span></div>
 </form></dialog>
+
+<dialog id="dlg3d">
+  <div class="cab"><h2 style="font-size:1.15rem" id="dlg3d-t">Crear 3D</h2><button type="button" class="b" id="cerrar3d" aria-label="Cerrar">✕</button></div>
+  <div class="cuerpo" id="gen3d"></div>
+</dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="../motor/qr.js"></script>
-<script src="../motor/modelos.js"></script>
+<script src="../motor/cargar-three.js"></script>
+<script src="../motor/relieve.js"></script>
+<script src="../motor/generador3d.js"></script>
+<script src="../motor/github.js"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (s) { return document.querySelector(s); };
-  var ETQ = { 'sin-tacc': 'Sin TACC', 'vegano': 'Vegano', 'chef': 'Recom. del Chef' };
-  var carpeta = (new URLSearchParams(location.search).get('local') || '').replace(/[^a-z0-9-]/g, '');
-  var raiz = new URL('../', location.href).href, link = raiz + carpeta + '/', src = link + 'menu.json';
-  var CLAVE = 'menu3d-borrador:' + src;
-  var M = null, original = '', vista = 'platos', editando = null, fotoNueva;
+  var q = new URLSearchParams(location.search), nuevo = q.has('nuevo');
+  var carpeta = (q.get('local') || '').replace(/[^a-z0-9-]/g, '');
+  var raiz = new URL('../', location.href).href;
+  var admin = nuevo || !!GitHub.token();
+  var M = null, original = '', vista = nuevo ? 'datos' : 'platos', editando = null, fotoNueva, modeloNuevo, fotos3d = [], cerrarGen = null;
+  var TIPOS = { clasica: 'Clásica (Fraunces)', moderna: 'Moderna (DM Sans)', elegante: 'Elegante (Cormorant)', rustica: 'Rústica (Bitter)' };
+  var ESTADOS = { demo: 'Demo', prototipo: 'Prototipo', activo: 'Activo' };
 
+  function link() { return raiz + (M && M._carpeta || carpeta) + '/'; }
+  function clave() { return nuevo ? 'menu3d-borrador:nuevo' : 'menu3d-borrador:' + raiz + carpeta + '/menu.json'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function img(r) { return /^(https?:|data:|\/)/.test(r) ? r : link + r; }
-  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2200); }
+  function img(r) { return /^(https?:|data:|blob:|\/)/.test(r) ? r : link() + r; }
+  function slug(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/&/g, 'y').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
+  /* achica una foto elegida en el celular/compu para que pese poco */
+  function achicar(file, max, calidad) {
+    return new Promise(function (ok, mal) {
+      var im = new Image(), u = URL.createObjectURL(file);
+      im.onload = function () {
+        var k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+        ok(c.toDataURL('image/jpeg', calidad || .82));
+      };
+      im.onerror = mal; im.src = u;
+    });
+  }
 
   /* cada cambio se guarda como borrador en este navegador */
   function guardar() {
     var s = JSON.stringify(M);
-    try { if (s === original) localStorage.removeItem(CLAVE); else localStorage.setItem(CLAVE, s); }
+    try { if (s === original) localStorage.removeItem(clave()); else localStorage.setItem(clave(), s); }
     catch (e) { toast('No hay más espacio en el navegador: probá con fotos más chicas'); }
     var sucio = s !== original;
-    $('#estado').textContent = sucio ? 'Cambios sin publicar' : 'Sin cambios';
+    $('#estado').textContent = sucio ? (nuevo ? 'Local sin publicar' : 'Cambios sin publicar') : 'Sin cambios';
     $('#estado').classList.toggle('sucio', sucio);
   }
 
   function cabecera() {
-    document.title = M.nombre + ' · Panel del local';
-    $('#titulo').innerHTML = esc(M.nombre) + '<small>Panel del local</small>';
-    $('#ver').href = link; $('#previa').href = link + '?borrador';
-    $('#qr').innerHTML = QR.svg(link);
+    var n = M.nombre || (nuevo ? 'Nuevo local' : '');
+    document.title = n + ' · Panel';
+    $('#titulo').innerHTML = esc(n) + '<small>' + (nuevo ? 'Crear local' : 'Panel del local') + '</small>';
+    $('#ver').hidden = nuevo; $('#qr').hidden = nuevo; $('#volver').hidden = !admin;
+    if (!nuevo) { $('#ver').href = link(); $('#qr').innerHTML = QR.svg(link()); }
+    $('#previa').href = nuevo ? raiz + 'plantilla/?borrador' : link() + '?borrador';
+    $('#publicar').hidden = !GitHub.token();
+    $('#publicar').textContent = nuevo ? 'Crear y publicar local' : 'Publicar cambios';
+    $('#bajar').hidden = !!GitHub.token();
+    $('#aviso').innerHTML = GitHub.token()
+      ? 'Estás como <b>administrador</b>: con <b>' + (nuevo ? 'Crear y publicar local' : 'Publicar cambios') + '</b> los cambios quedan online en 1 o 2 minutos.'
+      : 'Versión de muestra: los cambios se guardan en este navegador y se ven con <b>Vista previa</b>. Para publicarlos, descargá el menu.json y mandáselo al administrador.';
   }
 
   /* ---------- vista: platos ---------- */
   function vistaPlatos() {
-    var h = M.categorias.map(function (c) {
+    var h = M.categorias.length ? '' : '<p style="margin-top:20px;color:var(--suave)">Todavía no hay categorías. Agregá la primera (por ejemplo "Principales").</p>';
+    h += M.categorias.map(function (c) {
       var ps = M.platos.filter(function (p) { return p.categoria === c.id; });
       return '<section class="cat"><h3>' + esc(c.nombre) + ' <button class="b" data-nuevo="' + esc(c.id) + '">+ Agregar plato</button></h3>' +
         (ps.length ? '' : '<p style="color:var(--suave);font-size:.88rem">Sin platos.</p>') +
@@ -100,7 +142,7 @@
           return '<div class="fila' + (p.oculto ? ' off' : '') + '" data-id="' + esc(p.id) + '">' +
             '<div class="mini">' + (p.foto ? '<img src="' + esc(img(p.foto)) + '" alt="">' : esc(p.emoji || '🍽')) + '</div>' +
             '<div><div class="n">' + esc(p.nombre) + '</div><div class="s">' +
-            '<span>' + (p.modelo ? '🧊 3D: ' + esc(p.modelo) : 'Sin 3D') + '</span>' +
+            '<span>' + (p.modelo ? '🧊 Con 3D' : 'Sin 3D') + '</span>' +
             (p.agotado ? '<span style="color:var(--mal)">Sin stock</span>' : '') + (p.oculto ? '<span>Oculto</span>' : '') + '</div></div>' +
             '<div class="ctrl"><input class="precio" type="number" min="0" step="50" value="' + esc(p.precio) + '" aria-label="Precio de ' + esc(p.nombre) + '" data-precio>' +
             '<label class="sw"><input type="checkbox" data-hay' + (p.agotado ? '' : ' checked') + '> Hay stock</label>' +
@@ -108,86 +150,126 @@
             '<button class="b" data-editar>Editar</button></div></div>';
         }).join('') + '</section>';
     }).join('');
+    h += '<p style="margin-top:18px"><button class="b" data-nueva-cat>+ Agregar categoría</button></p>';
     $('#vista').innerHTML = h;
   }
   function plato(el) { var f = el.closest('[data-id]'); return f && M.platos.filter(function (p) { return String(p.id) === f.dataset.id; })[0]; }
+  function nuevaCategoria() {
+    var nom = prompt('Nombre de la nueva categoría (ej. Principales, Postres, Bebidas)'); if (!nom) return;
+    var id = slug(nom) || 'cat';
+    while (M.categorias.some(function (k) { return k.id === id; })) id += '-2';
+    M.categorias.push({ id: id, nombre: nom, fondo: 'linear-gradient(135deg,#eadfce,#c9b49a)' });
+    guardar(); mostrar();
+  }
 
-  /* ---------- vista: datos del local ---------- */
+  /* ---------- vista: datos e identidad ---------- */
   function vistaDatos() {
     var i = M.info || {}, c = (M.colores && M.colores.claro) || {};
     $('#vista').innerHTML = '<form class="form" id="fdatos" style="margin-top:20px" onsubmit="return false">' +
-      '<label>Nombre del local<input type="text" name="nombre" value="' + esc(M.nombre) + '"></label>' +
+      '<label>Nombre del local<input type="text" name="nombre" value="' + esc(M.nombre) + '" required></label>' +
+      (admin ? '<div class="fila2"><label>Carpeta (va en el link)<small>' + esc(raiz) + '<b id="slug-ej">' + esc(M._carpeta || carpeta) + '</b>/</small><input type="text" name="_carpeta" value="' + esc(M._carpeta || carpeta) + '"' + (nuevo ? '' : ' disabled') + ' pattern="[a-z0-9-]+"></label>' +
+        '<label>Estado<select name="_estado">' + Object.keys(ESTADOS).map(function (k) { return '<option value="' + k + '"' + ((M._estado || 'prototipo') === k ? ' selected' : '') + '>' + ESTADOS[k] + '</option>'; }).join('') + '</select></label></div>' +
+        '<label class="checks" style="font-weight:400"><input type="checkbox" name="prototipo"' + (M.prototipo ? ' checked' : '') + '> Mostrar la franja "Prototipo para ' + esc(M.nombre || '…') + '" (obligatorio si es una demo con la marca de un local real)</label>' : '') +
+      '<h3 style="font-size:1.05rem;margin-top:6px">Identidad</h3>' +
+      '<label>Descripción de identidad<small>Estilo, ambiente y tono del local (ej. "Bodegón familiar, clásico, tonos rojos")</small><textarea name="identidad" maxlength="300">' + esc(M.identidad) + '</textarea></label>' +
       '<label>Frase debajo del nombre<input type="text" name="subtitulo" value="' + esc(M.subtitulo) + '"></label>' +
+      '<div class="fila2"><label>Logo<input type="file" name="logo" accept="image/*"></label><div id="logo-prev" style="align-self:end"></div></div>' +
+      '<div class="fila2"><label>Color principal<input type="color" name="acento" value="' + esc(c.acento || '#b5832f') + '"></label>' +
+      '<label>Color de etiquetas<input type="color" name="acento2" value="' + esc(c.acento2 || '#8f6420') + '"></label></div>' +
+      '<label>Tipografía de los títulos<select name="tipografia">' + Object.keys(TIPOS).map(function (k) { return '<option value="' + k + '"' + ((M.tipografia || 'clasica') === k ? ' selected' : '') + '>' + TIPOS[k] + '</option>'; }).join('') + '</select></label>' +
+      '<h3 style="font-size:1.05rem;margin-top:6px">Datos de contacto</h3>' +
       '<div class="fila2"><label>Dirección<input type="text" name="direccion" value="' + esc(i.direccion) + '"></label>' +
       '<label>Horario<input type="text" name="horario" value="' + esc(i.horario) + '"></label></div>' +
       '<div class="fila2"><label>WhatsApp<small>Con código de país, ej. 5491122334455</small><input type="text" name="whatsapp" value="' + esc(i.whatsapp) + '"></label>' +
       '<label>Instagram<small>Ej. @milocal</small><input type="text" name="instagram" value="' + esc(i.instagram) + '"></label></div>' +
-      '<div class="fila2"><label>Color principal<input type="color" name="acento" value="' + esc(c.acento || '#b5832f') + '"></label>' +
-      '<label>Color de etiquetas<input type="color" name="acento2" value="' + esc(c.acento2 || '#8f6420') + '"></label></div>' +
-      '<div><b style="font-size:.88rem">Categorías</b><div style="display:grid;gap:8px;margin-top:6px">' +
+      '<h3 style="font-size:1.05rem;margin-top:6px">Categorías</h3><div style="display:grid;gap:8px">' +
       M.categorias.map(function (k, n) { return '<input type="text" data-cat="' + n + '" value="' + esc(k.nombre) + '" aria-label="Nombre de categoría">'; }).join('') +
-      '</div><button type="button" class="b" id="nueva-cat" style="margin-top:8px">+ Agregar categoría</button></div></form>';
+      '</div><div><button type="button" class="b" data-nueva-cat>+ Agregar categoría</button></div></form>';
+    logoPrev();
     $('#fdatos').oninput = function (e) {
       var t = e.target, n = t.name;
+      if (t.type === 'file') return;
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
-      else if (n === 'nombre' || n === 'subtitulo') M[n] = t.value;
+      else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
+      else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
+      else if (n === 'prototipo') M.prototipo = t.checked;
       else if (n === 'acento' || n === 'acento2') {
         M.colores = M.colores || {}; M.colores.claro = M.colores.claro || {}; M.colores.claro[n] = t.value;
-        /* el color elegido se usa también en modo oscuro */
-        M.colores.oscuro = M.colores.oscuro || {}; M.colores.oscuro[n] = t.value;
+        M.colores.oscuro = M.colores.oscuro || {}; M.colores.oscuro[n] = t.value; /* el mismo color en modo oscuro */
       } else { M.info = M.info || {}; M.info[n] = t.value; }
-      if (n === 'nombre') cabecera();
+      if (n === 'nombre') {
+        if (nuevo && !M._carpetaTocada) { M._carpeta = slug(t.value); var cc = $('[name=_carpeta]'); if (cc) cc.value = M._carpeta; $('#slug-ej').textContent = M._carpeta; }
+        cabecera();
+      }
+      if (n === '_carpeta') M._carpetaTocada = true;
       guardar();
     };
-    $('#nueva-cat').onclick = function () {
-      var nom = prompt('Nombre de la nueva categoría'); if (!nom) return;
-      var id = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'cat';
-      while (M.categorias.some(function (k) { return k.id === id; })) id += '-2';
-      M.categorias.push({ id: id, nombre: nom, fondo: 'linear-gradient(135deg,#eadfce,#c9b49a)' });
-      guardar(); vistaDatos();
+    $('[name=logo]').onchange = function () {
+      var f = this.files[0]; if (!f) return;
+      achicar(f, 400, .9).then(function (d) { M.logo = d; guardar(); logoPrev(); });
     };
+  }
+  function logoPrev() {
+    var d = $('#logo-prev'); if (!d) return;
+    d.innerHTML = M.logo ? '<div style="display:flex;gap:8px;align-items:center"><img src="' + esc(img(M.logo)) + '" alt="Logo" style="width:48px;height:48px;border-radius:10px;object-fit:cover"><button type="button" class="b" id="quitar-logo">Quitar</button></div>' : '';
+    var b = $('#quitar-logo'); if (b) b.onclick = function () { M.logo = ''; guardar(); logoPrev(); };
   }
 
   function mostrar() { if (vista === 'platos') vistaPlatos(); else vistaDatos(); }
 
   /* ---------- editar / agregar plato ---------- */
   var F = $('#fplato');
-  F.modelo.innerHTML = '<option value="">Sin 3D</option>' + Menu3DModelos.nombres.map(function (n) { return '<option>' + n + '</option>'; }).join('');
   function abrir(p, catNueva) {
-    editando = p; fotoNueva = undefined;
+    editando = p; fotoNueva = undefined; modeloNuevo = undefined; fotos3d = [];
     $('#dlg-t').textContent = p ? 'Editar plato' : 'Nuevo plato';
     F.categoria.innerHTML = M.categorias.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>'; }).join('');
     F.nombre.value = p ? p.nombre : ''; F.precio.value = p ? p.precio : '';
     F.categoria.value = p ? p.categoria : catNueva; F.descripcion.value = p ? p.descripcion : '';
-    F.modelo.value = p ? p.modelo || '' : ''; F.emoji.value = p ? p.emoji || '' : '🍽';
+    F.emoji.value = p ? p.emoji || '' : '🍽';
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
-    F.foto.value = ''; previaFoto(p && p.foto);
+    F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); estado3d();
     $('#borrar').hidden = !p;
     $('#dlg').showModal();
   }
+  function modeloActual() { return modeloNuevo !== undefined ? modeloNuevo : editando && editando.modelo; }
+  function fotoActual() { return fotoNueva !== undefined ? fotoNueva : editando && editando.foto; }
+  function estado3d() {
+    var m = modeloActual();
+    $('#estado3d').innerHTML = m
+      ? '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:var(--ok);font-weight:700">✓ Este plato tiene 3D</span><button type="button" class="b" id="ver3d">Ver</button><button type="button" class="b mal" id="quitar3d">Quitar 3D</button></div>'
+      : '<span style="color:var(--suave)">Todavía no tiene 3D. Subí fotos y tocá <b>Crear 3D</b>.</span>';
+    var v = $('#ver3d'); if (v) v.onclick = function () { abrir3d('Así se ve en 3D', function (cont) { cont.innerHTML = '<div class="gen-previa"></div><p style="color:var(--suave);font-size:.85rem;margin-top:8px">Arrastrá para girarlo.</p>'; return Generador3D.vistaPrevia(cont.firstChild, m, link()); }); };
+    var qq = $('#quitar3d'); if (qq) qq.onclick = function () { modeloNuevo = null; estado3d(); };
+  }
   function previaFoto(f) {
     $('#foto-prev').innerHTML = f ? '<div style="display:flex;gap:10px;align-items:center"><img src="' + esc(img(f)) + '" alt="" style="width:90px;height:64px;object-fit:cover;border-radius:10px"><button type="button" class="b" id="quitar-foto">Quitar foto</button></div>' : '';
-    var q = $('#quitar-foto'); if (q) q.onclick = function () { fotoNueva = ''; previaFoto(''); };
+    var b = $('#quitar-foto'); if (b) b.onclick = function () { fotoNueva = ''; previaFoto(''); };
   }
-  /* la foto se achica a 900 px para que el menú cargue rápido en el celular */
-  F.foto.onchange = function () {
-    var file = F.foto.files[0]; if (!file) return;
-    var im = new Image(), u = URL.createObjectURL(file);
-    im.onload = function () {
-      var k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas');
-      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
-      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-      fotoNueva = c.toDataURL('image/jpeg', .8); URL.revokeObjectURL(u); previaFoto(fotoNueva);
-    };
-    im.src = u;
+  F.foto.onchange = function () { var f = F.foto.files[0]; if (f) achicar(f, 900).then(function (d) { fotoNueva = d; previaFoto(d); }); };
+  F.fotos3d.onchange = function () {
+    Promise.all([].slice.call(F.fotos3d.files, 0, 4).map(function (f) { return achicar(f, 1600, .9); })).then(function (l) { fotos3d = l; });
+  };
+  function abrir3d(titulo, armar) {
+    $('#dlg3d-t').textContent = titulo; $('#dlg3d').showModal();
+    if (cerrarGen) cerrarGen(); cerrarGen = armar($('#gen3d'));
+  }
+  function cerrar3d() { if (cerrarGen) cerrarGen(); cerrarGen = null; $('#gen3d').innerHTML = ''; $('#dlg3d').close(); }
+  $('#cerrar3d').onclick = cerrar3d;
+  $('#crear3d').onclick = function () {
+    var fotos = fotos3d.length ? fotos3d : (fotoActual() ? [img(fotoActual())] : []);
+    if (!fotos.length) { toast('Subí al menos una foto del plato'); return; }
+    abrir3d('Crear 3D', function (cont) {
+      return Generador3D.abrir(cont, fotos, function (m) { modeloNuevo = m; cerrar3d(); estado3d(); toast('3D listo. Tocá "Guardar plato".'); });
+    });
   };
   F.onsubmit = function () {
     var p = editando;
     if (!p) { p = { id: M.platos.reduce(function (a, x) { return Math.max(a, Number(x.id) || 0); }, 0) + 1 }; M.platos.push(p); }
     p.nombre = F.nombre.value.trim(); p.precio = Number(F.precio.value) || 0; p.categoria = F.categoria.value;
-    p.descripcion = F.descripcion.value.trim(); p.modelo = F.modelo.value; p.emoji = F.emoji.value.trim();
+    p.descripcion = F.descripcion.value.trim(); p.emoji = F.emoji.value.trim();
     p.etiquetas = [].filter.call(F.querySelectorAll('[name=et]'), function (x) { return x.checked; }).map(function (x) { return x.value; });
     if (fotoNueva !== undefined) p.foto = fotoNueva;
+    if (modeloNuevo !== undefined) p.modelo = modeloNuevo;
     guardar(); mostrar(); toast('Plato guardado');
   };
   $('#borrar').onclick = function () {
@@ -200,7 +282,8 @@
   /* ---------- eventos de la lista ---------- */
   $('#vista').addEventListener('click', function (e) {
     var t = e.target;
-    if (t.closest('[data-nuevo]')) abrir(null, t.closest('[data-nuevo]').dataset.nuevo);
+    if (t.closest('[data-nueva-cat]')) nuevaCategoria();
+    else if (t.closest('[data-nuevo]')) abrir(null, t.closest('[data-nuevo]').dataset.nuevo);
     else if (t.closest('[data-editar]')) abrir(plato(t));
   });
   $('#vista').addEventListener('change', function (e) {
@@ -212,31 +295,104 @@
   });
   document.querySelector('.tabs').onclick = function (e) {
     var b = e.target.closest('[data-vista]'); if (!b) return;
-    vista = b.dataset.vista;
-    [].forEach.call(document.querySelectorAll('.tabs [data-vista]'), function (x) { x.setAttribute('aria-selected', x === b); });
-    mostrar();
+    vista = b.dataset.vista; marcarTab(); mostrar();
   };
+  function marcarTab() { [].forEach.call(document.querySelectorAll('.tabs [data-vista]'), function (x) { x.setAttribute('aria-selected', x.dataset.vista === vista); }); }
 
-  /* ---------- pie ---------- */
+  /* ---------- publicar ---------- */
+  /* menú listo para publicar: sin campos internos y con las fotos nuevas pasadas a archivos */
+  function empaquetar() {
+    var m = JSON.parse(JSON.stringify(M)), archivos = [], t = Date.now().toString(36);
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m.base;
+    function archivo(d, ruta) { archivos.push({ ruta: ruta, dataUrl: d }); return ruta.split('/').slice(1).join('/'); }
+    var dir = (M._carpeta || carpeta) + '/';
+    if (/^data:/.test(m.logo || '')) m.logo = archivo(m.logo, dir + 'img/logo-' + t + '.jpg');
+    m.platos.forEach(function (p) {
+      if (/^data:/.test(p.foto || '')) p.foto = archivo(p.foto, dir + 'img/' + p.id + '-' + t + '.jpg');
+      if (p.modelo && /^data:/.test(p.modelo.textura)) p.modelo.textura = archivo(p.modelo.textura, dir + 'modelos/' + p.id + '-' + t + '-textura.jpg');
+      if (p.modelo && /^data:/.test(p.modelo.relieve)) p.modelo.relieve = archivo(p.modelo.relieve, dir + 'modelos/' + p.id + '-' + t + '-relieve.png');
+    });
+    archivos.push({ ruta: dir + 'menu.json', texto: JSON.stringify(m, null, 2) + '\n' });
+    return { menu: m, archivos: archivos };
+  }
+  function paginaLocal(m) {
+    var n = esc(m.nombre), color = (m.colores && m.colores.claro && m.colores.claro.acento) || '#b5832f';
+    return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+      '<!-- Datos para cuando se comparte el link (WhatsApp, etc.). El menú en sí está en menu.json -->\n' +
+      '<title>' + n + ' · Menú 3D</title>\n<meta name="description" content="Menú digital con platos en 3D. Escaneá el QR o acercá el celular al NFC y mirá cada plato sobre tu mesa.">\n' +
+      '<meta property="og:title" content="' + n + ' · Menú 3D">\n<meta property="og:description" content="Mirá cada plato en 3D sobre tu mesa antes de elegir.">\n' +
+      '<meta name="theme-color" content="' + esc(color) + '">\n' +
+      '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">\n' +
+      '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">\n' +
+      '<link rel="stylesheet" href="../motor/menu.css">\n</head>\n<body data-menu="menu.json">\n' +
+      '<script src="../motor/menu.js"></' + 'script>\n<script src="../motor/cargar-three.js"></' + 'script>\n<script src="../motor/relieve.js"></' + 'script>\n<script src="../motor/visor3d.js"></' + 'script>\n</body>\n</html>\n';
+  }
+  $('#publicar').onclick = function () {
+    var dirLocal = M._carpeta || carpeta;
+    if (!M.nombre) { toast('Falta el nombre del local'); vista = 'datos'; marcarTab(); mostrar(); return; }
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(dirLocal) || /^(admin|panel|motor|plantilla)$/.test(dirLocal)) { toast('Revisá la carpeta: solo minúsculas, números y guiones'); return; }
+    if (!M.categorias.length) { toast('Agregá al menos una categoría'); return; }
+    var bot = this; bot.disabled = true; $('#estado').textContent = 'Publicando…';
+    var paq = empaquetar();
+    (nuevo ? GitHub.leer(dirLocal + '/menu.json') : Promise.resolve(null)).then(function (existe) {
+      if (existe) throw new Error('Ya existe un local con la carpeta "' + dirLocal + '"');
+      return GitHub.leer('locales.json');
+    }).then(function (txt) {
+      var locs = txt ? JSON.parse(txt) : [], ent = locs.filter(function (l) { return l.carpeta === dirLocal; })[0];
+      if (!ent) { ent = { carpeta: dirLocal }; locs.push(ent); }
+      ent.nombre = M.nombre; ent.estado = M._estado || ent.estado || 'prototipo';
+      if (M.identidad) ent.nota = M.identidad;
+      paq.archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
+      if (nuevo) paq.archivos.push({ ruta: dirLocal + '/index.html', texto: paginaLocal(paq.menu) });
+      return GitHub.publicar(paq.archivos, (nuevo ? 'Crea el local ' : 'Actualiza el menú de ') + M.nombre, function (t) { $('#estado').textContent = t; });
+    }).then(function () {
+      try { localStorage.removeItem(clave()); } catch (e) {}
+      if (nuevo) { location.replace('./?local=' + encodeURIComponent(dirLocal) + '&publicado=1'); return; }
+      paq.menu._estado = M._estado; M = paq.menu; original = JSON.stringify(M); guardar(); mostrar();
+      toast('¡Publicado! En 1 o 2 minutos se ve en el menú.');
+    }).catch(function (e) {
+      console.error(e); toast('No se pudo publicar: ' + e.message); guardar();
+    }).then(function () { bot.disabled = false; });
+  };
+  $('#previa').onclick = function () {
+    if (!nuevo) return;
+    try { localStorage.setItem('menu3d-borrador:' + raiz + 'plantilla/menu.json', JSON.stringify(M)); } catch (e) {}
+  };
   $('#bajar').onclick = function () {
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(M, null, 2)], { type: 'application/json' }));
+    var a = document.createElement('a'), m = JSON.parse(JSON.stringify(M));
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada;
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(m, null, 2)], { type: 'application/json' }));
     a.download = 'menu.json'; a.click();
   };
   $('#descartar').onclick = function () {
-    if (!confirm('¿Descartar todos los cambios sin publicar?')) return;
+    if (!confirm(nuevo ? '¿Borrar todo lo cargado de este local nuevo?' : '¿Descartar todos los cambios sin publicar?')) return;
     M = JSON.parse(original); guardar(); cabecera(); mostrar();
   };
 
   /* ---------- carga ---------- */
-  if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }
-  fetch(src, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (m) {
+  function arrancar(m, estado) {
+    if (!nuevo && admin && estado) m._estado = estado;
     original = JSON.stringify(m);
-    var b = null; try { b = localStorage.getItem(CLAVE); } catch (e) {}
+    var b = null; try { b = localStorage.getItem(clave()); } catch (e) {}
     M = b ? JSON.parse(b) : m;
-    cabecera(); guardar(); mostrar();
+    marcarTab(); cabecera(); guardar(); mostrar();
+    if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');
+  }
+  if (nuevo) {
+    arrancar({ nombre: '', subtitulo: 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa', identidad: '', tipografia: 'clasica', logo: '', prototipo: true, moneda: '$',
+      info: { direccion: '', horario: '', whatsapp: '', instagram: '' }, colores: { claro: { acento: '#b5832f', acento2: '#8f6420' }, oscuro: { acento: '#b5832f', acento2: '#8f6420' } },
+      categorias: [], platos: [], _estado: 'prototipo', _carpeta: '' });
+    return;
+  }
+  if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }
+  Promise.all([
+    fetch(raiz + carpeta + '/menu.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }),
+    fetch(raiz + 'locales.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+  ]).then(function (r) {
+    var ent = r[1].filter(function (l) { return l.carpeta === carpeta; })[0];
+    arrancar(r[0], ent && ent.estado);
   }).catch(function () {
-    $('#vista').innerHTML = '<p style="margin-top:20px">No se encontró el menú de "' + esc(carpeta) + '".</p>';
+    $('#vista').innerHTML = '<p style="margin-top:20px">No se encontró el menú de "' + esc(carpeta) + '". Si recién lo creaste, esperá 1 o 2 minutos y recargá.</p>';
   });
 })();
 </script>

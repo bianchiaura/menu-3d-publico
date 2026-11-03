@@ -78,4 +78,19 @@ dialog .pie{display:flex;gap:8px;justify-content:space-between;padding:14px 18px
 .pie-fijo .wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 .pie-fijo .estado{flex:1;min-width:160px;font-size:.88rem;color:var(--suave)}
 .pie-fijo .estado.sucio{color:#c2410c;font-weight:700}
+/* generador de 3D */
+.gen{display:grid;gap:12px}
+.gen-ayuda{font-size:.85rem;color:var(--suave)}
+.gen-fotos{display:flex;gap:8px;flex-wrap:wrap}
+.gen-fotos button{width:64px;height:64px;border-radius:10px;overflow:hidden;border:2px solid transparent;padding:0}
+.gen-fotos button[aria-pressed=true]{border-color:var(--acento)}
+.gen-fotos img{width:100%;height:100%;object-fit:cover;display:block}
+.gen-lienzo canvas{width:100%;height:auto;display:block;border-radius:12px;touch-action:none;cursor:move;background:#000}
+.gen-ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.gen-ctrl label{display:grid;gap:4px;font-size:.82rem;font-weight:600;min-width:0}
+.gen-ctrl select,.gen-ctrl input{width:100%;min-width:0}
+.gen-ctrl select{padding:7px 10px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo)}
+.gen-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.gen-msg{font-size:.88rem;color:var(--suave)}
+.gen-previa{height:280px;border-radius:12px;background:radial-gradient(circle at 50% 40%,#5a4636,#1b140f 75%)}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--texto);color:var(--fondo);padding:10px 16px;border-radius:12px;font-weight:600;z-index:30}

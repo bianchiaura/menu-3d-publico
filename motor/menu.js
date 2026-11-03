@@ -28,12 +28,26 @@
     }
   }
 
+  /* tipografía de los títulos según la identidad del local */
+  var TIPOS = {
+    clasica: ['Fraunces', null],
+    moderna: ["'DM Sans'", null],
+    elegante: ["'Cormorant Garamond'", 'Cormorant+Garamond:wght@600;700'],
+    rustica: ["'Bitter'", 'Bitter:wght@600;700']
+  };
+  function tipografia(t) {
+    var x = TIPOS[t]; if (!x) return;
+    if (x[1]) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=' + x[1] + '&display=swap'; document.head.appendChild(l); }
+    document.documentElement.style.setProperty('--titulos', x[0] + ',Georgia,serif');
+  }
+
   function infoLocal() {
     var i = M.info || {}, l = [];
     if (i.direccion) l.push('<span>📍 ' + esc(i.direccion) + '</span>');
     if (i.horario) l.push('<span>🕒 ' + esc(i.horario) + '</span>');
     if (i.whatsapp) l.push('<a href="https://wa.me/' + esc(String(i.whatsapp).replace(/\D/g, '')) + '" target="_blank" rel="noopener">WhatsApp</a>');
     if (i.instagram) l.push('<a href="https://instagram.com/' + esc(String(i.instagram).replace(/^@/, '')) + '" target="_blank" rel="noopener">Instagram</a>');
+    if (M.creditos) l.push('<a href="' + esc(url(M.creditos)) + '">Créditos de las fotos</a>');
     return l.length ? '<footer class="info">' + l.join('') + '</footer>' : '';
   }
 
@@ -96,7 +110,7 @@
 
   function mostrar(m, borrador) {
     M = window.MENU = m; m.base = base;
-    colores(m.colores); esqueleto(borrador);
+    colores(m.colores); tipografia(m.tipografia); esqueleto(borrador);
     cat = categorias()[0] && categorias()[0].id;
     tabs(); list();
     /* con el menú ya visible, se baja el visor 3D de antemano para que "Ver en 3D" abra al instante */

@@ -1,12 +1,11 @@
 /* Menú 3D · Vista 3D con cámara (común a todos los locales)
    - open3D(id) abre la cámara trasera y muestra el plato en 3D sobre la imagen.
-   - El modelo sale de la biblioteca (modelos.js) según el campo "modelo" del plato en el menu.json.
+   - El modelo es el que armó el generador a partir de fotos reales (campo "modelo" del plato, ver relieve.js).
+   Necesita cargar-three.js y relieve.js.
    Gestos: 1 dedo = girar / inclinar · 2 dedos = agrandar y mover · rueda = zoom. */
 (function () {
   'use strict';
-  var THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-  var THREE_URL2 = 'https://unpkg.com/three@0.160.0/build/three.module.js';
-  var THREE = null, LIB = null, ov, vid, cv, msg, ttl, S = null, stream = null, curId = null, lastEv = null, oriOn = false;
+  var THREE = null, ov, vid, cv, msg, ttl, S = null, stream = null, curId = null, lastEv = null, oriOn = false;
 
   /* ---------- sensores de movimiento: el plato queda fijo en el espacio ---------- */
   function onOri(e) { lastEv = e; }
@@ -223,9 +222,7 @@
 
   /* ---------- abrir / cerrar ---------- */
   function loadThree() {
-    if (THREE) return Promise.resolve(THREE);
-    return import(THREE_URL).catch(function () { return import(THREE_URL2); })
-      .then(function (m) { THREE = m; LIB = window.Menu3DModelos(THREE); return m; });
+    return window.cargarThree().then(function (m) { THREE = m; return m; });
   }
 
   function open3D(id) {
@@ -237,11 +234,10 @@
     var cam = startOri().then(startCam);
     loadThree().then(function () {
       if (!ov.classList.contains('open')) return;
-      var model = d && d.modelo ? LIB.crear(d.modelo) : null;
-      if (!model) {
-        msg.textContent = 'Este plato todavía no tiene modelo 3D.'; msg.hidden = false;
-        return;
-      }
+      if (!d || !d.modelo || d.modelo.tipo !== 'foto') throw 'sin-modelo';
+      return window.Menu3DRelieve(THREE, d.modelo, (window.MENU && window.MENU.base) || '');
+    }).then(function (model) {
+      if (!model || !ov.classList.contains('open') || curId !== id) return;
       try {
         freshCanvas();
         buildScene(model);
@@ -252,8 +248,10 @@
       }
       if (!ov.classList.contains('nocam')) msg.hidden = true;
       return cam;
-    }, function () {
-      msg.textContent = 'No se pudo descargar el visor 3D. Revisá tu conexión e intentá de nuevo.'; msg.hidden = false;
+    }).catch(function (e) {
+      if (window.console && e !== 'sin-modelo') console.error(e);
+      msg.textContent = e === 'sin-modelo' ? 'Este plato todavía no tiene modelo 3D.' : 'No se pudo cargar el plato en 3D. Revisá tu conexión e intentá de nuevo.';
+      msg.hidden = false;
     });
   }
 
