@@ -1,0 +1,48 @@
+{
+  "nombre": "Brasa & Grano",
+  "subtitulo": "Tocá \"Ver en 3D\" y mirá tu plato sobre la mesa",
+  "logo": "",
+  "prototipo": false,
+  "moneda": "$",
+  "info": { "direccion": "Restaurante de muestra", "horario": "Todos los días de 12 a 24 h", "whatsapp": "", "instagram": "" },
+  "colores": {
+    "claro": { "acento": "#b5832f", "acento2": "#8f6420" },
+    "oscuro": { "acento": "#d6a24b", "acento2": "#e6b863" }
+  },
+  "categorias": [
+    { "id": "carnes", "nombre": "Carnes rojas", "fondo": "linear-gradient(135deg,#e9c9a0,#c98b5a)" },
+    { "id": "pastas", "nombre": "Pastas", "fondo": "linear-gradient(135deg,#f6e3a8,#e1b552)" },
+    { "id": "burgers", "nombre": "Hamburguesas", "fondo": "linear-gradient(135deg,#f3cf9b,#d9903f)" },
+    { "id": "cafe", "nombre": "Cafetería", "fondo": "linear-gradient(135deg,#dcc3a6,#a7794f)" },
+    { "id": "bebidas", "nombre": "Bebidas", "fondo": "linear-gradient(135deg,#cfe6d8,#8cc3a2)" },
+    { "id": "postres", "nombre": "Postres", "fondo": "linear-gradient(135deg,#f0d0d6,#d99aa8)" }
+  ],
+  "platos": [
+    { "id": 1, "categoria": "carnes", "nombre": "Bife de chorizo", "emoji": "🥩", "precio": 14500, "etiquetas": ["sin-tacc", "chef"], "modelo": "bife-de-chorizo", "foto": "",
+      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, con sal gruesa y chimichurri casero (perejil, ajo, ají molido, vinagre de vino y aceite de oliva)." },
+    { "id": 2, "categoria": "carnes", "nombre": "Ojo de bife", "emoji": "🥩", "precio": 16900, "etiquetas": ["sin-tacc"], "modelo": "ojo-de-bife", "foto": "",
+      "descripcion": "400 g de ojo de bife marmoleado, sellado en hierro y terminado con manteca de hierbas (romero, tomillo y ajo)." },
+    { "id": 3, "categoria": "carnes", "nombre": "Entraña a la parrilla", "emoji": "🍖", "precio": 13800, "etiquetas": ["sin-tacc"], "modelo": "entrana", "foto": "",
+      "descripcion": "300 g de entraña tierna con marinada de ajo y limón. Se sirve con salsa criolla de tomate, cebolla morrón y ají." },
+    { "id": 4, "categoria": "pastas", "nombre": "Ravioles de osobuco", "emoji": "🍝", "precio": 11200, "etiquetas": ["chef"], "modelo": "ravioles", "foto": "",
+      "descripcion": "Pasta fresca rellena de osobuco braseado 8 horas, con salsa de tomates asados, parmesano rallado y albahaca. Contiene gluten, huevo y lácteos." },
+    { "id": 5, "categoria": "pastas", "nombre": "Sorrentinos veganos", "emoji": "🍅", "precio": 10400, "etiquetas": ["vegano"], "modelo": "sorrentinos", "foto": "",
+      "descripcion": "Masa sin huevo rellena de calabaza asada, nueces y tofu ahumado, con salsa pomodoro y aceite de oliva. No contiene lácteos ni huevo." },
+    { "id": 6, "categoria": "burgers", "nombre": "Mequinesse Burger", "emoji": "🍔", "precio": 9800, "etiquetas": ["chef"], "modelo": "hamburguesa", "foto": "",
+      "descripcion": "Pan de papa brioche, medallones smash de carne vacuna (120 g c/u), queso cheddar, bacon crocante y nuestra salsa Mequinesse (mayonesa, mostaza, pickles y pimentón ahumado)." },
+    { "id": 7, "categoria": "burgers", "nombre": "Veggie Garden", "emoji": "🥬", "precio": 9200, "etiquetas": ["vegano"], "modelo": "hamburguesa-veggie", "foto": "",
+      "descripcion": "Medallón de lentejas, avena y remolacha, pan de papa vegano, palta, rúcula, tomate y mayonesa de anacardos." },
+    { "id": 8, "categoria": "cafe", "nombre": "Cappuccino", "emoji": "☕", "precio": 3600, "etiquetas": ["chef"], "modelo": "cappuccino", "foto": "",
+      "descripcion": "Doble espresso de blend de granos 100% arábica (Colombia y Brasil) con leche texturizada y espuma cremosa." },
+    { "id": 9, "categoria": "cafe", "nombre": "Medialunas de manteca", "emoji": "🥐", "precio": 3200, "etiquetas": [], "modelo": "medialunas", "foto": "",
+      "descripcion": "Tres medialunas de hojaldre y manteca, horneadas cada mañana y bañadas con almíbar. Contienen gluten, huevo y lácteos." },
+    { "id": 10, "categoria": "bebidas", "nombre": "Limonada con menta y jengibre", "emoji": "🍋", "precio": 4200, "etiquetas": ["vegano", "sin-tacc"], "modelo": "", "foto": "",
+      "descripcion": "Limones exprimidos al momento, menta fresca, jengibre rallado y soda. Endulzada con azúcar de caña, a elección." },
+    { "id": 11, "categoria": "bebidas", "nombre": "Cerveza artesanal IPA", "emoji": "🍺", "precio": 5200, "etiquetas": [], "modelo": "", "foto": "",
+      "descripcion": "Pinta de 473 ml de IPA de elaboración local, con notas cítricas y amargor medio. Contiene cebada." },
+    { "id": 12, "categoria": "postres", "nombre": "Flan casero con dulce de leche", "emoji": "🍮", "precio": 5400, "etiquetas": ["sin-tacc", "chef"], "modelo": "flan", "foto": "",
+      "descripcion": "Flan de huevos y vainilla con caramelo, dulce de leche repostero y crema chantilly. Contiene lácteos y huevo." },
+    { "id": 13, "categoria": "postres", "nombre": "Brownie tibio", "emoji": "🍫", "precio": 6100, "etiquetas": ["chef"], "modelo": "brownie", "foto": "",
+      "descripcion": "Brownie de chocolate semiamargo 70% y nueces, servido tibio con helado de crema americana y salsa de chocolate." }
+  ]
+}

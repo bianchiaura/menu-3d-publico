@@ -1,0 +1,45 @@
+/* Menú 3D · estilos comunes a todos los locales.
+   Los colores de cada local se pisan desde su menu.json ("colores"). */
+:root{--fondo:#faf6ee;--tarjeta:#fff;--texto:#2b2018;--suave:#7a6b5d;--acento:#b5832f;--acento2:#8f6420;--linea:#eadfce;--sobre-acento:#fff;--sombra:0 2px 14px rgba(70,45,10,.09);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fondo:#17120e;--tarjeta:#221b15;--texto:#f4ecdf;--suave:#b2a493;--acento:#d6a24b;--acento2:#e6b863;--linea:#3a2f25;--sobre-acento:#1b1410;--sombra:none;color-scheme:dark}}
+:root[data-theme="dark"]{--fondo:#17120e;--tarjeta:#221b15;--texto:#f4ecdf;--suave:#b2a493;--acento:#d6a24b;--acento2:#e6b863;--linea:#3a2f25;--sobre-acento:#1b1410;--sombra:none;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:150px}
+body{background:var(--fondo);color:var(--texto);font:16px/1.5 'DM Sans',system-ui,sans-serif;max-width:640px;margin:0 auto;padding-bottom:40px}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+button:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+.proto{background:#c2410c;color:#fff;text-align:center;font-weight:700;font-size:.85rem;padding:6px 16px;letter-spacing:.02em;margin:-14px -16px 12px}
+header{position:sticky;top:0;z-index:20;background:var(--fondo);padding:14px 16px 0;border-bottom:1px solid var(--linea)}
+.top{display:flex;gap:12px;align-items:center}
+.top img{width:48px;height:48px;border-radius:12px;object-fit:cover;flex:none}
+.top h1{font-size:1.4rem;line-height:1.1}.top small{color:var(--suave);display:block;font-family:'DM Sans',sans-serif;font-weight:400;font-size:.85rem;margin-top:2px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:8px 16px;border-radius:999px;background:var(--tarjeta);border:1px solid var(--linea);font-weight:500;color:var(--suave)}
+.tab[aria-selected=true]{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento);font-weight:700}
+main{padding:18px 16px;display:grid;gap:16px}
+main>h2{font-size:1.5rem}
+.aviso{color:var(--suave);text-align:center;padding:40px 0}
+.card{background:var(--tarjeta);border-radius:18px;overflow:hidden;box-shadow:var(--sombra);border:1px solid var(--linea)}
+.ph{height:150px;display:grid;place-items:center;font-size:4.6rem;position:relative;background:linear-gradient(135deg,#eadfce,#c9b49a)}
+.ph img{width:100%;height:100%;object-fit:cover}
+.bd{padding:14px 16px 16px;display:grid;gap:8px}
+.bd h3{font-size:1.2rem}.bd p{color:var(--suave);font-size:.92rem}
+.tg{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(181,131,47,.15);color:var(--acento2)}
+.tag.v{background:rgba(70,140,70,.16);color:#3f8a3f}.tag.s{background:rgba(70,110,170,.16);color:#4a78c0}
+.ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px;min-height:44px}
+.ft b{font-family:Fraunces,serif;font-size:1.25rem}
+.btn{background:var(--acento);color:var(--sobre-acento);padding:10px 18px;border-radius:12px;font-weight:700}
+.btn:active{transform:scale(.97)}
+.proto.borr{background:#1d4ed8}
+.proto+.proto{margin-top:-12px}
+.filtros{display:flex;gap:8px;padding:0 0 12px}
+.fil{padding:5px 12px;border-radius:999px;border:1px dashed var(--linea);font-size:.82rem;font-weight:500;color:var(--suave)}
+.fil[aria-pressed=true]{border-style:solid;border-color:var(--acento);color:var(--acento2);background:rgba(181,131,47,.12);font-weight:700}
+.card.agotado .ph>*:not(.sin),.card.agotado .bd{opacity:.55}
+.sin{position:absolute;top:12px;left:12px;background:#2b2018;color:#fff;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:999px}
+.info{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;padding:8px 16px 24px;color:var(--suave);font-size:.88rem}
+.info a{color:var(--acento2);font-weight:700}
