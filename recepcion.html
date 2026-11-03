@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brasa & Grano · Recepción</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1e8;--card:#fff;--ink:#2b2018;--mut:#7a6b5d;--gold:#b5832f;--gold2:#8f6420;--line:#eadfce;--on:#fff;--sh:0 2px 14px rgba(70,45,10,.09);--red:#b3402f;--grn:#3f8a3f;--blu:#3b6fb5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17120e;--card:#221b15;--ink:#f4ecdf;--mut:#b2a493;--gold:#d6a24b;--gold2:#e6b863;--line:#3a2f25;--on:#1b1410;--sh:none;--red:#e0705d;--grn:#6cc06c;--blu:#7fa8e0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17120e;--card:#221b15;--ink:#f4ecdf;--mut:#b2a493;--gold:#d6a24b;--gold2:#e6b863;--line:#3a2f25;--on:#1b1410;--sh:none;--red:#e0705d;--grn:#6cc06c;--blu:#7fa8e0;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 'DM Sans',system-ui,sans-serif;padding-bottom:40px}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding:12px 16px 0;border-bottom:1px solid var(--line)}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.top h1{font-size:1.35rem}.top small{font:400 .8rem 'DM Sans',sans-serif;color:var(--mut);display:block}
+.sim{display:flex;gap:8px;flex-wrap:wrap}
+.b{border:1.5px solid var(--gold);color:var(--gold2);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.85rem}
+.b.p{background:var(--gold);color:var(--on)}
+.tabs{display:flex;gap:6px;padding:12px 0 0}
+.tab{padding:9px 16px;border-radius:10px 10px 0 0;color:var(--mut);font-weight:500;border:1px solid transparent;border-bottom:0}
+.tab b{background:var(--line);border-radius:999px;padding:0 8px;font-size:.8rem;margin-left:4px}
+.tab[aria-selected=true]{background:var(--card);border-color:var(--line);color:var(--ink);font-weight:700;box-shadow:0 2px 0 var(--card)}
+#alerts{padding:12px 16px 0;display:grid;gap:8px}
+.al{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(179,64,47,.12);border:1.5px solid var(--red);color:var(--ink);border-radius:12px;padding:10px 14px;animation:pl 1.4s ease-in-out 3}
+.al.c{background:rgba(59,111,181,.12);border-color:var(--blu)}
+@keyframes pl{50%{transform:scale(1.015)}}
+@media (prefers-reduced-motion:reduce){.al{animation:none}}
+main{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;max-width:1300px;margin:0 auto}
+.empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:50px 0}
+.o{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:14px;box-shadow:var(--sh);display:flex;flex-direction:column}
+.o.pendiente{border-left-color:var(--red)}.o.cocina{border-left-color:var(--gold)}.o.listo{border-left-color:var(--grn)}.o.entregado,.o.cancelado{border-left-color:var(--mut);opacity:.85}
+.o.new{animation:nw 1.8s ease-out}
+@keyframes nw{from{box-shadow:0 0 0 4px var(--gold)}}
+.oh{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 14px 8px;gap:8px}
+.oh h2{font-size:1.7rem;line-height:1}
+.oh small{color:var(--mut);font-size:.85rem}.late{color:var(--red)!important;font-weight:700}
+.st{font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.st.pendiente{background:rgba(179,64,47,.15);color:var(--red)}.st.cocina{background:rgba(181,131,47,.18);color:var(--gold2)}.st.listo{background:rgba(63,138,63,.18);color:var(--grn)}.st.entregado,.st.cancelado{background:var(--line);color:var(--mut)}
+.chips{padding:0 14px;display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:.75rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--red);color:#fff}.chip.c{background:var(--blu)}
+.it{padding:10px 14px;border-top:1px dashed var(--line);margin-top:8px}
+.it:first-of-type{margin-top:10px}
+.it b{display:block}
+.it span{display:block;font-size:.88rem;color:var(--mut)}
+.it .sin{color:var(--red);font-weight:700}.it .ex{color:var(--grn);font-weight:700}
+.nt{margin:0 14px 8px;padding:8px 10px;border-radius:8px;background:rgba(181,131,47,.14);font-size:.88rem}
+.tot{display:flex;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);font-family:Fraunces,serif;font-size:1.15rem;margin-top:auto}
+.ac{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}
+.ac .b{flex:1;min-width:120px;text-align:center}.ac .b.p{flex:2}.ac .b.d{border-color:var(--red);color:var(--red)}
+.o{position:relative}
+.oh .r{display:flex;align-items:center;gap:4px}
+.dots{width:36px;height:36px;border-radius:50%;font-size:1.4rem;line-height:1;color:var(--mut)}.dots:hover{background:var(--line)}
+.mn{position:absolute;right:10px;top:54px;z-index:10;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);padding:6px;min-width:220px;display:grid}
+.mn p{font-size:.78rem;color:var(--mut);padding:6px 10px 2px}
+.mn button{text-align:left;padding:11px 10px;border-radius:8px;font-size:.92rem}.mn button:hover{background:var(--line)}.mn button.x{color:var(--red)}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(20,12,5,.6);display:none;align-items:center;justify-content:center;padding:16px}
+.ov.open{display:flex}
+.md{background:var(--bg);border-radius:16px;max-height:92%;display:flex;flex-direction:column;max-width:100%}
+.md-h{padding:12px 16px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.md-b{overflow:auto;padding:18px;background:#8a8176}
+.paper{background:#fff;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.35)}
+.seg{display:flex;gap:4px}.seg button{padding:6px 12px;border:1.5px solid var(--gold);border-radius:8px;font-weight:700;font-size:.82rem;color:var(--gold2)}.seg button.on{background:var(--gold);color:var(--on)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;z-index:60;display:none;font-size:.9rem}
+/* Ticket térmico (pantalla = vista previa, impresión = solo #ticket) */
+.tk{font:12px/1.35 'Courier New',ui-monospace,monospace;color:#000;background:#fff;padding:4mm 3mm}
+.tk .c{text-align:center;font-weight:700;font-size:13px}
+.tk hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.tk .i{font-weight:700;margin-top:4px;text-transform:uppercase}
+.tk .s{padding-left:10px}
+.tk .m{font-weight:700;font-size:13px}
+#ticket{display:none}
+@media print{
+  body>*:not(#ticket){display:none!important}
+  html,body{background:#fff!important;padding:0!important;margin:0!important}
+  #ticket{display:block!important}
+  #ticket .tk{padding:2mm 2mm}
+}
+</style>
+<style id="pg">@page{size:80mm auto;margin:0}</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Brasa &amp; Grano · Recepción<small id="clock"></small></h1>
+    <div class="sim"><span id="who" style="align-self:center;color:var(--mut);font-size:.85rem"></span><button class="b" onclick="logout()">Salir</button>
+      <button class="b" id="prn" onclick="openPr()">🖨 Conectar impresora</button>
+      <button class="b" id="snd" onclick="toggleSnd()" aria-pressed="true">🔔 Sonido: activado</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Filtros de estado"></nav>
+</header>
+<div id="alerts"></div>
+<main id="list"></main>
+
+<div class="ov" id="pv" onclick="if(event.target===this)closePv()"><div class="md" role="dialog" aria-modal="true" aria-label="Vista previa de comanda">
+  <div class="md-h"><b>Vista previa de comanda</b>
+    <div class="seg"><button id="w58" onclick="setW(58)">58 mm</button><button id="w80" class="on" onclick="setW(80)">80 mm</button></div>
+    <div class="seg"><button class="on" style="background:var(--gold);color:var(--on)" onclick="doPrint()">Imprimir</button><button onclick="closePv()">Cerrar</button></div></div>
+  <div class="md-b"><div class="paper" id="paper" style="width:80mm"></div></div>
+</div></div>
+<div class="ov" id="pr" onclick="if(event.target===this)closePr()"><div class="md" role="dialog" aria-modal="true" aria-label="Impresora" style="width:420px">
+  <div class="md-h"><b>Impresora de comandas</b><button class="b" onclick="closePr()">Cerrar</button></div>
+  <div class="md-b" style="background:var(--bg);display:grid;gap:10px">
+    <p id="prs" style="font-size:.92rem"></p>
+    <button class="b p" onclick="conn('usb')">Conectar por USB</button>
+    <button class="b" onclick="conn('serial')">Conectar por puerto serie / COM</button>
+    <button class="b" onclick="conn('bt')">Conectar por Bluetooth</button>
+    <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="auto" checked style="width:20px;height:20px;accent-color:var(--gold)"> Imprimir automáticamente al enviar a cocina</label>
+    <div style="display:flex;gap:8px"><button class="b" style="flex:1" onclick="testPrint()">Imprimir prueba</button><button class="b" style="flex:1;border-color:var(--red);color:var(--red)" onclick="disc()">Desconectar</button></div>
+    <p style="font-size:.8rem;color:var(--mut)">Para impresoras térmicas ESC/POS de 58 u 80 mm (el ancho se elige en la vista previa). Requiere Chrome o Edge. Sin impresora conectada, se usa el diálogo de impresión del navegador.</p>
+  </div></div></div>
+<div id="ticket"></div>
+<style>.lgi{padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:inherit;width:100%}</style>
+<div class="ov open" id="lg"><form class="md" onsubmit="login(event)" style="width:340px;padding:22px;display:grid;gap:12px"><h2>Ingreso del personal</h2><input class="lgi" id="em" type="email" required placeholder="Email" autocomplete="username"><input class="lgi" id="pw" type="password" required placeholder="Contraseña" autocomplete="current-password"><p id="lgm" style="color:var(--red);font-size:.85rem" role="alert"></p><button class="b p" style="padding:12px">Ingresar</button></form></div>
+<div id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),f=n=>'$ '+n.toLocaleString('es-AR');
+const NOW=()=>Date.now(),MIN=60000;
+let seq=104,filter='activos',orders=[],alerts=[],width=80,printId=null,newId=null,openMenu=null,snd=true,ac=null;
+const ORD=['pendiente','cocina','listo','entregado','cancelado'];
+function menu(o){return `<div class="mn" role="menu"><p>Cambiar estado</p>${ORD.filter(k=>k!==o.st).map(k=>{const back=ORD.indexOf(k)<ORD.indexOf(o.st)||o.st==='cancelado';const l=k==='cancelado'?'✕ Cancelar pedido':(back?'↩ Volver a ':'→ Pasar a ')+LBL[k];return `<button role="menuitem" class="${k==='cancelado'?'x':''}" onclick="moveTo(${o.id},'${k}')">${l}</button>`}).join('')}</div>`}
+function moveTo(id,k){if(k==='cancelado'&&!confirm('¿Cancelar el pedido #'+id+'?'))return;setSt(id,k)}
+/* Impresora ESC/POS directa (USB, serie, Bluetooth) */
+let prn=null;
+const CP={'á':0xA0,'é':0x82,'í':0xA1,'ó':0xA2,'ú':0xA3,'ñ':0xA4,'Ñ':0xA5,'ü':0x81,'Á':0xB5,'É':0x90,'Í':0xD6,'Ó':0xE0,'Ú':0xE9,'¿':0xA8,'¡':0xAD,'×':0x78,'“':0x22,'”':0x22,'·':0xFA,'→':0x3E};
+function enc(s){const o=[];for(const ch of s){const c=ch.charCodeAt(0);o.push(c<128?c:(CP[ch]??0x3F))}return o}
+function escpos(o){const cols=width===58?32:48,L=[],T=s=>L.push(...enc(s)),N=()=>L.push(10),hr=()=>{T('-'.repeat(cols));N()},B=v=>L.push(0x1B,0x45,v);
+ const h=new Date(o.t).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+ L.push(0x1B,0x40,0x1B,0x74,19,0x1B,0x61,1);B(1);T('RESTAURANTE');N();T('COMANDA DE COCINA');N();B(0);L.push(0x1B,0x61,0);hr();
+ B(1);L.push(0x1D,0x21,0x11);T('MESA '+pad(o.mesa));N();L.push(0x1D,0x21,0);T('Hora: '+h+' | Pedido #'+o.id);N();B(0);hr();
+ o.items.forEach(i=>{B(1);T(i.q+'x '+i.n.toUpperCase());N();B(0);i.o.forEach(x=>{T('   - '+x[0]+': '+x[1]);N()});i.sin.forEach(x=>{T('   * SIN '+x);N()});i.ex.forEach(x=>{T('   * EXTRA '+x);N()})});
+ hr();T(o.note?'Notas del cliente: "'+o.note+'"':'Sin notas del cliente');N();hr();N();N();N();L.push(0x1D,0x56,0x42,0x00);return new Uint8Array(L)}
+async function sendPr(o){try{const b=escpos(o);for(let i=0;i<b.length;i+=512)await prn.send(b.slice(i,i+512));toast('Comanda #'+o.id+' enviada a la impresora')}catch(e){toast('Error al imprimir: '+(e.message||e))}}
+async function conn(t){const K={usb:'usb',serial:'serial',bt:'bluetooth'};try{
+ if(!navigator[K[t]])throw{name:'NoApi'};
+ if(t==='serial'){const p=await navigator.serial.requestPort();await p.open({baudRate:9600});const w=p.writable.getWriter();prn={name:'Puerto serie',send:async b=>{await w.write(b)},close:async()=>{w.releaseLock();await p.close()}}}
+ else if(t==='usb'){const d=await navigator.usb.requestDevice({filters:[]});await d.open();if(!d.configuration)await d.selectConfiguration(1);let ep=null,inf=null;for(const i of d.configuration.interfaces){for(const a of i.alternates){const e=a.endpoints.find(e=>e.direction==='out'&&e.type==='bulk');if(e){ep=e.endpointNumber;inf=i.interfaceNumber;break}}if(ep!==null)break}
+  if(ep===null)throw new Error('No se encontró la salida de datos de la impresora');await d.claimInterface(inf);prn={name:d.productName||'USB',send:async b=>{await d.transferOut(ep,b)},close:async()=>{await d.close()}}}
+ else{const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ff00-0000-1000-8000-00805f9b34fb']});const g=await d.gatt.connect();let ch=null;for(const s of await g.getPrimaryServices()){for(const c of await s.getCharacteristics()){if(c.properties.write||c.properties.writeWithoutResponse){ch=c;break}}if(ch)break}
+  if(!ch)throw new Error('La impresora no acepta escritura por Bluetooth');prn={name:d.name||'Bluetooth',send:async b=>{for(let i=0;i<b.length;i+=100){const s=b.slice(i,i+100);ch.properties.writeWithoutResponse?await ch.writeValueWithoutResponse(s):await ch.writeValue(s)}},close:async()=>{d.gatt.disconnect()}}}
+ prUi();toast('Impresora conectada: '+prn.name)}catch(e){if(e&&e.name==='NotFoundError')return;toast(e&&(e.name==='NoApi'||e.name==='SecurityError')?'Este visor o navegador no permite conectar impresoras. Abrí la página en Chrome o Edge, en una pestaña propia.':'No se pudo conectar: '+(e.message||e))}}
+function prUi(){$('#prn').textContent=prn?'🖨 Impresora: '+prn.name:'🖨 Conectar impresora';$('#prs').textContent=prn?'Conectada a '+prn.name+'. Las comandas salen directo, sin diálogo.':'Sin impresora conectada. Elegí cómo se conecta tu impresora térmica.'}
+async function disc(){if(prn){try{await prn.close()}catch(e){}prn=null}prUi();toast('Impresora desconectada')}
+function openPr(){prUi();$('#pr').classList.add('open')}
+function closePr(){$('#pr').classList.remove('open')}
+function testPrint(){if(!prn){toast('Primero conectá una impresora');return}sendPr({id:0,mesa:0,t:NOW(),items:[{q:1,n:'Prueba de impresión',o:[['Estado','OK']],sin:[],ex:[]}],note:'Impresora funcionando'})}
+/* Sonido (WebAudio, sin archivos) */
+function audio(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume();return ac}
+function tone(fr,s,d){const c=audio();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+s;o.type='sine';o.frequency.value=fr;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.3,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d+.05)}
+function beep(k){if(!snd)return;if(k==='order'){tone(880,0,.18);tone(1175,.2,.35)}else if(k==='mozo'){tone(660,0,.15);tone(660,.22,.15);tone(660,.44,.15)}else{tone(523,0,.2);tone(784,.22,.35)}}
+function toggleSnd(){snd=!snd;const b=$('#snd');b.textContent=snd?'🔔 Sonido: activado':'🔕 Sonido: silenciado';b.setAttribute('aria-pressed',snd);if(snd)beep('order')}
+const mk=(mesa,ago,st,items,note,total)=>({id:++seq-1,mesa,t:NOW()-ago*MIN,st,items,note,total});
+orders=[];
+const POOL=[
+ {n:'Mequinesse Burger',o:[['Guarnición','Papas rústicas al romero']],sin:['Pickles'],ex:['Carne (x3)','Cebolla crispy'],p:14200},
+ {n:'Ojo de bife',o:[['Guarnición','Ensalada mixta'],['Cocción','A punto']],sin:[],ex:['Salsa de malbec (x1)'],p:18000},
+ {n:'Ravioles de osobuco',o:[['Salsa','Crema y panceta']],sin:['Albahaca fresca'],ex:[],p:12100},
+ {n:'Veggie Garden',o:[['Guarnición','Papas fritas']],sin:['Rúcula'],ex:[],p:10100},
+ {n:'Brownie tibio',o:[],sin:['Nueces'],ex:[],p:6100},
+ {n:'Cerveza artesanal IPA',o:[['Formato','Pinta 473 ml']],sin:[],ex:[],p:5200}];
+const NOTES=['','','Sin sal, por favor','Traer todo junto','La carne bien cocida','Es para un cumpleaños'];
+
+function ago(t){const m=Math.floor((NOW()-t)/MIN);return m<1?'Recién ingresado':'Hace '+m+' min'}
+const grp={activos:['pendiente','cocina'],listos:['listo'],historial:['entregado','cancelado']};
+function tabs(){$('#tabs').innerHTML=Object.keys(grp).map(k=>`<button class="tab" role="tab" aria-selected="${k===filter}" onclick="filter='${k}';render()">${k[0].toUpperCase()+k.slice(1)}<b>${orders.filter(o=>grp[k].includes(o.st)).length}</b></button>`).join('')}
+const LBL={pendiente:'Pendiente',cocina:'En cocina',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
+function render(){tabs();
+ const L=orders.filter(o=>grp[filter].includes(o.st)).sort((a,b)=>filter==='historial'?b.t-a.t:a.t-b.t); // FIFO: más antiguo primero
+ $('#list').innerHTML=L.length?L.map(card).join(''):'<p class="empty">No hay pedidos en esta vista.</p>';
+ $('#alerts').innerHTML=alerts.map(a=>`<div class="al ${a.k==='cuenta'?'c':''}" role="alert"><span>${a.k==='mozo'?'🔔 <b>Mesa '+pad(a.mesa)+'</b> llama al mozo':'🧾 <b>Mesa '+pad(a.mesa)+'</b> pidió la cuenta'} · ${ago(a.t)}</span><button class="b" onclick="clearAlert(${a.id})">Atendido</button></div>`).join('');
+ newId=null}
+const pad=n=>String(n).padStart(2,'0');
+function card(o){const late=(o.st==='pendiente'||o.st==='cocina')&&NOW()-o.t>10*MIN,al=alerts.filter(a=>a.mesa===o.mesa);
+ const A={pendiente:`<button class="b p" onclick="setSt(${o.id},'cocina')">Aceptar / Enviar a cocina</button>`,cocina:`<button class="b p" onclick="setSt(${o.id},'listo')">Marcar como listo</button>`,listo:`<button class="b p" onclick="setSt(${o.id},'entregado')">Marcar entregado</button>`}[o.st]||'';
+ const canX=o.st==='pendiente'||o.st==='cocina';
+ return `<article class="o ${o.st} ${o.id===newId?'new':''}"><div class="oh"><div><h2>MESA ${pad(o.mesa)}</h2><small class="${late?'late':''}">Pedido #${o.id} · ${ago(o.t)}</small></div><div class="r"><span class="st ${o.st}">${LBL[o.st]}</span><button class="dots" aria-label="Más opciones" aria-haspopup="menu" onclick="event.stopPropagation();openMenu=openMenu===${o.id}?null:${o.id};render()">⋮</button></div></div>${openMenu===o.id?menu(o):''}
+ ${al.length?`<div class="chips">${al.map(a=>`<span class="chip ${a.k==='cuenta'?'c':''}">${a.k==='mozo'?'🔔 Llama al mozo':'🧾 Pide la cuenta'}</span>`).join('')}</div>`:''}
+ ${o.items.map(i=>`<div class="it"><b>${i.q}× ${i.n}</b>${i.o.map(x=>`<span>${x[0]}: ${x[1]}</span>`).join('')}${i.sin.map(x=>`<span class="sin">SIN ${x}</span>`).join('')}${i.ex.map(x=>`<span class="ex">EXTRA ${x}</span>`).join('')}</div>`).join('')}
+ ${o.note?`<div class="nt"><b>Nota:</b> “${o.note}”</div>`:''}
+ <div class="tot"><span>Total</span><span>${f(o.total)}</span></div>
+ <div class="ac">${A}<button class="b" onclick="printOrder(${o.id})">Imprimir comanda</button><button class="b" onclick="preview(${o.id})">Vista previa</button>${canX?`<button class="b d" onclick="cancel(${o.id})">Cancelar</button>`:''}</div></article>`}
+
+function setSt(id,s){const o=orders.find(x=>x.id===id),pv=o.st;o.st=s;openMenu=null;render();if(s==='cocina'&&pv==='pendiente'&&prn&&$('#auto').checked)sendPr(o);toast('Pedido #'+id+' → '+LBL[s]+' (en '+Object.keys(grp).find(k=>grp[k].includes(s))+')')}
+function cancel(id){if(confirm('¿Cancelar el pedido #'+id+'?'))setSt(id,'cancelado')}
+function clearAlert(id){alerts=alerts.filter(a=>a.id!==id);render()}
+function simOrder(){const r=a=>a[Math.floor(Math.random()*a.length)],its=[...POOL].sort(()=>Math.random()-.5).slice(0,1+Math.floor(Math.random()*2)).map(p=>({q:1+Math.floor(Math.random()*2),n:p.n,o:p.o,sin:p.sin,ex:p.ex,p:p.p}));
+ const o={id:seq++,mesa:1+Math.floor(Math.random()*20),t:NOW(),st:'pendiente',items:its,note:r(NOTES),total:its.reduce((a,i)=>a+i.p*i.q,0)};
+ its.forEach(i=>delete i.p);orders.push(o);newId=o.id;filter='activos';render();toast('Nuevo pedido · Mesa '+pad(o.mesa));beep('order')}
+let aid=0;function simCall(k){const act=orders.filter(o=>grp.activos.includes(o.st)||o.st==='listo'),m=act.length?act[Math.floor(Math.random()*act.length)].mesa:1+Math.floor(Math.random()*20);
+ alerts.push({id:++aid,mesa:m,k,t:NOW()});render();beep(k)}
+
+/* Comanda */
+function ticket(o){const h=new Date(o.t).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+ return `<div class="tk"><div class="c">RESTAURANTE<br>COMANDA DE COCINA</div><hr><div class="m">Mesa: ${pad(o.mesa)} | Hora: ${h} | Pedido #${o.id}</div><hr>`
+ +o.items.map(i=>`<div class="i">${i.q}x ${i.n}</div>${i.o.map(x=>`<div class="s">- ${x[0]}: ${x[1]}</div>`).join('')}${i.sin.map(x=>`<div class="s">* SIN ${x}</div>`).join('')}${i.ex.map(x=>`<div class="s">* EXTRA ${x}</div>`).join('')}`).join('')
+ +`<hr>${o.note?`<div>Notas del cliente: “${o.note}”</div>`:'<div>Sin notas del cliente</div>'}<hr><div class="c">*** FIN DE COMANDA ***</div></div>`}
+function fill(id){printId=id;const o=orders.find(x=>x.id===id),h=ticket(o);$('#ticket').innerHTML=h;$('#paper').innerHTML=h;
+ $('#ticket').firstChild.style.width=width+'mm';$('#pg').textContent='@page{size:'+width+'mm auto;margin:0}'}
+function preview(id){fill(id);$('#pv').classList.add('open')}
+function closePv(){$('#pv').classList.remove('open')}
+function setW(w){width=w;$('#paper').style.width=w+'mm';$('#w58').classList.toggle('on',w===58);$('#w80').classList.toggle('on',w===80);if(printId)fill(printId)}
+function tkDoc(){const o=orders.find(x=>x.id===printId);return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comanda #'+o.id+'</title><style>@page{size:'+width+'mm auto;margin:0}body{margin:0}.tk{font:12px/1.35 "Courier New",monospace;color:#000;background:#fff;padding:2mm;width:'+width+'mm}.tk .c{text-align:center;font-weight:700;font-size:13px}.tk hr{border:0;border-top:1px dashed #000;margin:6px 0}.tk .i{font-weight:700;margin-top:4px;text-transform:uppercase}.tk .s{padding-left:10px}.tk .m{font-weight:700;font-size:13px}</style></head><body>'+ticket(o)+'<script>onload=function(){setTimeout(function(){print()},250)}<\/script></body></html>'}
+function doPrint(){if(!printId)return;if(prn){sendPr(orders.find(x=>x.id===printId));return}let w=null;try{w=window.open('','comanda','width=420,height=640')}catch(e){}
+ if(w){w.document.open();w.document.write(tkDoc());w.document.close();return}
+ try{window.print();toast('Imprimiendo… si no se abre el diálogo, abrí la página en una pestaña propia.')}catch(e){toast('El navegador bloqueó la impresión. Abrí la página en una pestaña propia.')}}
+function printOrder(id){fill(id);doPrint()}
+let tm;function toast(s){const t=$('#toast');t.textContent=s;t.style.display='block';clearTimeout(tm);tm=setTimeout(()=>t.style.display='none',2600)}
+function clock(){$('#clock').textContent=new Date().toLocaleString('es-AR',{weekday:'long',hour:'2-digit',minute:'2-digit'})+' · cola por orden de llegada'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePv();closePr();if(openMenu!==null){openMenu=null;render()}}});
+document.addEventListener('click',e=>{if(openMenu!==null&&!e.target.closest('.mn')){openMenu=null;render()}});
+document.addEventListener('pointerdown',()=>{if(snd)audio()});
+render();clock();setInterval(()=>{if(openMenu===null)render();clock()},30000);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+/* Capa Supabase: reemplaza la simulación por datos reales */
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const row=r=>({id:r.id,mesa:r.mesa,t:Date.parse(r.created_at),st:r.estado,items:r.items,note:r.nota||'',total:r.total});
+const upsert=o=>{const i=orders.findIndex(x=>x.id===o.id);i<0?orders.push(o):orders[i]=o};
+async function login(e){e.preventDefault();$('#lgm').textContent='';const{error}=await sb.auth.signInWithPassword({email:$('#em').value,password:$('#pw').value});if(error){$('#lgm').textContent='Email o contraseña incorrectos';return}start()}
+async function logout(){await sb.auth.signOut();location.reload()}
+async function start(){
+ const{data:{session}}=await sb.auth.getSession();if(!session)return;
+ const{data:p}=await sb.from('profiles').select('nombre,rol').eq('id',session.user.id).maybeSingle();
+ if(!p){await sb.auth.signOut();$('#lgm').textContent='Tu usuario no tiene un rol asignado';return}
+ $('#lg').classList.remove('open');$('#who').textContent=p.nombre+' · '+p.rol;
+ const[a,b]=await Promise.all([sb.from('pedidos').select('*').order('created_at').limit(300),sb.from('llamados').select('*').eq('atendido',false)]);
+ orders=(a.data||[]).map(row);alerts=(b.data||[]).map(l=>({id:l.id,mesa:l.mesa,k:l.tipo,t:Date.parse(l.created_at)}));render();
+ sb.channel('rt')
+  .on('postgres_changes',{event:'*',schema:'public',table:'pedidos'},pl=>{if(!pl.new||!pl.new.id)return;const o=row(pl.new);upsert(o);if(pl.eventType==='INSERT'){newId=o.id;beep('order');toast('Nuevo pedido · Mesa '+pad(o.mesa))}if(openMenu===null)render()})
+  .on('postgres_changes',{event:'*',schema:'public',table:'llamados'},pl=>{const l=pl.new;if(!l||!l.id)return;alerts=alerts.filter(a=>a.id!==l.id);if(!l.atendido){alerts.push({id:l.id,mesa:l.mesa,k:l.tipo,t:Date.parse(l.created_at)});if(pl.eventType==='INSERT')beep(l.tipo)}render()})
+  .subscribe()}
+async function setSt(id,s){const o=orders.find(x=>x.id===id),pv=o.st;
+ const{error}=await sb.from('pedidos').update({estado:s}).eq('id',id);if(error){toast('No se pudo actualizar: '+error.message);return}
+ o.st=s;openMenu=null;render();toast('Pedido #'+id+' → '+LBL[s]);
+ if(s==='cocina'&&pv==='pendiente'&&prn&&$('#auto').checked)sendPr(o)}
+async function clearAlert(id){const{error}=await sb.from('llamados').update({atendido:true}).eq('id',id);if(error){toast(error.message);return}alerts=alerts.filter(a=>a.id!==id);render()}
+start();
+</script>
+</body>
+</html>
