@@ -1,0 +1,46 @@
+{
+  "nombre": "Br Burguers",
+  "subtitulo": "Tocá \"Ver en 3D\" y mirá tu plato sobre la mesa",
+  "identidad": "Es una hamburguesería que brinda felicidad.",
+  "tipografia": "rustica",
+  "logo": "img/logo-mw1aw649.jpg",
+  "prototipo": true,
+  "moneda": "$",
+  "info": {
+    "direccion": "Elcano 2994",
+    "horario": "11am-00pm",
+    "whatsapp": "1145878652",
+    "instagram": "brburguer@gmail.com.ar"
+  },
+  "colores": {
+    "claro": {
+      "acento": "#41351f",
+      "acento2": "#beb7ac"
+    },
+    "oscuro": {
+      "acento": "#41351f",
+      "acento2": "#beb7ac"
+    }
+  },
+  "categorias": [
+    {
+      "id": "cheese-burguer",
+      "nombre": "Cheese Burguer",
+      "fondo": "linear-gradient(135deg,#eadfce,#c9b49a)"
+    }
+  ],
+  "platos": [
+    {
+      "id": 1,
+      "nombre": "argento",
+      "precio": 15000,
+      "categoria": "cheese-burguer",
+      "descripcion": "buenarda",
+      "emoji": "🍽",
+      "etiquetas": [
+        "sin-tacc"
+      ],
+      "foto": "img/1-mw1aw649.jpg"
+    }
+  ]
+}
