@@ -190,10 +190,11 @@ tabs();list();
     lastEv = null;
     function listen() { if (!oriOn) { addEventListener('deviceorientation', onOri, true); oriOn = true; } }
     var DOE = window.DeviceOrientationEvent;
+    listen(); /* se escucha siempre: si no dan permiso, simplemente no llegan eventos */
     if (DOE && typeof DOE.requestPermission === 'function') {
-      return DOE.requestPermission().then(function (r) { if (r === 'granted') listen(); }).catch(function () {});
+      try { return Promise.resolve(DOE.requestPermission()).catch(function () {}); } catch (e) { return Promise.resolve(); }
     }
-    listen(); return Promise.resolve();
+    return Promise.resolve();
   }
   function stopOri() { if (oriOn) { removeEventListener('deviceorientation', onOri, true); oriOn = false; } lastEv = null; }
   function devQuat(e, out) {
@@ -270,7 +271,7 @@ tabs();list();
     '<input type="file" id="a-file" accept="image/*" capture="environment" hidden>' +
     '<div class="a-top"><button class="a-x" aria-label="Cerrar vista 3D">✕</button><div><b id="a-t"></b><small>Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Arrastrá en cualquier dirección para girarlo · Pellizcá para agrandar</small></div></div>' +
     '<div class="a-msg" hidden></div>' +
-    '<div class="a-bot"><button id="a-photo">📷 Foto de tu mesa</button><button id="a-auto">⟳ Girar</button><button id="a-reset">Centrar</button><button class="p" id="a-order">Pedir este plato</button></div>';
+    '<div class="a-bot"><button id="a-photo">📷 Foto de tu mesa</button><button id="a-reset">Centrar</button><button class="p" id="a-order">Pedir este plato</button></div>';
   document.body.appendChild(ov);
   vid = ov.querySelector('video'); cv = ov.querySelector('canvas'); msg = ov.querySelector('.a-msg'); ttl = ov.querySelector('#a-t');
   ov.querySelector('.a-x').onclick = close3D;
@@ -283,8 +284,12 @@ tabs();list();
     photoUrl = URL.createObjectURL(f); bg.src = photoUrl;
     ov.classList.add('photo'); msg.hidden = true; fileIn.value = '';
   };
-  ov.querySelector('#a-auto').onclick = function () { if (S) S.auto = !S.auto; };
-  ov.querySelector('#a-reset').onclick = function () { if (S) resetView(); };
+  /* Centrar: el plato vuelve al medio de la pantalla, apoyado en la mesa, derecho y con su tamaño original */
+  ov.querySelector('#a-reset').onclick = function () {
+    if (!S) return;
+    S.spin.quaternion.identity();
+    if (S.gyro) placeAt(innerWidth / 2, innerHeight / 2); else resetView();
+  };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov.classList.contains('open')) close3D(); });
 
   /* ---------- inyectar botones sin tocar el código original ---------- */
@@ -294,7 +299,11 @@ tabs();list();
       var b = card.querySelector('.ft .btn');
       var m = b && /openD\((\d+)\)/.exec(b.getAttribute('onclick') || '');
       if (!m) return;
-      var id = +m[1], x = document.createElement('button');
+      var id = +m[1];
+      /* las bebidas no llevan vista 3D */
+      var dish = (typeof D !== 'undefined' ? D : []).find(function (z) { return z.id === id; });
+      if (dish && dish.c === 'bebidas') return;
+      var x = document.createElement('button');
       x.type = 'button'; x.className = 'btn3d';
       x.innerHTML = '<span aria-hidden="true">🧊</span> Ver en 3D';
       x.addEventListener('click', function () { open3D(id); });
@@ -553,7 +562,6 @@ tabs();list();
     (function loop() {
       if (!S) return;
       S.raf = requestAnimationFrame(loop);
-      if (S.auto) S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(0, 1, 0), .006));
       if (lastEv && lastEv.beta != null) {
         devQuat(lastEv, S.qd);
         if (S.calib || !S.gyro) { S.gyro = true; S.calib = false; calibrate(); }
