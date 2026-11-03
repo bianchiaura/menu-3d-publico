@@ -32,14 +32,16 @@ index.html          la raíz: muestra Brasa & Grano
 
 ## Cómo se crea el 3D de un plato
 
-1. En el panel, al agregar o editar un plato, se suben 1 a 4 **fotos para el 3D** (o se usa la de portada).
-2. En **Crear 3D** se elige la mejor foto y se encuadra el plato con la elipse. Si la foto está sacada en ángulo, se achata la elipse con "Inclinación" y el plato queda redondo.
-3. Se elige el **volumen** (bajo para pizzas, medio para carnes y pastas, alto para hamburguesas y postres altos) y se toca **Generar 3D**.
-4. Una IA de profundidad (Depth Anything V2, que corre en el navegador) calcula la altura de cada punto de la comida, y con eso se arma el plato en 3D con la foto real encima.
+1. En el panel, al agregar o editar un plato, se suben de **1 a 5 fotos para el 3D** (o se usa la de portada). Recomendado: 3 (1 de arriba + 2 de costado).
+2. En **Crear 3D** se indica qué es cada foto:
+   - **De arriba** (obligatoria): se encuadra el plato con la elipse. Si la foto está sacada en ángulo, se achata la elipse con "Inclinación" y el plato queda redondo. Da la forma y el color.
+   - **De costado** (opcionales): se ajusta un recuadro de borde a borde del plato y desde la base hasta lo más alto de la comida. Con eso se mide la **altura real** (si hay varias, se promedia).
+3. Si no hay fotos de costado, la altura se elige a mano (baja, media, alta o muy alta). Se toca **Generar 3D**.
+4. Una IA de profundidad (Depth Anything V2, que corre en el navegador) calcula la forma de la comida en la foto de arriba, y con eso se arma el plato en 3D con la foto real encima.
 
 La primera vez el generador baja unos 25 MB; después tarda unos segundos por plato.
 
-**Fotos que mejor funcionan:** el plato entero, desde arriba o en diagonal (no de costado), con buena luz y sin cosas encima. El 3D se ve muy real de frente y en diagonal; de costado total, lo que no se ve en la foto no se puede inventar.
+**Guía de fotos para los locales** (imprimible): https://bianchiaura.github.io/menu-3d-publico/guia-fotos/ — también hay un resumen dentro de "Agregar plato" y un botón en el administrador. Lo que no aparece en ninguna foto no se puede inventar.
 
 ## Crear un local nuevo (administrador)
 

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de fotos para el 3D · Menú 3D</title>
+<meta name="description" content="Cómo sacar las fotos de cada plato para generar su modelo 3D.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%93%B7%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../motor/panel.css">
+<style>
+.guia{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+.guia h1{font-size:1.7rem}
+.guia h2{font-size:1.2rem;margin:30px 0 10px;padding-top:14px;border-top:1px solid var(--linea)}
+.guia p,.guia li{line-height:1.6}
+.guia ul,.guia ol{padding-left:22px;display:grid;gap:6px}
+.sub{color:var(--suave);margin-top:6px}
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:18px}
+.resumen div{background:var(--tarjeta);border:1px solid var(--linea);border-radius:14px;padding:12px 14px}
+.resumen b{display:block;font:700 1.6rem Fraunces,Georgia,serif}
+.resumen span{color:var(--suave);font-size:.88rem}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.95rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--linea);vertical-align:top}
+th{font-size:.82rem;color:var(--suave);font-weight:600}
+.foto{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start;background:var(--tarjeta);border:1px solid var(--linea);border-radius:16px;padding:16px;margin-top:12px}
+.foto svg{width:100%;height:auto}
+.foto h3{font-size:1.05rem;margin-bottom:6px}
+.etq{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.obl{background:rgba(180,35,24,.12);color:var(--mal)}.rec{background:rgba(47,125,74,.14);color:var(--ok)}.opc{background:rgba(127,127,127,.15);color:var(--suave)}
+.no li::marker{content:'✕  ';color:var(--mal)}
+.si li::marker{content:'✓  ';color:var(--ok)}
+.svg-linea{stroke:var(--texto);fill:none;stroke-width:2}
+.svg-plato{fill:var(--fondo);stroke:var(--texto);stroke-width:2}
+.svg-comida{fill:var(--acento)}
+.svg-cel{fill:var(--texto)}
+.svg-flecha{stroke:var(--acento2);stroke-width:2;stroke-dasharray:5 4;fill:none}
+@media (max-width:560px){.foto{grid-template-columns:1fr}.foto svg{max-width:200px}}
+@media print{.no-print{display:none}body{padding:0}.guia{padding-top:0}.foto,.resumen div{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main class="guia">
+  <p class="no-print" style="display:flex;gap:8px;justify-content:flex-end"><button class="b" onclick="print()">Imprimir o guardar como PDF</button></p>
+  <h1>Guía para sacar las fotos de cada plato</h1>
+  <p class="sub">Con estas fotos se genera el modelo 3D que el cliente ve sobre su mesa. Cuanto mejores sean las fotos, más real se verá el plato.</p>
+
+  <div class="resumen">
+    <div><b>1</b><span>foto como mínimo (de arriba, obligatoria)</span></div>
+    <div><b>3</b><span>fotos recomendadas: 1 de arriba y 2 de costado</span></div>
+    <div><b>5</b><span>fotos como máximo</span></div>
+  </div>
+
+  <h2>1. Cuántas fotos sacar según el plato</h2>
+  <table>
+    <thead><tr><th>Tipo de plato</th><th>Fotos recomendadas</th></tr></thead>
+    <tbody>
+      <tr><td><b>Bajos:</b> pizzas, carnes, tartas, pastas, ensaladas, tablas</td><td>1 de arriba + 1 de costado</td></tr>
+      <tr><td><b>Altos:</b> hamburguesas, sándwiches, tortas, postres en copa, platos apilados</td><td>1 de arriba + 2 de costado</td></tr>
+      <tr><td><b>Bebidas:</b> tragos, cafés, licuados</td><td>1 de arriba + 2 de costado (el vaso o taza sobre su plato)</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">La foto de arriba da la forma y el color del plato. Las de costado indican la altura real de la comida. Lo que no aparece en ninguna foto no se puede reconstruir.</p>
+
+  <h2>2. Antes de sacar las fotos</h2>
+  <ul class="si">
+    <li>Servir el plato <b>terminado, tal como llega a la mesa</b>.</li>
+    <li>Apoyarlo sobre una <b>mesa lisa</b>, de un color parejo y distinto al del plato.</li>
+    <li>Retirar cubiertos, servilletas, vasos y cualquier objeto que esté encima o muy cerca.</li>
+    <li>Usar <b>luz pareja</b>: cerca de una ventana (sin sol directo) o con las luces del salón encendidas.</li>
+    <li><b>Limpiar la lente</b> del celular.</li>
+    <li>Desactivar el flash, el zoom y los filtros. Usar la cámara normal del celular.</li>
+  </ul>
+
+  <h2>3. Las fotos, una por una</h2>
+
+  <div class="foto">
+    <svg viewBox="0 0 150 130" aria-hidden="true">
+      <rect class="svg-cel" x="55" y="6" width="40" height="22" rx="4"/>
+      <path class="svg-flecha" d="M75 30 L75 72"/>
+      <ellipse class="svg-plato" cx="75" cy="100" rx="60" ry="16"/>
+      <ellipse class="svg-comida" cx="75" cy="96" rx="30" ry="8"/>
+      <line class="svg-linea" x1="5" y1="120" x2="145" y2="120"/>
+    </svg>
+    <div>
+      <h3>Foto 1 — De arriba <span class="etq obl">Obligatoria</span></h3>
+      <ol>
+        <li>Pararse frente a la mesa y sostener el celular <b>por encima del plato</b>, apuntando hacia abajo.</li>
+        <li>Puede estar levemente inclinado (hasta unos 45°), pero <b>nunca de costado</b>.</li>
+        <li>El plato tiene que verse <b>entero y centrado</b>, ocupando unas tres cuartas partes de la foto, con un margen de mesa alrededor.</li>
+        <li>Cuidar que la sombra del celular o de la mano no caiga sobre la comida.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="foto">
+    <svg viewBox="0 0 150 130" aria-hidden="true">
+      <rect class="svg-cel" x="2" y="86" width="14" height="26" rx="3"/>
+      <path class="svg-flecha" d="M18 99 L52 99"/>
+      <path class="svg-plato" d="M55 112 L145 112 L138 106 L62 106 Z"/>
+      <rect class="svg-comida" x="78" y="74" width="44" height="32" rx="8"/>
+      <line class="svg-linea" x1="0" y1="118" x2="150" y2="118"/>
+    </svg>
+    <div>
+      <h3>Fotos 2 y 3 — De costado <span class="etq rec">Recomendadas</span></h3>
+      <ol>
+        <li>Agacharse hasta que el celular quede <b>a la altura del borde del plato</b> (la lente, a pocos centímetros por encima de la mesa).</li>
+        <li>Ubicarse a unos 30 a 50 cm del plato y sacar la foto <b>de frente</b>, con el plato entero de borde a borde y un poco de margen.</li>
+        <li>Para la foto 3, <b>girar el plato un cuarto de vuelta</b> (o rodearlo) y repetir.</li>
+        <li>Tiene que verse con claridad desde la base del plato hasta el punto más alto de la comida.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="foto">
+    <svg viewBox="0 0 150 130" aria-hidden="true">
+      <rect class="svg-cel" x="16" y="18" width="34" height="20" rx="4" transform="rotate(35 33 28)"/>
+      <path class="svg-flecha" d="M48 44 L72 76"/>
+      <ellipse class="svg-plato" cx="90" cy="100" rx="52" ry="15"/>
+      <ellipse class="svg-comida" cx="90" cy="96" rx="26" ry="7"/>
+      <line class="svg-linea" x1="5" y1="120" x2="145" y2="120"/>
+    </svg>
+    <div>
+      <h3>Fotos 4 y 5 — Extras <span class="etq opc">Opcionales</span></h3>
+      <ul>
+        <li>Otra foto de arriba en diagonal o con otra luz, para poder elegir la mejor.</li>
+        <li>Otra foto de costado desde un tercer lado, si el plato es irregular.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>4. Errores que conviene evitar</h2>
+  <ul class="no">
+    <li>Plato cortado: algún borde queda afuera de la foto.</li>
+    <li>Foto movida o desenfocada.</li>
+    <li>Contraluz: una ventana o una lámpara detrás del plato.</li>
+    <li>Flash o luz muy dura, que genera brillos y sombras marcadas.</li>
+    <li>Fondo con muchos objetos, o un mantel con dibujos.</li>
+    <li>Foto demasiado cerca, que deforma el plato.</li>
+    <li>Cubiertos, manos o envoltorios tapando la comida.</li>
+  </ul>
+
+  <h2>5. Cómo cargarlas en el panel</h2>
+  <ol>
+    <li>Entrar al panel del local y tocar <b>+ Agregar plato</b> (o <b>Editar</b> en un plato existente).</li>
+    <li>Completar nombre, precio y descripción, y subir la <b>foto de portada</b> (la que se ve en el menú).</li>
+    <li>En <b>Fotos para el 3D</b>, elegir de 1 a 5 fotos y tocar <b>Crear 3D</b>.</li>
+    <li>Tocar cada foto e indicar si es <b>De arriba</b> o <b>De costado</b>.</li>
+    <li>En la de arriba, encerrar el plato con la elipse. En cada una de costado, ajustar el recuadro: de borde a borde del plato y desde la base del plato hasta lo más alto de la comida.</li>
+    <li>Tocar <b>Generar 3D</b>, revisar cómo quedó girándolo, y tocar <b>Usar este 3D</b> y luego <b>Guardar plato</b>.</li>
+  </ol>
+  <p class="sub" style="margin-top:22px">Si el resultado no convence, conviene volver a sacar la foto de arriba con mejor luz: es la que más influye en cómo se ve el plato.</p>
+</main>
+</body>
+</html>

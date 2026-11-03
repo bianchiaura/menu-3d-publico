@@ -56,7 +56,17 @@
     <div class="caja" style="display:grid;gap:10px">
       <b>Modelo 3D</b>
       <div id="estado3d"></div>
-      <label>Fotos para el 3D<small>1 a 4 fotos del plato entero, desde arriba o un poco inclinadas, con buena luz. Si no subís ninguna, se usa la de portada.</small><input type="file" name="fotos3d" accept="image/*" multiple></label>
+      <div class="guia-mini">
+        <b>Cómo sacar las fotos</b> (mínimo 1, máximo 5 · recomendado: 3)
+        <ol>
+          <li><b>1 de arriba (obligatoria):</b> celular sobre el plato apuntando hacia abajo, plato entero y centrado, con margen de mesa.</li>
+          <li><b>1 o 2 de costado (recomendadas):</b> celular a la altura del borde del plato, de frente, con el plato entero de borde a borde. Para la segunda, girar el plato un cuarto de vuelta.</li>
+          <li>Luz pareja, sin flash ni zoom, mesa lisa y nada tapando la comida.</li>
+        </ol>
+        <a href="../guia-fotos/" target="_blank" rel="noopener">Ver la guía completa →</a>
+      </div>
+      <label>Fotos para el 3D<small>Elegí de 1 a 5 fotos. Si no subís ninguna, se usa la de portada.</small><input type="file" name="fotos3d" accept="image/*" multiple></label>
+      <div id="fotos3d-prev" class="gen-fotos"></div>
       <div><button type="button" class="b p" id="crear3d">Crear 3D</button></div>
     </div>
   </div>
@@ -241,7 +251,7 @@
     F.categoria.value = p ? p.categoria : catNueva; F.descripcion.value = p ? p.descripcion : '';
     F.emoji.value = p ? p.emoji || '' : '🍽';
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
-    F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); estado3d();
+    F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); previa3d(); estado3d();
     $('#borrar').hidden = !p;
     $('#dlg').showModal();
   }
@@ -261,8 +271,15 @@
   }
   F.foto.onchange = function () { var f = F.foto.files[0]; if (f) achicar(f, 900).then(function (d) { fotoNueva = d; previaFoto(d); }); };
   F.fotos3d.onchange = function () {
-    Promise.all([].slice.call(F.fotos3d.files, 0, 4).map(function (f) { return achicar(f, 1600, .9); })).then(function (l) { fotos3d = l; });
+    var max = Generador3D.MAX_FOTOS, archivos = [].slice.call(F.fotos3d.files);
+    if (archivos.length > max) toast('Se usan las primeras ' + max + ' fotos (el máximo es ' + max + ')');
+    Promise.all(archivos.slice(0, max).map(function (f) { return achicar(f, 1600, .9); })).then(function (l) { fotos3d = l; previa3d(); });
   };
+  function previa3d() {
+    $('#fotos3d-prev').innerHTML = fotos3d.map(function (d, i) {
+      return '<button type="button" tabindex="-1" aria-hidden="true"><img src="' + d + '" alt=""><span>' + (i === 0 ? 'Arriba' : 'Costado') + '</span></button>';
+    }).join('');
+  }
   function abrir3d(titulo, armar) {
     $('#dlg3d-t').textContent = titulo; $('#dlg3d').showModal();
     if (cerrarGen) cerrarGen(); cerrarGen = armar($('#gen3d'));

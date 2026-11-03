@@ -3,6 +3,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fondo:#14110e;--tarjeta:#1f1a15;--texto:#f2eadf;--suave:#ab9d8c;--acento:#d6a24b;--acento2:#e6b863;--linea:#352c23;--sobre-acento:#1b1410;--ok:#5cbf7d;--mal:#f87171;--info:#93b4ff;color-scheme:dark}}
 :root[data-theme="dark"]{--fondo:#14110e;--tarjeta:#1f1a15;--texto:#f2eadf;--suave:#ab9d8c;--acento:#d6a24b;--acento2:#e6b863;--linea:#352c23;--sobre-acento:#1b1410;--ok:#5cbf7d;--mal:#f87171;--info:#93b4ff;color-scheme:dark}
 *{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
 body{background:var(--fondo);color:var(--texto);font:15px/1.5 'DM Sans',system-ui,sans-serif;padding-bottom:90px}
 h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700;line-height:1.2}
 a{color:var(--acento2)}
@@ -82,9 +83,19 @@ dialog .pie{display:flex;gap:8px;justify-content:space-between;padding:14px 18px
 .gen{display:grid;gap:12px}
 .gen-ayuda{font-size:.85rem;color:var(--suave)}
 .gen-fotos{display:flex;gap:8px;flex-wrap:wrap}
-.gen-fotos button{width:64px;height:64px;border-radius:10px;overflow:hidden;border:2px solid transparent;padding:0}
+.gen-fotos button{width:76px;border-radius:10px;overflow:hidden;border:2px solid var(--linea);padding:0;background:var(--tarjeta)}
 .gen-fotos button[aria-pressed=true]{border-color:var(--acento)}
-.gen-fotos img{width:100%;height:100%;object-fit:cover;display:block}
+.gen-fotos img{width:100%;height:56px;object-fit:cover;display:block}
+.gen-fotos span{display:block;font-size:.72rem;font-weight:700;padding:2px 0;color:var(--suave)}
+.gen-rol{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.88rem}
+.gen-rol button{padding:6px 14px;border-radius:999px;border:1px solid var(--linea);font-weight:600;color:var(--suave)}
+.gen-rol button[aria-pressed=true]{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
+.gen-tip{font-size:.85rem;color:var(--suave)}
+.guia-mini{background:rgba(181,131,47,.08);border:1px solid var(--linea);border-radius:12px;padding:10px 14px;font-size:.85rem}
+.guia-mini ol{padding-left:18px;margin:6px 0;display:grid;gap:4px}
+.guia-mini a{font-weight:700}
+#fotos3d-prev:empty{display:none}
+#fotos3d-prev button{cursor:default}
 .gen-lienzo canvas{width:100%;height:auto;display:block;border-radius:12px;touch-action:none;cursor:move;background:#000}
 .gen-ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .gen-ctrl label{display:grid;gap:4px;font-size:.82rem;font-weight:600;min-width:0}
