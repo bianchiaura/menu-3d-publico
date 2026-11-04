@@ -74,7 +74,8 @@
         "altura": 0.2
       },
       "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero.",
-      "agotado": true
+      "agotado": true,
+      "oculto": true
     },
     {
       "id": 2,
@@ -92,7 +93,8 @@
         "relieve": "modelos/2-relieve.png",
         "altura": 0.2
       },
-      "descripcion": "400 g de ojo de bife marmoleado, sellado en hierro, con brócoli al vapor y manteca de hierbas."
+      "descripcion": "400 g de ojo de bife marmoleado, sellado en hierro, con brócoli al vapor y manteca de hierbas.",
+      "oculto": true
     },
     {
       "id": 3,
