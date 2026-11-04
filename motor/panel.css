@@ -91,9 +91,6 @@ dialog .pie{display:flex;gap:8px;justify-content:space-between;padding:14px 18px
 .gen-rol button{padding:6px 14px;border-radius:999px;border:1px solid var(--linea);font-weight:600;color:var(--suave)}
 .gen-rol button[aria-pressed=true]{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
 .gen-tip{font-size:.85rem;color:var(--suave)}
-.guia-mini{background:rgba(181,131,47,.08);border:1px solid var(--linea);border-radius:12px;padding:10px 14px;font-size:.85rem}
-.guia-mini ol{padding-left:18px;margin:6px 0;display:grid;gap:4px}
-.guia-mini a{font-weight:700}
 #fotos3d-prev:empty{display:none}
 #fotos3d-prev button{cursor:default}
 .gen-lienzo canvas{width:100%;height:auto;display:block;border-radius:12px;touch-action:none;cursor:move;background:#000}

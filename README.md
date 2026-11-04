@@ -41,7 +41,7 @@ index.html          la raíz: muestra Brasa & Grano
 
 La primera vez el generador baja unos 25 MB; después tarda unos segundos por plato.
 
-**Guía de fotos para los locales** (imprimible): https://bianchiaura.github.io/menu-3d-publico/guia-fotos/ — también hay un resumen dentro de "Agregar plato" y un botón en el administrador. Lo que no aparece en ninguna foto no se puede inventar.
+Lo que no aparece en ninguna foto no se puede inventar.
 
 ## Crear un local nuevo (administrador)
 
