@@ -41,14 +41,46 @@
     document.documentElement.style.setProperty('--titulos', x[0] + ',Georgia,serif');
   }
 
+  /* ---------- información del local ----------
+     "info": { sobre, direccion, zona, horarios: [{ dias, horas, d: [0..6] }], telefono, whatsapp, email, instagram, reservas, pagos: [], servicios: [] }
+     (el viejo "horario" de una sola línea sigue funcionando). Con "muestra": true los datos son inventados:
+     se muestran, pero teléfonos, mails y redes no son links, para no contactar a nadie real por error. */
+  function horarios(i) { return i.horarios && i.horarios.length ? i.horarios : (i.horario ? [{ dias: 'Horario', horas: i.horario }] : []); }
+  function hoy(i) { var d = new Date().getDay(); return horarios(i).filter(function (h) { return h.d && h.d.indexOf(d) >= 0; })[0]; }
+  function hayInfo() {
+    var i = M.info || {};
+    return !!(i.sobre || i.direccion || horarios(i).length || i.telefono || i.whatsapp || i.email || i.instagram || i.reservas || (i.pagos || []).length || (i.servicios || []).length);
+  }
+  function enlace(texto, href) { return M.muestra || !href ? esc(texto) : '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(texto) + '</a>'; }
+  function ficha() {
+    var i = M.info || {}, h = horarios(i), t = hoy(i), s = [];
+    function bloque(icono, titulo, cuerpo) { s.push('<section><h3><span aria-hidden="true">' + icono + '</span> ' + titulo + '</h3>' + cuerpo + '</section>'); }
+    if (i.sobre) bloque('🔥', 'Sobre nosotros', '<p>' + esc(i.sobre) + '</p>');
+    if (i.direccion) bloque('📍', 'Dónde estamos', '<p>' + esc(i.direccion) + (i.zona ? '<br><span class="suave">' + esc(i.zona) + '</span>' : '') + '</p>' +
+      (M.muestra ? '' : '<p><a class="btn-sec" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(i.direccion + ' ' + (i.zona || '')) + '" target="_blank" rel="noopener">Cómo llegar</a></p>'));
+    if (h.length) bloque('🕒', 'Horarios', '<dl class="horas">' + h.map(function (x) {
+      return '<div' + (x === t ? ' class="hoy"' : '') + '><dt>' + esc(x.dias) + (x === t ? ' <em>hoy</em>' : '') + '</dt><dd>' + esc(x.horas) + '</dd></div>';
+    }).join('') + '</dl>');
+    var c = [];
+    if (i.telefono) c.push(['Teléfono', enlace(i.telefono, 'tel:' + String(i.telefono).replace(/[^\d+]/g, ''))]);
+    if (i.whatsapp) c.push(['WhatsApp', enlace(i.whatsapp, 'https://wa.me/' + String(i.whatsapp).replace(/\D/g, ''))]);
+    if (i.email) c.push(['Mail', enlace(i.email, 'mailto:' + i.email)]);
+    if (i.instagram) c.push(['Instagram', enlace(i.instagram, 'https://instagram.com/' + String(i.instagram).replace(/^@/, ''))]);
+    if (c.length) bloque('📞', 'Contacto', '<dl class="horas">' + c.map(function (x) { return '<div><dt>' + x[0] + '</dt><dd>' + x[1] + '</dd></div>'; }).join('') + '</dl>');
+    if (i.reservas) bloque('📅', 'Reservas', '<p>' + esc(i.reservas) + '</p>');
+    if ((i.pagos || []).length) bloque('💳', 'Medios de pago', '<p class="chips">' + i.pagos.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</p>');
+    if ((i.servicios || []).length) bloque('✨', 'Servicios', '<p class="chips">' + i.servicios.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</p>');
+    return '<dialog class="ficha" id="ficha" aria-labelledby="ficha-t"><div class="ficha-cab"><h2 id="ficha-t">' + esc(M.nombre) + '</h2>' +
+      '<button class="ficha-x" data-cerrar-ficha aria-label="Cerrar">✕</button></div><div class="ficha-cuerpo">' + s.join('') +
+      (M.muestra ? '<p class="muestra">Restaurante y datos de muestra, inventados para la demostración.</p>' : '') + '</div></dialog>';
+  }
   function infoLocal() {
-    var i = M.info || {}, l = [];
+    var i = M.info || {}, l = [], t = hoy(i), h = horarios(i);
     if (i.direccion) l.push('<span>📍 ' + esc(i.direccion) + '</span>');
-    if (i.horario) l.push('<span>🕒 ' + esc(i.horario) + '</span>');
-    if (i.whatsapp) l.push('<a href="https://wa.me/' + esc(String(i.whatsapp).replace(/\D/g, '')) + '" target="_blank" rel="noopener">WhatsApp</a>');
-    if (i.instagram) l.push('<a href="https://instagram.com/' + esc(String(i.instagram).replace(/^@/, '')) + '" target="_blank" rel="noopener">Instagram</a>');
+    if (t) l.push('<span>🕒 Hoy: ' + esc(t.horas) + '</span>'); else if (h.length === 1) l.push('<span>🕒 ' + esc(h[0].horas) + '</span>');
+    if (hayInfo()) l.push('<button class="ver-ficha" data-abrir-ficha>Horarios, contacto y más</button>');
     if (M.creditos) l.push('<a href="' + esc(url(M.creditos)) + '">Créditos de las fotos</a>');
-    return l.length ? '<footer class="info">' + l.join('') + '</footer>' : '';
+    return (l.length ? '<footer class="info">' + l.join('') + '</footer>' : '') + (hayInfo() ? ficha() : '');
   }
 
   function esqueleto(borrador) {
@@ -59,13 +91,19 @@
       (borrador ? '<div class="proto borr" role="note">Vista previa: cambios todavía sin publicar</div>' : '') +
       (M.prototipo ? '<div class="proto" role="note">Prototipo para ' + esc(M.nombre) + '</div>' : '') +
       '<div class="top">' + (M.logo ? '<img src="' + esc(url(M.logo)) + '" alt="">' : '') +
-      '<h1>' + esc(M.nombre) + '<small>' + esc(M.subtitulo || 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa') + '</small></h1></div>' +
+      '<h1>' + esc(M.nombre) + '<small>' + esc(M.subtitulo || 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa') + '</small></h1>' +
+      (hayInfo() ? '<button class="btn-info" data-abrir-ficha aria-label="Información del local: horarios, dirección y contacto"><span aria-hidden="true">ℹ</span> Info</button>' : '') + '</div>' +
       '<nav class="tabs" id="tabs" role="tablist" aria-label="Categorías"></nav>' +
       (hay.length ? '<div class="filtros" id="filtros" aria-label="Filtrar">' + hay.map(function (f) {
         return '<button class="fil" aria-pressed="false" data-fil="' + f + '">' + ETIQUETAS[f][0] + '</button>';
       }).join('') + '</div>' : '') +
       '</header><main id="list"></main>' + infoLocal());
     $('#tabs').onclick = function (e) { var b = e.target.closest('[data-cat]'); if (b) setCat(b.dataset.cat); };
+    document.addEventListener('click', function (e) {
+      var f = $('#ficha'); if (!f) return;
+      if (e.target.closest('[data-abrir-ficha]')) f.showModal();
+      else if (e.target.closest('[data-cerrar-ficha]') || e.target === f) f.close(); /* tocar afuera también la cierra */
+    });
     if ($('#filtros')) $('#filtros').onclick = function (e) {
       var b = e.target.closest('[data-fil]'); if (!b) return;
       filtro = filtro === b.dataset.fil ? null : b.dataset.fil;

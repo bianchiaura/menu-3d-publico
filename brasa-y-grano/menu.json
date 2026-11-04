@@ -6,11 +6,25 @@
   "logo": "",
   "prototipo": false,
   "moneda": "$",
+  "muestra": true,
   "info": {
-    "direccion": "Restaurante de muestra",
-    "horario": "Todos los días de 12 a 24 h",
-    "whatsapp": "",
-    "instagram": ""
+    "sobre": "Parrilla y cafetería de barrio desde 2016. Carnes a las brasas de quebracho, pastas caseras y café de especialidad, en un salón cálido con terraza.",
+    "direccion": "Av. de los Fogones 1450",
+    "zona": "Palermo, Ciudad de Buenos Aires",
+    "horarios": [
+      { "dias": "Lunes", "horas": "Cerrado", "d": [1] },
+      { "dias": "Martes a jueves", "horas": "12 a 16 h · 20 a 24 h", "d": [2, 3, 4] },
+      { "dias": "Viernes y sábado", "horas": "12 a 16 h · 20 a 1 h", "d": [5, 6] },
+      { "dias": "Domingo", "horas": "12 a 17 h", "d": [0] },
+      { "dias": "Cafetería (mar. a dom.)", "horas": "9 a 12 h" }
+    ],
+    "telefono": "+54 11 0000-0000",
+    "whatsapp": "+54 9 11 0000-0000",
+    "email": "hola@brasaygrano.example",
+    "instagram": "@brasaygrano.demo",
+    "reservas": "Por WhatsApp o teléfono, hasta las 18 h del mismo día. Grupos de más de 8 personas, con seña.",
+    "pagos": ["Efectivo", "Débito", "Crédito", "Mercado Pago", "Transferencia"],
+    "servicios": ["Wi-Fi gratis", "Terraza", "Pet friendly", "Acceso sin escalones", "Opciones sin TACC", "Para llevar", "Cumpleaños y eventos"]
   },
   "creditos": "creditos.html",
   "colores": {

@@ -45,3 +45,32 @@ main>h2{font-size:1.5rem}
 .sin{position:absolute;top:12px;left:12px;background:#2b2018;color:#fff;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:999px}
 .info{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;padding:8px 16px 24px;color:var(--suave);font-size:.88rem}
 .info a{color:var(--acento2);font-weight:700}
+/* información del local: botón "Info" en el encabezado y ficha que se abre */
+.top h1{flex:1;min-width:0}
+.btn-info{flex:none;align-self:center;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;min-height:40px;border-radius:999px;border:1px solid var(--linea);background:var(--tarjeta);font-weight:700;font-size:.85rem;color:var(--acento2)}
+.btn-info span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--acento);color:var(--sobre-acento);font-size:.75rem;font-style:normal}
+.ver-ficha{font-weight:700;color:var(--acento2);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.ficha{border:0;padding:0;margin:auto auto 0;width:100%;max-width:640px;max-height:88vh;border-radius:22px 22px 0 0;background:var(--fondo);color:var(--texto);overflow:auto}
+.ficha::backdrop{background:rgba(0,0,0,.5)}
+@media (min-width:700px){.ficha{margin:auto;border-radius:22px;max-height:85vh}}
+.ficha-cab{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:var(--fondo);border-bottom:1px solid var(--linea)}
+.ficha-cab h2{flex:1;font-size:1.35rem}
+.ficha-x{width:40px;height:40px;border-radius:50%;border:1px solid var(--linea);background:var(--tarjeta);font-size:1rem;flex:none}
+.ficha-cuerpo{padding:6px 20px calc(24px + env(safe-area-inset-bottom,0px));display:grid;gap:4px}
+.ficha section{padding:14px 0;border-bottom:1px solid var(--linea)}
+.ficha section:last-of-type{border-bottom:0}
+.ficha h3{font-size:1rem;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.ficha p{color:var(--texto);font-size:.95rem}
+.ficha .suave{color:var(--suave);font-size:.88rem}
+.horas{display:grid;gap:2px;margin:0}
+.horas div{display:flex;justify-content:space-between;gap:12px;padding:7px 10px;border-radius:10px;font-size:.93rem}
+.horas dt{color:var(--suave)}
+.horas dd{margin:0;text-align:right;font-weight:500}
+.horas a{color:var(--acento2);font-weight:700}
+.horas .hoy{background:rgba(181,131,47,.12)}
+.horas .hoy dt{color:var(--texto);font-weight:700}
+.horas em{font-style:normal;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sobre-acento);background:var(--acento);padding:1px 7px;border-radius:999px;margin-left:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{padding:4px 11px;border-radius:999px;background:var(--tarjeta);border:1px solid var(--linea);font-size:.85rem}
+.btn-sec{display:inline-block;margin-top:10px;padding:8px 16px;border-radius:12px;border:1.5px solid var(--acento);color:var(--acento2);font-weight:700;text-decoration:none}
+.muestra{margin-top:10px;font-size:.8rem;color:var(--suave);text-align:center}
