@@ -48,18 +48,35 @@
         d[y * N + x] = D.data[(Math.floor(v * D.height) * D.width + Math.floor(u * D.width)) * D.channels] / 255;
         dentro[y * N + x] = dx * dx + dy * dy <= 1 ? 1 : 0;
       }
-      /* plano del plato: se ajusta con los puntos cerca del borde (mínimos cuadrados) */
-      var S = [0, 0, 0, 0, 0, 0, 0, 0, 0], B = [0, 0, 0];
-      for (var i = 0; i < N * N; i++) {
-        var px = (i % N + .5) / N * 2 - 1, py = (Math.floor(i / N) + .5) / N * 2 - 1, r = Math.sqrt(px * px + py * py);
-        if (r < .8 || r > .95) continue;
-        var f = [px, py, 1];
-        for (var a = 0; a < 3; a++) { B[a] += f[a] * d[i]; for (var b = 0; b < 3; b++) S[a * 3 + b] += f[a] * f[b]; }
+      /* plano del plato: se ajusta con los puntos del anillo exterior (mínimos cuadrados) y después se repite
+         dejando afuera los puntos que no son plato (comida que llega al borde, mantel, sombras): así el borde
+         no "se levanta" en las fotos sacadas en ángulo */
+      function ajustar(usar) {
+        var S = [0, 0, 0, 0, 0, 0, 0, 0, 0], B = [0, 0, 0];
+        for (var i = 0; i < N * N; i++) {
+          if (!usar(i)) continue;
+          var f = [(i % N + .5) / N * 2 - 1, (Math.floor(i / N) + .5) / N * 2 - 1, 1];
+          for (var a = 0; a < 3; a++) { B[a] += f[a] * d[i]; for (var b = 0; b < 3; b++) S[a * 3 + b] += f[a] * f[b]; }
+        }
+        return resolver(S, B);
       }
-      var p = resolver(S, B), h = new Float32Array(N * N), lista = [];
+      function radio(i) { var x = (i % N + .5) / N * 2 - 1, y = (Math.floor(i / N) + .5) / N * 2 - 1; return Math.sqrt(x * x + y * y); }
+      function plano(p, i) { return p[0] * ((i % N + .5) / N * 2 - 1) + p[1] * ((Math.floor(i / N) + .5) / N * 2 - 1) + p[2]; }
+      var anillo = function (i) { var r = radio(i); return r >= .72 && r <= .95; };
+      var p = ajustar(anillo);
+      for (var vuelta = 0; vuelta < 2; vuelta++) {
+        var res = [];
+        for (var i2 = 0; i2 < N * N; i2++) if (anillo(i2)) res.push(Math.abs(d[i2] - plano(p, i2)));
+        res.sort(function (m, n) { return m - n; });
+        var corte = res[Math.floor(res.length * .6)] || 0, pPrev = p;
+        p = ajustar(function (i) { return anillo(i) && Math.abs(d[i] - plano(pPrev, i)) <= corte; });
+      }
+      var h = new Float32Array(N * N), lista = [];
       for (var k = 0; k < N * N; k++) {
-        var qx = (k % N + .5) / N * 2 - 1, qy = (Math.floor(k / N) + .5) / N * 2 - 1;
-        h[k] = dentro[k] ? Math.max(0, d[k] - (p[0] * qx + p[1] * qy + p[2])) : 0;
+        var r = radio(k);
+        /* cerca del borde la altura baja suave hasta cero: el borde de un plato siempre está apoyado */
+        var borde = r < .82 ? 1 : r > .97 ? 0 : (.97 - r) / .15;
+        h[k] = dentro[k] ? Math.max(0, d[k] - plano(p, k)) * borde * borde * (3 - 2 * borde) : 0;
         if (dentro[k]) lista.push(h[k]);
       }
       /* se suaviza un poco y se normaliza con el percentil 99 (para que un punto suelto no aplaste todo) */

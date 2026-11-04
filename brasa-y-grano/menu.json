@@ -36,12 +36,12 @@
       "4": { "nombre": "Ricotta sorrentinos", "descripcion": "Fresh round pasta filled with ricotta and walnuts, with tomato sauce and grated parmesan. Contains gluten, egg and dairy." },
       "5": { "nombre": "Sorrentinos with bolognese", "descripcion": "Ham and mozzarella sorrentinos with a hand-chopped beef bolognese sauce. Contains gluten, egg and dairy." },
       "6": { "nombre": "Mequinesse Burger", "descripcion": "Potato bun, beef patty, cheddar cheese, crispy bacon and house sauce. Served with fries." },
-      "7": { "nombre": "Veggie Garden", "descripcion": "Chickpea and vegetable patty, sesame bun, cucumber, tomato and spring onion." },
+      "7": { "nombre": "Veggie Garden", "descripcion": "Legume and vegetable patty on a seeded wholegrain bun. Served with fries and a fresh salad." },
       "8": { "nombre": "Cappuccino", "descripcion": "Double espresso of 100% arabica beans with steamed milk and latte art." },
       "9": { "nombre": "Butter croissants (medialunas)", "descripcion": "Two flaky butter croissants, baked every morning. Contain gluten, egg and dairy." },
       "10": { "nombre": "Mint and ginger lemonade", "descripcion": "Freshly squeezed lemons, fresh mint, grated ginger and soda. Sweetened with cane sugar, to taste." },
       "11": { "nombre": "Craft IPA beer", "descripcion": "473 ml pint of locally brewed IPA, with citrus notes and medium bitterness. Contains barley." },
-      "12": { "nombre": "Homemade flan with dulce de leche", "descripcion": "Egg and vanilla custard with caramel, dulce de leche and cream. Contains dairy and egg." },
+      "12": { "nombre": "Homemade flan", "descripcion": "Egg and vanilla custard with caramel. Ask for it with dulce de leche or cream. Contains dairy and egg." },
       "13": { "nombre": "Brownie with ice cream", "descripcion": "Warm dark chocolate brownie with two scoops of vanilla ice cream and chocolate sauce." }
     },
     "info": {
@@ -261,12 +261,12 @@
       "foto": "img/7.jpg",
       "modelo": {
         "tipo": "foto",
-        "diametro": 26,
+        "diametro": 28,
         "textura": "modelos/7-textura.jpg",
         "relieve": "modelos/7-relieve.png",
         "altura": 0.55
       },
-      "descripcion": "Medallón de garbanzos y verduras, pan con sésamo, pepino, tomate y cebolla de verdeo."
+      "descripcion": "Medallón de legumbres y verduras en pan integral con semillas. Viene con papas fritas y ensalada fresca."
     },
     {
       "id": 8,
@@ -283,7 +283,7 @@
         "diametro": 16,
         "textura": "modelos/8-textura.jpg",
         "relieve": "modelos/8-relieve.png",
-        "altura": 0.45
+        "altura": 0.8
       },
       "descripcion": "Doble espresso de granos 100% arábica con leche texturizada y latte art."
     },
@@ -332,7 +332,7 @@
     {
       "id": 12,
       "categoria": "postres",
-      "nombre": "Flan casero con dulce de leche",
+      "nombre": "Flan casero",
       "emoji": "🍮",
       "precio": 5400,
       "etiquetas": [
@@ -342,12 +342,12 @@
       "foto": "img/12.jpg",
       "modelo": {
         "tipo": "foto",
-        "diametro": 20,
+        "diametro": 24,
         "textura": "modelos/12-textura.jpg",
         "relieve": "modelos/12-relieve.png",
         "altura": 0.45
       },
-      "descripcion": "Flan de huevos y vainilla con caramelo, dulce de leche repostero y crema. Contiene lácteos y huevo."
+      "descripcion": "Flan de huevos y vainilla con caramelo. Pedilo con dulce de leche o crema. Contiene lácteos y huevo."
     },
     {
       "id": 13,
