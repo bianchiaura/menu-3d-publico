@@ -135,7 +135,7 @@
     if (!C) { $('#list').innerHTML = '<p class="aviso">Todavía no hay platos cargados.</p>'; return; }
     var ps = visibles().filter(function (d) { return d.categoria === cat && (!filtro || (d.etiquetas || []).indexOf(filtro) >= 0); });
     $('#list').innerHTML = '<h2>' + esc(C.nombre) + '</h2>' + (ps.length ? '' : '<p class="aviso">No hay platos ' + esc(ETIQUETAS[filtro][0]) + ' en esta categoría.</p>') + ps.map(function (d) {
-      return '<article class="card' + (d.agotado ? ' agotado' : '') + '"><div class="ph"' + (C.fondo ? ' style="background:' + esc(C.fondo) + '"' : '') + '>' +
+      return '<article class="card' + (d.agotado ? ' agotado' : '') + '" id="plato-' + esc(d.id) + '"><div class="ph"' + (C.fondo ? ' style="background:' + esc(C.fondo) + '"' : '') + '>' +
         (d.foto ? '<img src="' + esc(url(d.foto)) + '" alt="' + esc(d.nombre) + '" loading="lazy">' : '<span aria-hidden="true">' + esc(d.emoji || '🍽') + '</span>') +
         (d.agotado ? '<span class="sin">Sin stock hoy</span>' : '') +
         '</div><div class="bd"><div class="tg">' + (d.etiquetas || []).map(etiqueta).join('') + '</div>' +
@@ -156,7 +156,20 @@
     tabs(); list();
     /* con el menú ya visible, se baja el visor 3D de antemano para que "Ver en 3D" abra al instante */
     if (visibles().some(function (d) { return d.modelo; })) setTimeout(function () { if (window.precargar3D) window.precargar3D(); }, 2500);
+    document.dispatchEvent(new CustomEvent('menu-listo')); /* avisa a los agregados (ej. la mascota) */
   }
+
+  /* lleva a un plato: abre su categoría, saca el filtro, lo muestra y lo resalta un momento */
+  window.irAPlato = function (id) {
+    var p = M.platos.filter(function (x) { return String(x.id) === String(id); })[0]; if (!p) return;
+    cat = p.categoria; filtro = null;
+    [].forEach.call(document.querySelectorAll('.fil'), function (x) { x.setAttribute('aria-pressed', 'false'); });
+    tabs(); list();
+    var t = document.querySelector('.tab[aria-selected=true]'); if (t) t.scrollIntoView({ inline: 'center', block: 'nearest' });
+    var c = document.getElementById('plato-' + p.id); if (!c) return;
+    c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    c.classList.add('destacado'); setTimeout(function () { c.classList.remove('destacado'); }, 2200);
+  };
 
   var src = document.body.getAttribute('data-menu') || 'menu.json';
   base = src.replace(/[^/]*$/, '');

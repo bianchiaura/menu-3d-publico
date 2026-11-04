@@ -76,3 +76,37 @@ main>h2{font-size:1.5rem}
 .chips span{padding:4px 11px;border-radius:999px;background:var(--tarjeta);border:1px solid var(--linea);font-size:.85rem}
 .btn-sec{display:inline-block;margin-top:10px;padding:8px 16px;border-radius:12px;border:1.5px solid var(--acento);color:var(--acento2);font-weight:700;text-decoration:none}
 .muestra{margin-top:10px;font-size:.8rem;color:var(--suave);text-align:center}
+/* plato al que lleva la mascota: se resalta un momento */
+.card.destacado{box-shadow:0 0 0 3px var(--acento),var(--sombra);transition:box-shadow .3s}
+/* mascota del local (mascota.js): chiquita, abajo a la izquierda, sin tapar los platos */
+body.con-mascota .info{padding-bottom:96px}
+.mascota{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
+.mascota>*{pointer-events:auto}
+.m-boton{width:58px;height:66px;padding:0;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.m-boton svg{width:100%;height:100%;display:block;overflow:visible}
+.m-cuerpo{transform-origin:32px 66px;animation:m-llama 2.6s ease-in-out infinite}
+.m-ojos{transform-origin:32px 43px;animation:m-parpadeo 4.5s infinite}
+.m-feliz,.m-boca-abierta{display:none}
+.mascota.charla .m-ojos{display:none}.mascota.charla .m-feliz{display:inline}
+.mascota.charla .m-boca{display:none}.mascota.charla .m-boca-abierta{display:inline}
+.mascota.salta .m-boton{animation:m-salto .6s cubic-bezier(.3,1.6,.5,1)}
+.mascota.salta .m-cuerpo{animation:m-aviva .6s ease-out}
+.mascota.saluda .m-boton{animation:m-saludo 1.6s ease-in-out}
+@keyframes m-llama{0%,100%{transform:scale(1,1) skewX(0)}30%{transform:scale(1.03,.97) skewX(-2deg)}60%{transform:scale(.98,1.04) skewX(2deg)}}
+@keyframes m-parpadeo{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes m-salto{0%{transform:translateY(0)}40%{transform:translateY(-18px)}100%{transform:translateY(0)}}
+@keyframes m-aviva{0%{transform:scale(1)}35%{transform:scale(1.18,1.25)}100%{transform:scale(1)}}
+@keyframes m-saludo{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
+.m-globo{position:relative;margin-bottom:8px;width:min(270px,calc(100vw - 32px));background:var(--tarjeta);color:var(--texto);border:1px solid var(--linea);border-radius:18px 18px 18px 6px;box-shadow:0 8px 28px rgba(40,20,5,.22);padding:14px 14px 10px;animation:m-aparece .25s ease-out}
+.m-globo[hidden]{display:none}
+.m-globo p{font-size:.92rem;line-height:1.4;margin-bottom:6px;padding-right:22px}
+.m-globo .m-reco{padding-right:0;color:var(--texto)}
+.m-globo b{color:var(--acento2)}
+.m-x{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;font-size:.8rem;color:var(--suave)}
+.m-acciones{display:flex;gap:6px;margin-top:8px}
+.m-acciones button{flex:1;padding:9px 10px;border-radius:12px;font-weight:700;font-size:.85rem;min-height:40px;border:1.5px solid var(--acento);color:var(--acento2)}
+.m-acciones button[data-m=ver]{background:var(--acento);color:var(--sobre-acento)}
+.m-acciones button[hidden]{display:none}
+.m-ocultar{display:block;margin:8px auto 0;font-size:.75rem;color:var(--suave);text-decoration:underline;padding:4px}
+@keyframes m-aparece{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.m-cuerpo,.m-ojos,.mascota.salta .m-boton,.mascota.salta .m-cuerpo,.mascota.saluda .m-boton,.m-globo{animation:none}}

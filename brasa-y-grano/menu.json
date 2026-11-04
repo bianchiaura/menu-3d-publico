@@ -7,6 +7,25 @@
   "prototipo": false,
   "moneda": "$",
   "muestra": true,
+  "mascota": {
+    "nombre": "Brasita",
+    "frases": [
+      "¡Hola! Soy Brasita, la brasa más chiquita de la parrilla. 🔥",
+      "Vivo acá desde 2016. Nunca me apagué, ni en los cortes de luz.",
+      "Dato de brasa: el quebracho da el mejor fuego. Lo sé porque soy de quebracho.",
+      "Si me tocás mucho me pongo al rojo vivo, eh.",
+      "Me dicen que no me acerque al helado del brownie. No sé por qué.",
+      "Mi sueño es ser fogón de campamento. Por ahora, parrilla.",
+      "Shh… el chimichurri es receta de la abuela del parrillero.",
+      "Tocá \"Ver en 3D\" y ponete el plato en la mesa. Yo ya lo hice y quedé con hambre."
+    ],
+    "recomienda": [
+      "Hoy yo pediría {plato}.",
+      "Mi favorito de esta semana: {plato}.",
+      "¿Indeciso? Andá a lo seguro: {plato}.",
+      "Si te gusta lo rico, {plato} no falla."
+    ]
+  },
   "info": {
     "sobre": "Parrilla y cafetería de barrio desde 2016. Carnes a las brasas de quebracho, pastas caseras y café de especialidad, en un salón cálido con terraza.",
     "direccion": "Av. de los Fogones 1450",

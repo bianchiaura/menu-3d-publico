@@ -78,3 +78,13 @@ Cada plato: `id`, `categoria`, `nombre`, `descripcion`, `precio`, `emoji`, `foto
 - El 3D sale de una sola foto: se ve muy bien de frente y en diagonal, pero no tiene "parte de atrás".
 - El plato sigue los giros del celular, no los desplazamientos (no hay WebXR).
 - Las fotos de Brasa & Grano son de Wikimedia Commons (ver `brasa-y-grano/creditos.html`).
+
+## Mascota del local (opcional)
+
+Un personajito que vive abajo a la izquierda del menú. Al tocarlo salta, dice una frase y recomienda un plato al azar; "Ver plato" lleva a ese plato. El cliente lo puede ocultar. Se activa agregando al `menu.json`:
+
+```json
+"mascota": { "nombre": "Brasita", "frases": ["…"], "recomienda": ["Hoy yo pediría {plato}.", "…"] }
+```
+
+Brasa & Grano tiene a **Brasita**, una brasa con cara. Código: `motor/mascota.js`.
