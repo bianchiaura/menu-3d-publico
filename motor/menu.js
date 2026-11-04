@@ -92,7 +92,10 @@
       (M.prototipo ? '<div class="proto" role="note">Prototipo para ' + esc(M.nombre) + '</div>' : '') +
       '<div class="top">' + (M.logo ? '<img src="' + esc(url(M.logo)) + '" alt="">' : '') +
       '<h1>' + esc(M.nombre) + '<small>' + esc(M.subtitulo || 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa') + '</small></h1>' +
-      (hayInfo() ? '<button class="btn-info" data-abrir-ficha aria-label="Información del local: horarios, dirección y contacto"><span aria-hidden="true">ℹ</span> Info</button>' : '') + '</div>' +
+      (hayInfo() ? '<button class="btn-info" data-abrir-ficha aria-label="Información del local: horarios, dirección y contacto">' +
+        /* la "i" clásica de información: círculo con una i en cursiva (dibujada, no emoji, para que se vea igual en todos los celulares) */
+        '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="9.25" class="i-fondo"/>' +
+        '<circle cx="11.1" cy="5.6" r="1.35" class="i-letra"/><path d="M9.4 8.4h2.6l-1.55 6.1c-.12.48.08.7.45.7.35 0 .72-.2 1.05-.5l.3.45c-.68.82-1.55 1.3-2.45 1.3-1.08 0-1.5-.68-1.25-1.7l1.15-4.6h-.9z" class="i-letra"/></svg>Info</button>' : '') + '</div>' +
       '<nav class="tabs" id="tabs" role="tablist" aria-label="Categorías"></nav>' +
       (hay.length ? '<div class="filtros" id="filtros" aria-label="Filtrar">' + hay.map(function (f) {
         return '<button class="fil" aria-pressed="false" data-fil="' + f + '">' + ETIQUETAS[f][0] + '</button>';

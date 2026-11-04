@@ -48,7 +48,9 @@ main>h2{font-size:1.5rem}
 /* información del local: botón "Info" en el encabezado y ficha que se abre */
 .top h1{flex:1;min-width:0}
 .btn-info{flex:none;align-self:center;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;min-height:40px;border-radius:999px;border:1px solid var(--linea);background:var(--tarjeta);font-weight:700;font-size:.85rem;color:var(--acento2)}
-.btn-info span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--acento);color:var(--sobre-acento);font-size:.75rem;font-style:normal}
+.btn-info svg{flex:none;display:block}
+.btn-info .i-fondo{fill:var(--acento)}
+.btn-info .i-letra{fill:var(--sobre-acento)}
 .ver-ficha{font-weight:700;color:var(--acento2);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
 .ficha{border:0;padding:0;margin:auto auto 0;width:100%;max-width:640px;max-height:88vh;border-radius:22px 22px 0 0;background:var(--fondo);color:var(--texto);overflow:auto}
 .ficha::backdrop{background:rgba(0,0,0,.5)}
