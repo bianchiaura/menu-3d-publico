@@ -38,11 +38,22 @@ window.GitHub = (function () {
     return btoa(t);
   }
 
+  /* autor de los commits con la dirección privada de GitHub (…@users.noreply.github.com),
+     para que el mail real de la cuenta no quede a la vista en el historial público */
+  function autor() {
+    return fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + token(), 'Accept': 'application/vnd.github+json' } })
+      .then(function (r) { if (!r.ok) throw new Error('GitHub ' + r.status); return r.json(); })
+      .then(function (u) { return { name: u.login, email: u.id + '+' + u.login + '@users.noreply.github.com' }; });
+  }
+
   /* archivos: [{ ruta, texto }] o [{ ruta, dataUrl }] */
   function publicar(archivos, mensaje, aviso) {
     aviso = aviso || function () {};
-    var padre;
-    return pedir('/git/ref/heads/' + RAMA).then(function (ref) {
+    var padre, quien;
+    return autor().then(function (a) {
+      quien = a;
+      return pedir('/git/ref/heads/' + RAMA);
+    }).then(function (ref) {
       padre = ref.object.sha;
       return pedir('/git/commits/' + padre);
     }).then(function (commit) {
@@ -57,7 +68,7 @@ window.GitHub = (function () {
         return pedir('/git/trees', { method: 'POST', body: { base_tree: commit.tree.sha, tree: arbol } });
       });
     }).then(function (arbol) {
-      return pedir('/git/commits', { method: 'POST', body: { message: mensaje, tree: arbol.sha, parents: [padre] } });
+      return pedir('/git/commits', { method: 'POST', body: { message: mensaje, tree: arbol.sha, parents: [padre], author: quien, committer: quien } });
     }).then(function (nuevo) {
       return pedir('/git/refs/heads/' + RAMA, { method: 'PATCH', body: { sha: nuevo.sha } });
     });
