@@ -53,14 +53,29 @@ window.Menu3DAR = (function () {
       visor.setAttribute('ar-modes', 'webxr quick-look scene-viewer');
       visor.setAttribute('ar-scale', 'fixed'); /* tamaño real, sin agrandar */
       visor.setAttribute('ar-placement', 'floor');
-      visor.style.cssText = 'position:fixed;width:2px;height:2px;left:-10px;top:-10px;opacity:0;pointer-events:none';
+      /* model-viewer solo carga cuando el elemento está dentro de la pantalla: por eso "eager" y un punto
+         invisible dentro de la pantalla (fuera de ella nunca cargaba y el botón quedaba en "Preparando AR…") */
+      visor.setAttribute('loading', 'eager');
+      visor.setAttribute('reveal', 'auto');
+      visor.style.cssText = 'position:fixed;width:4px;height:4px;left:0;bottom:0;opacity:0;pointer-events:none;z-index:-1';
       document.body.appendChild(visor);
+      /* invisible, model-viewer carga el plato pero no avisa con el evento "load": se revisa "loaded" cada un ratito */
+      var este = visor;
       return new Promise(function (ok, mal) {
-        visor.addEventListener('load', function () {
-          if (!visor.canActivateAR) { mal(new Error('sin-ar')); return; }
-          listo = true; ok();
-        }, { once: true });
-        visor.addEventListener('error', function () { mal(new Error('No se pudo preparar el plato')); }, { once: true });
+        var inicio = Date.now(), cargoEn = 0, fallo = false;
+        este.addEventListener('error', function () { fallo = true; }, { once: true });
+        (function revisar() {
+          if (este !== visor) return mal(new Error('descartado'));
+          if (fallo) return mal(new Error('No se pudo preparar el plato'));
+          if (este.loaded) {
+            if (!cargoEn) cargoEn = Date.now();
+            if (este.canActivateAR) { listo = true; return ok(); }
+            /* en Android el soporte de AR se confirma un instante después: se espera hasta 3 segundos */
+            if (Date.now() - cargoEn > 3000) return mal(new Error('sin-ar'));
+          }
+          if (Date.now() - inicio > 25000) return mal(new Error('tardó demasiado'));
+          setTimeout(revisar, 200);
+        })();
       });
     });
   }
