@@ -6,57 +6,277 @@
   "logo": "",
   "prototipo": false,
   "moneda": "$",
-  "info": { "direccion": "Restaurante de muestra", "horario": "Todos los días de 12 a 24 h", "whatsapp": "", "instagram": "" },
+  "info": {
+    "direccion": "Restaurante de muestra",
+    "horario": "Todos los días de 12 a 24 h",
+    "whatsapp": "",
+    "instagram": ""
+  },
   "creditos": "creditos.html",
   "colores": {
-    "claro": { "acento": "#b5832f", "acento2": "#8f6420" },
-    "oscuro": { "acento": "#d6a24b", "acento2": "#e6b863" }
+    "claro": {
+      "acento": "#b5832f",
+      "acento2": "#8f6420"
+    },
+    "oscuro": {
+      "acento": "#d6a24b",
+      "acento2": "#e6b863"
+    }
   },
   "categorias": [
-    { "id": "carnes", "nombre": "Carnes rojas", "fondo": "linear-gradient(135deg,#e9c9a0,#c98b5a)" },
-    { "id": "pastas", "nombre": "Pastas", "fondo": "linear-gradient(135deg,#f6e3a8,#e1b552)" },
-    { "id": "burgers", "nombre": "Hamburguesas", "fondo": "linear-gradient(135deg,#f3cf9b,#d9903f)" },
-    { "id": "cafe", "nombre": "Cafetería", "fondo": "linear-gradient(135deg,#dcc3a6,#a7794f)" },
-    { "id": "bebidas", "nombre": "Bebidas", "fondo": "linear-gradient(135deg,#cfe6d8,#8cc3a2)" },
-    { "id": "postres", "nombre": "Postres", "fondo": "linear-gradient(135deg,#f0d0d6,#d99aa8)" }
+    {
+      "id": "carnes",
+      "nombre": "Carnes rojas",
+      "fondo": "linear-gradient(135deg,#e9c9a0,#c98b5a)"
+    },
+    {
+      "id": "pastas",
+      "nombre": "Pastas",
+      "fondo": "linear-gradient(135deg,#f6e3a8,#e1b552)"
+    },
+    {
+      "id": "burgers",
+      "nombre": "Hamburguesas",
+      "fondo": "linear-gradient(135deg,#f3cf9b,#d9903f)"
+    },
+    {
+      "id": "cafe",
+      "nombre": "Cafetería",
+      "fondo": "linear-gradient(135deg,#dcc3a6,#a7794f)"
+    },
+    {
+      "id": "bebidas",
+      "nombre": "Bebidas",
+      "fondo": "linear-gradient(135deg,#cfe6d8,#8cc3a2)"
+    },
+    {
+      "id": "postres",
+      "nombre": "Postres",
+      "fondo": "linear-gradient(135deg,#f0d0d6,#d99aa8)"
+    }
   ],
   "platos": [
-    { "id": 1, "categoria": "carnes", "nombre": "Bife de chorizo", "emoji": "🥩", "precio": 14500, "etiquetas": ["sin-tacc", "chef"], "foto": "img/1.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/1-textura.jpg", "relieve": "modelos/1-relieve.png", "altura": 0.2 },
-      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero." },
-    { "id": 2, "categoria": "carnes", "nombre": "Ojo de bife", "emoji": "🥩", "precio": 16900, "etiquetas": ["sin-tacc"], "foto": "img/2.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/2-textura.jpg", "relieve": "modelos/2-relieve.png", "altura": 0.2 },
-      "descripcion": "400 g de ojo de bife marmoleado, sellado en hierro, con brócoli al vapor y manteca de hierbas." },
-    { "id": 3, "categoria": "carnes", "nombre": "Entraña a la parrilla", "emoji": "🍖", "precio": 13800, "etiquetas": ["sin-tacc"], "foto": "img/3.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/3-textura.jpg", "relieve": "modelos/3-relieve.png", "altura": 0.15 },
-      "descripcion": "300 g de entraña tierna con marinada de ajo y limón, grillada a las brasas. Para compartir." },
-    { "id": 4, "categoria": "pastas", "nombre": "Sorrentinos de ricota", "emoji": "🍝", "precio": 11200, "etiquetas": ["chef"], "foto": "img/4.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/4-textura.jpg", "relieve": "modelos/4-relieve.png", "altura": 0.2 },
-      "descripcion": "Pasta fresca rellena de ricota y nuez, con salsa fileto y parmesano rallado. Contiene gluten, huevo y lácteos." },
-    { "id": 5, "categoria": "pastas", "nombre": "Sorrentinos con boloñesa", "emoji": "🍝", "precio": 11900, "etiquetas": [], "foto": "img/5.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/5-textura.jpg", "relieve": "modelos/5-relieve.png", "altura": 0.2 },
-      "descripcion": "Sorrentinos de jamón y mozzarella con salsa boloñesa de carne picada a cuchillo. Contiene gluten, huevo y lácteos." },
-    { "id": 6, "categoria": "burgers", "nombre": "Mequinesse Burger", "emoji": "🍔", "precio": 9800, "etiquetas": ["chef"], "foto": "img/6.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/6-textura.jpg", "relieve": "modelos/6-relieve.png", "altura": 0.55 },
-      "descripcion": "Pan de papa, medallón de carne vacuna, queso cheddar, bacon crocante y salsa de la casa. Con papas fritas." },
-    { "id": 7, "categoria": "burgers", "nombre": "Veggie Garden", "emoji": "🥬", "precio": 9200, "etiquetas": ["vegano"], "foto": "img/7.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/7-textura.jpg", "relieve": "modelos/7-relieve.png", "altura": 0.55 },
-      "descripcion": "Medallón de garbanzos y verduras, pan con sésamo, pepino, tomate y cebolla de verdeo." },
-    { "id": 8, "categoria": "cafe", "nombre": "Cappuccino", "emoji": "☕", "precio": 3600, "etiquetas": ["chef"], "foto": "img/8.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/8-textura.jpg", "relieve": "modelos/8-relieve.png", "altura": 0.45 },
-      "descripcion": "Doble espresso de granos 100% arábica con leche texturizada y latte art." },
-    { "id": 9, "categoria": "cafe", "nombre": "Medialunas de manteca", "emoji": "🥐", "precio": 3200, "etiquetas": [], "foto": "img/9.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/9-textura.jpg", "relieve": "modelos/9-relieve.png", "altura": 0.3 },
-      "descripcion": "Dos medialunas de hojaldre y manteca, horneadas cada mañana. Contienen gluten, huevo y lácteos." },
-    { "id": 10, "categoria": "bebidas", "nombre": "Limonada con menta y jengibre", "emoji": "🍋", "precio": 4200, "etiquetas": ["vegano", "sin-tacc"], "foto": "img/10.jpg", "modelo": null,
-      "descripcion": "Limones exprimidos al momento, menta fresca, jengibre rallado y soda. Endulzada con azúcar de caña, a elección." },
-    { "id": 11, "categoria": "bebidas", "nombre": "Cerveza artesanal IPA", "emoji": "🍺", "precio": 5200, "etiquetas": [], "foto": "img/11.jpg", "modelo": null,
-      "descripcion": "Pinta de 473 ml de IPA de elaboración local, con notas cítricas y amargor medio. Contiene cebada." },
-    { "id": 12, "categoria": "postres", "nombre": "Flan casero con dulce de leche", "emoji": "🍮", "precio": 5400, "etiquetas": ["sin-tacc", "chef"], "foto": "img/12.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/12-textura.jpg", "relieve": "modelos/12-relieve.png", "altura": 0.45 },
-      "descripcion": "Flan de huevos y vainilla con caramelo, dulce de leche repostero y crema. Contiene lácteos y huevo." },
-    { "id": 13, "categoria": "postres", "nombre": "Brownie con helado", "emoji": "🍫", "precio": 6100, "etiquetas": ["chef"], "foto": "img/13.jpg",
-      "modelo": { "tipo": "foto", "textura": "modelos/13-textura.jpg", "relieve": "modelos/13-relieve.png", "altura": 0.4 },
-      "descripcion": "Brownie de chocolate semiamargo tibio con dos bochas de helado de crema americana y salsa de chocolate." }
+    {
+      "id": 1,
+      "categoria": "carnes",
+      "nombre": "Bife de chorizo",
+      "emoji": "🥩",
+      "precio": 14500,
+      "etiquetas": [
+        "sin-tacc",
+        "chef"
+      ],
+      "foto": "img/1.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/1-textura.jpg",
+        "relieve": "modelos/1-relieve.png",
+        "altura": 0.2
+      },
+      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero.",
+      "agotado": true
+    },
+    {
+      "id": 2,
+      "categoria": "carnes",
+      "nombre": "Ojo de bife",
+      "emoji": "🥩",
+      "precio": 16900,
+      "etiquetas": [
+        "sin-tacc"
+      ],
+      "foto": "img/2.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/2-textura.jpg",
+        "relieve": "modelos/2-relieve.png",
+        "altura": 0.2
+      },
+      "descripcion": "400 g de ojo de bife marmoleado, sellado en hierro, con brócoli al vapor y manteca de hierbas."
+    },
+    {
+      "id": 3,
+      "categoria": "carnes",
+      "nombre": "Entraña a la parrilla",
+      "emoji": "🍖",
+      "precio": 13800,
+      "etiquetas": [
+        "sin-tacc"
+      ],
+      "foto": "img/3.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/3-textura.jpg",
+        "relieve": "modelos/3-relieve.png",
+        "altura": 0.15
+      },
+      "descripcion": "300 g de entraña tierna con marinada de ajo y limón, grillada a las brasas. Para compartir."
+    },
+    {
+      "id": 4,
+      "categoria": "pastas",
+      "nombre": "Sorrentinos de ricota",
+      "emoji": "🍝",
+      "precio": 11200,
+      "etiquetas": [
+        "chef"
+      ],
+      "foto": "img/4.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/4-textura.jpg",
+        "relieve": "modelos/4-relieve.png",
+        "altura": 0.2
+      },
+      "descripcion": "Pasta fresca rellena de ricota y nuez, con salsa fileto y parmesano rallado. Contiene gluten, huevo y lácteos."
+    },
+    {
+      "id": 5,
+      "categoria": "pastas",
+      "nombre": "Sorrentinos con boloñesa",
+      "emoji": "🍝",
+      "precio": 11900,
+      "etiquetas": [],
+      "foto": "img/5.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/5-textura.jpg",
+        "relieve": "modelos/5-relieve.png",
+        "altura": 0.2
+      },
+      "descripcion": "Sorrentinos de jamón y mozzarella con salsa boloñesa de carne picada a cuchillo. Contiene gluten, huevo y lácteos."
+    },
+    {
+      "id": 6,
+      "categoria": "burgers",
+      "nombre": "Mequinesse Burger",
+      "emoji": "🍔",
+      "precio": 9800,
+      "etiquetas": [
+        "chef"
+      ],
+      "foto": "img/6.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/6-textura.jpg",
+        "relieve": "modelos/6-relieve.png",
+        "altura": 0.55
+      },
+      "descripcion": "Pan de papa, medallón de carne vacuna, queso cheddar, bacon crocante y salsa de la casa. Con papas fritas."
+    },
+    {
+      "id": 7,
+      "categoria": "burgers",
+      "nombre": "Veggie Garden",
+      "emoji": "🥬",
+      "precio": 9200,
+      "etiquetas": [
+        "vegano"
+      ],
+      "foto": "img/7.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/7-textura.jpg",
+        "relieve": "modelos/7-relieve.png",
+        "altura": 0.55
+      },
+      "descripcion": "Medallón de garbanzos y verduras, pan con sésamo, pepino, tomate y cebolla de verdeo."
+    },
+    {
+      "id": 8,
+      "categoria": "cafe",
+      "nombre": "Cappuccino",
+      "emoji": "☕",
+      "precio": 3600,
+      "etiquetas": [
+        "chef"
+      ],
+      "foto": "img/8.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/8-textura.jpg",
+        "relieve": "modelos/8-relieve.png",
+        "altura": 0.45
+      },
+      "descripcion": "Doble espresso de granos 100% arábica con leche texturizada y latte art."
+    },
+    {
+      "id": 9,
+      "categoria": "cafe",
+      "nombre": "Medialunas de manteca",
+      "emoji": "🥐",
+      "precio": 3200,
+      "etiquetas": [],
+      "foto": "img/9.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/9-textura.jpg",
+        "relieve": "modelos/9-relieve.png",
+        "altura": 0.3
+      },
+      "descripcion": "Dos medialunas de hojaldre y manteca, horneadas cada mañana. Contienen gluten, huevo y lácteos."
+    },
+    {
+      "id": 10,
+      "categoria": "bebidas",
+      "nombre": "Limonada con menta y jengibre",
+      "emoji": "🍋",
+      "precio": 4200,
+      "etiquetas": [
+        "vegano",
+        "sin-tacc"
+      ],
+      "foto": "img/10.jpg",
+      "modelo": null,
+      "descripcion": "Limones exprimidos al momento, menta fresca, jengibre rallado y soda. Endulzada con azúcar de caña, a elección."
+    },
+    {
+      "id": 11,
+      "categoria": "bebidas",
+      "nombre": "Cerveza artesanal IPA",
+      "emoji": "🍺",
+      "precio": 5200,
+      "etiquetas": [],
+      "foto": "img/11.jpg",
+      "modelo": null,
+      "descripcion": "Pinta de 473 ml de IPA de elaboración local, con notas cítricas y amargor medio. Contiene cebada."
+    },
+    {
+      "id": 12,
+      "categoria": "postres",
+      "nombre": "Flan casero con dulce de leche",
+      "emoji": "🍮",
+      "precio": 5400,
+      "etiquetas": [
+        "sin-tacc",
+        "chef"
+      ],
+      "foto": "img/12.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/12-textura.jpg",
+        "relieve": "modelos/12-relieve.png",
+        "altura": 0.45
+      },
+      "descripcion": "Flan de huevos y vainilla con caramelo, dulce de leche repostero y crema. Contiene lácteos y huevo."
+    },
+    {
+      "id": 13,
+      "categoria": "postres",
+      "nombre": "Brownie con helado",
+      "emoji": "🍫",
+      "precio": 6100,
+      "etiquetas": [
+        "chef"
+      ],
+      "foto": "img/13.jpg",
+      "modelo": {
+        "tipo": "foto",
+        "textura": "modelos/13-textura.jpg",
+        "relieve": "modelos/13-relieve.png",
+        "altura": 0.4
+      },
+      "descripcion": "Brownie de chocolate semiamargo tibio con dos bochas de helado de crema americana y salsa de chocolate."
+    }
   ]
 }
