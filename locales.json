@@ -4,11 +4,5 @@
     "nombre": "Brasa & Grano",
     "estado": "demo",
     "nota": "Restaurante inventado para mostrar el producto. Es el que abre el QR original."
-  },
-  {
-    "carpeta": "br-burguers",
-    "nombre": "Br Burguers",
-    "estado": "prototipo",
-    "nota": "Es una hamburguesería que brinda felicidad."
   }
 ]
