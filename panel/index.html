@@ -45,6 +45,10 @@
       <label>Categoría<select name="categoria"></select></label>
     </div>
     <label>Descripción<small>Ingredientes, gramaje y alérgenos</small><textarea name="descripcion" maxlength="400"></textarea></label>
+    <details class="ingles"><summary>Inglés (opcional, para turistas)</summary>
+      <label>Nombre en inglés<input type="text" name="nombre_en" maxlength="80" placeholder="Ej. Homemade flan"></label>
+      <label>Descripción en inglés<textarea name="descripcion_en" maxlength="400"></textarea></label>
+    </details>
     <div><b style="font-size:.88rem">Etiquetas</b><div class="checks" style="margin-top:6px">
       <label><input type="checkbox" name="et" value="sin-tacc"> Sin TACC</label>
       <label><input type="checkbox" name="et" value="vegano"> Vegano</label>
@@ -334,6 +338,8 @@
     F.categoria.innerHTML = M.categorias.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>'; }).join('');
     F.nombre.value = p ? p.nombre : ''; F.precio.value = p ? p.precio : '';
     F.categoria.value = p ? p.categoria : catNueva; F.descripcion.value = p ? p.descripcion : '';
+    var tr = p && M.en && M.en.platos && M.en.platos[p.id] || {}; F.nombre_en.value = tr.nombre || ''; F.descripcion_en.value = tr.descripcion || '';
+    F.querySelector('details.ingles').open = !!(tr.nombre || tr.descripcion);
     F.emoji.value = p ? p.emoji || '' : '🍽';
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
     F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); previa3d(); estado3d();
@@ -383,6 +389,10 @@
     if (!p) { p = { id: M.platos.reduce(function (a, x) { return Math.max(a, Number(x.id) || 0); }, 0) + 1 }; M.platos.push(p); }
     p.nombre = F.nombre.value.trim(); p.precio = Number(F.precio.value) || 0; p.categoria = F.categoria.value;
     p.descripcion = F.descripcion.value.trim(); p.emoji = F.emoji.value.trim();
+    /* traducción al inglés: va en M.en.platos[id]; si se carga alguna, el menú muestra el botón EN */
+    var ne = F.nombre_en.value.trim(), de = F.descripcion_en.value.trim();
+    if (ne || de) { M.en = M.en || {}; M.en.platos = M.en.platos || {}; M.en.platos[p.id] = { nombre: ne, descripcion: de }; }
+    else if (M.en && M.en.platos) delete M.en.platos[p.id];
     p.etiquetas = [].filter.call(F.querySelectorAll('[name=et]'), function (x) { return x.checked; }).map(function (x) { return x.value; });
     if (fotoNueva !== undefined) p.foto = fotoNueva;
     if (modeloNuevo !== undefined) p.modelo = modeloNuevo;
@@ -392,6 +402,7 @@
     if (!editando) return;
     confirmar(this, '¿Seguro? Tocá de nuevo', function () {
       M.platos = M.platos.filter(function (p) { return p !== editando; });
+      if (M.en && M.en.platos) delete M.en.platos[editando.id];
       $('#dlg').close(); guardar(); mostrar(); toast('Plato borrado');
     });
   };

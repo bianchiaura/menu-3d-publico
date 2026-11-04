@@ -133,3 +133,6 @@ html.modo-compu .form .fila2{grid-template-columns:1fr 1fr}
 .cat-fila{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center}
 .cat-fila .b{min-width:40px;justify-content:center}
 .b:disabled{opacity:.35;cursor:default}
+details.ingles{border:1px solid var(--linea);border-radius:12px;padding:10px 14px}
+details.ingles summary{cursor:pointer;font-weight:600;font-size:.88rem}
+details.ingles label{margin-top:10px}

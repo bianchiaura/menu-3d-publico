@@ -110,3 +110,6 @@ body.con-mascota .info{padding-bottom:96px}
 .m-ocultar{display:block;margin:8px auto 0;font-size:.75rem;color:var(--suave);text-decoration:underline;padding:4px}
 @keyframes m-aparece{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.m-cuerpo,.m-ojos,.mascota.salta .m-boton,.mascota.salta .m-cuerpo,.mascota.saluda .m-boton,.m-globo{animation:none}}
+/* botón de idioma (EN / ES), al lado de "Info" */
+.btn-idioma{flex:none;align-self:center;min-width:44px;min-height:40px;padding:8px 10px;border-radius:999px;border:1px solid var(--linea);background:var(--tarjeta);font-weight:700;font-size:.8rem;letter-spacing:.04em;color:var(--acento2)}
+.top{flex-wrap:nowrap}

@@ -26,6 +26,57 @@
       "Si te gusta lo rico, {plato} no falla."
     ]
   },
+  "en": {
+    "subtitulo": "Tap \"View in 3D\" and see your dish on the table",
+    "categorias": { "carnes": "Steaks", "pastas": "Pasta", "burgers": "Burgers", "cafe": "Coffee & bakery", "bebidas": "Drinks", "postres": "Desserts" },
+    "platos": {
+      "1": { "nombre": "Sirloin steak (bife de chorizo)", "descripcion": "350 g grass-fed sirloin grilled over hardwood embers, served on a wooden board with coarse salt and homemade chimichurri." },
+      "2": { "nombre": "Rib eye", "descripcion": "400 g marbled rib eye, seared in cast iron, with steamed broccoli and herb butter." },
+      "3": { "nombre": "Grilled skirt steak", "descripcion": "300 g tender skirt steak marinated in garlic and lemon, grilled over embers. Great for sharing." },
+      "4": { "nombre": "Ricotta sorrentinos", "descripcion": "Fresh round pasta filled with ricotta and walnuts, with tomato sauce and grated parmesan. Contains gluten, egg and dairy." },
+      "5": { "nombre": "Sorrentinos with bolognese", "descripcion": "Ham and mozzarella sorrentinos with a hand-chopped beef bolognese sauce. Contains gluten, egg and dairy." },
+      "6": { "nombre": "Mequinesse Burger", "descripcion": "Potato bun, beef patty, cheddar cheese, crispy bacon and house sauce. Served with fries." },
+      "7": { "nombre": "Veggie Garden", "descripcion": "Chickpea and vegetable patty, sesame bun, cucumber, tomato and spring onion." },
+      "8": { "nombre": "Cappuccino", "descripcion": "Double espresso of 100% arabica beans with steamed milk and latte art." },
+      "9": { "nombre": "Butter croissants (medialunas)", "descripcion": "Two flaky butter croissants, baked every morning. Contain gluten, egg and dairy." },
+      "10": { "nombre": "Mint and ginger lemonade", "descripcion": "Freshly squeezed lemons, fresh mint, grated ginger and soda. Sweetened with cane sugar, to taste." },
+      "11": { "nombre": "Craft IPA beer", "descripcion": "473 ml pint of locally brewed IPA, with citrus notes and medium bitterness. Contains barley." },
+      "12": { "nombre": "Homemade flan with dulce de leche", "descripcion": "Egg and vanilla custard with caramel, dulce de leche and cream. Contains dairy and egg." },
+      "13": { "nombre": "Brownie with ice cream", "descripcion": "Warm dark chocolate brownie with two scoops of vanilla ice cream and chocolate sauce." }
+    },
+    "info": {
+      "sobre": "Neighborhood grill and coffee shop since 2016. Meats cooked over quebracho embers, homemade pasta and specialty coffee, in a warm dining room with a terrace.",
+      "zona": "Palermo, Buenos Aires",
+      "horarios": [
+        { "dias": "Monday", "horas": "Closed" },
+        { "dias": "Tuesday to Thursday", "horas": "12–4 pm · 8 pm–12 am" },
+        { "dias": "Friday and Saturday", "horas": "12–4 pm · 8 pm–1 am" },
+        { "dias": "Sunday", "horas": "12–5 pm" },
+        { "dias": "Coffee shop (Tue–Sun)", "horas": "9 am–12 pm" }
+      ],
+      "reservas": "By WhatsApp or phone, until 6 pm the same day. Groups of more than 8 people require a deposit.",
+      "pagos": ["Cash", "Debit card", "Credit card", "Mercado Pago", "Bank transfer"],
+      "servicios": ["Free Wi-Fi", "Terrace", "Pet friendly", "Step-free access", "Gluten-free options", "Takeaway", "Birthdays and events"]
+    },
+    "mascota": {
+      "frases": [
+        "Hi! I'm Brasita, the tiniest ember on the grill. 🔥",
+        "I've been here since 2016. Never went out, not even in a blackout.",
+        "Ember fact: quebracho wood makes the best fire. I'd know, I'm made of it.",
+        "If you poke me too much I'll get red hot, just so you know.",
+        "They tell me to stay away from the brownie's ice cream. No idea why.",
+        "My dream is to be a campfire. For now, a grill.",
+        "Shh… the chimichurri is the grill master's grandma's recipe.",
+        "Tap \"View in 3D\" and put the dish on your table. I did, and now I'm hungry."
+      ],
+      "recomienda": [
+        "Today I'd order {plato}.",
+        "My favorite this week: {plato}.",
+        "Can't decide? Play it safe: {plato}.",
+        "If you like good food, {plato} never fails."
+      ]
+    }
+  },
   "info": {
     "sobre": "Parrilla y cafetería de barrio desde 2016. Carnes a las brasas de quebracho, pastas caseras y café de especialidad, en un salón cálido con terraza.",
     "direccion": "Av. de los Fogones 1450",
@@ -102,6 +153,7 @@
       "foto": "img/1.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 32,
         "textura": "modelos/1-textura.jpg",
         "relieve": "modelos/1-relieve.png",
         "altura": 0.2
@@ -190,6 +242,7 @@
       "foto": "img/6.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 24,
         "textura": "modelos/6-textura.jpg",
         "relieve": "modelos/6-relieve.png",
         "altura": 0.55
@@ -208,6 +261,7 @@
       "foto": "img/7.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 26,
         "textura": "modelos/7-textura.jpg",
         "relieve": "modelos/7-relieve.png",
         "altura": 0.55
@@ -226,6 +280,7 @@
       "foto": "img/8.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 16,
         "textura": "modelos/8-textura.jpg",
         "relieve": "modelos/8-relieve.png",
         "altura": 0.45
@@ -242,6 +297,7 @@
       "foto": "img/9.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 24,
         "textura": "modelos/9-textura.jpg",
         "relieve": "modelos/9-relieve.png",
         "altura": 0.3
@@ -286,6 +342,7 @@
       "foto": "img/12.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 20,
         "textura": "modelos/12-textura.jpg",
         "relieve": "modelos/12-relieve.png",
         "altura": 0.45
@@ -304,6 +361,7 @@
       "foto": "img/13.jpg",
       "modelo": {
         "tipo": "foto",
+        "diametro": 22,
         "textura": "modelos/13-textura.jpg",
         "relieve": "modelos/13-relieve.png",
         "altura": 0.4

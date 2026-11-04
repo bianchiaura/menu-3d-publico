@@ -88,3 +88,10 @@ Un personajito que vive abajo a la izquierda del menú. Al tocarlo salta, dice u
 ```
 
 Brasa & Grano tiene a **Brasita**, una brasa con cara. Código: `motor/mascota.js`.
+
+## AR del celular, idiomas y compartir
+
+- **AR "de verdad"** (`motor/ar.js`): en iPhone (Quick Look) y Android con AR, el visor muestra **"Ver en tu mesa (AR)"**. El plato queda fijo sobre la mesa y en tamaño real aunque uno se mueva. El modelo se convierte en el momento a `.glb` y lo abre `<model-viewer>` (Google). Tamaño: `"diametro"` (cm) en el `modelo` del plato; si no está, 26 cm.
+- **Inglés**: con un bloque `"en"` en el `menu.json` (categorías, platos, info y frases de la mascota) aparece el botón **EN/ES**; si el celular no está en español, arranca en inglés. En el panel, cada plato tiene "Inglés (opcional)".
+- **Compartir** (`motor/compartir.js`): al publicar, el panel genera `compartir.jpg` (foto + nombre + "Menú con platos en 3D") y la página del local, para que el link se vea con imagen en WhatsApp.
+- **Paneles**: los borradores se guardan en IndexedDB (`motor/almacen.js`, sin el límite de 5 MB); avisan si alguien publicó mientras se editaba; se pueden ordenar platos y categorías, borrar categorías y, desde el administrador, eliminar un local (pide escribir su nombre).

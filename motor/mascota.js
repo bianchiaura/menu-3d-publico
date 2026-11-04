@@ -25,20 +25,34 @@
     '</g></svg>';
 
   var M, cfg, raiz, globo, plato = null, ultimaFrase = -1, ultimoPlato = null;
+  /* textos de la mascota según el idioma del menú (window.idiomaMenu, de menu.js) */
+  var TM = {
+    es: { ver: 'Ver plato', otra: 'Otra idea', ocultar: 'Ocultar a {x}', volver: 'Volver a ver a {x}', tocar: '{x}: tocá para que te recomiende un plato', cerrar: 'Cerrar', reco: 'Hoy pedite {plato}' },
+    en: { ver: 'See dish', otra: 'Another idea', ocultar: 'Hide {x}', volver: 'Bring back {x}', tocar: '{x}: tap for a dish suggestion', cerrar: 'Close', reco: 'Today, try {plato}' }
+  };
+  function enIngles() { return window.idiomaMenu === 'en'; }
+  function tm(k, x) { var s = (enIngles() ? TM.en : TM.es)[k]; return x == null ? s : s.replace('{x}', x); }
+  function nombre() { return cfg.nombre || (enIngles() ? 'the mascot' : 'la mascota'); }
+  /* frases en el idioma del menú (la traducción va en "en": { "mascota": { frases, recomienda } }) */
+  function dichos() {
+    var e = enIngles() && M.en && M.en.mascota;
+    return { frases: (e && e.frases) || cfg.frases || [], recomienda: (e && e.recomienda) || cfg.recomienda || [tm('reco')] };
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function oculta() { try { return localStorage.getItem(CLAVE) === '1'; } catch (e) { return false; } }
   function azar(l, evitar) { if (!l.length) return null; var x; do { x = Math.floor(Math.random() * l.length); } while (l.length > 1 && x === evitar); return x; }
 
   function decir() {
-    var frases = cfg.frases || [], reco = cfg.recomienda || ['Hoy pedite {plato}'];
+    var dd = dichos(), frases = dd.frases, reco = dd.recomienda;
     var platos = M.platos.filter(function (p) { return !p.oculto && !p.agotado && p !== ultimoPlato; });
     var i = azar(platos);
     plato = i == null ? null : platos[i]; ultimoPlato = plato;
     var f = azar(frases, ultimaFrase); ultimaFrase = f;
     var r = reco[Math.floor(Math.random() * reco.length)];
+    var nom = plato && (window.textoPlato ? window.textoPlato(plato).nombre : plato.nombre);
     globo.querySelector('.m-texto').innerHTML =
       (f != null ? '<p>' + esc(frases[f]) + '</p>' : '') +
-      (plato ? '<p class="m-reco">' + esc(r).replace('{plato}', '<b>' + esc(plato.nombre) + '</b>') + '</p>' : '');
+      (plato ? '<p class="m-reco">' + esc(r).replace('{plato}', '<b>' + esc(nom) + '</b>') + '</p>' : '');
     globo.querySelector('[data-m=ver]').hidden = !plato;
   }
 
@@ -48,14 +62,14 @@
   }
   function cerrar() { globo.hidden = true; raiz.classList.remove('charla'); }
 
-  function armar() {
+  function armar(sinSaludo) {
     raiz = document.createElement('div');
     raiz.className = 'mascota';
     raiz.innerHTML =
-      '<div class="m-globo" role="status" aria-live="polite" hidden><button class="m-x" data-m="cerrar" aria-label="Cerrar">✕</button>' +
-      '<div class="m-texto"></div><div class="m-acciones"><button data-m="ver">Ver plato</button><button data-m="otra">Otra idea</button></div>' +
-      '<button class="m-ocultar" data-m="ocultar">Ocultar a ' + esc(cfg.nombre || 'la mascota') + '</button></div>' +
-      '<button class="m-boton" data-m="tocar" aria-label="' + esc(cfg.nombre || 'Mascota') + ': tocá para que te recomiende un plato">' + DIBUJO + '</button>';
+      '<div class="m-globo" role="status" aria-live="polite" hidden><button class="m-x" data-m="cerrar" aria-label="' + tm('cerrar') + '">✕</button>' +
+      '<div class="m-texto"></div><div class="m-acciones"><button data-m="ver">' + tm('ver') + '</button><button data-m="otra">' + tm('otra') + '</button></div>' +
+      '<button class="m-ocultar" data-m="ocultar">' + esc(tm('ocultar', nombre())) + '</button></div>' +
+      '<button class="m-boton" data-m="tocar" aria-label="' + esc(tm('tocar', nombre())) + '">' + DIBUJO + '</button>';
     document.body.appendChild(raiz); document.body.classList.add('con-mascota');
     globo = raiz.querySelector('.m-globo');
     raiz.addEventListener('click', function (e) {
@@ -68,16 +82,16 @@
       if (a === 'ocultar') { try { localStorage.setItem(CLAVE, '1'); } catch (err) {} quitar(); }
     });
     /* una sola vez, a los pocos segundos, saluda para que se note que se puede tocar */
-    setTimeout(function () { if (raiz.isConnected && globo.hidden) { raiz.classList.add('saluda'); setTimeout(function () { raiz.classList.remove('saluda'); }, 1600); } }, 6000);
+    if (!sinSaludo) setTimeout(function () { if (raiz && raiz.isConnected && globo.hidden) { raiz.classList.add('saluda'); setTimeout(function () { if (raiz) raiz.classList.remove('saluda'); }, 1600); } }, 6000);
   }
   function quitar() {
     if (raiz) raiz.remove(); raiz = null; document.body.classList.remove('con-mascota');
     var pie = document.querySelector('footer.info');
     if (pie && !pie.querySelector('[data-volver-mascota]')) {
-      pie.insertAdjacentHTML('beforeend', '<button class="ver-ficha" data-volver-mascota>Volver a ver a ' + esc(cfg.nombre || 'la mascota') + '</button>');
+      pie.insertAdjacentHTML('beforeend', '<button class="ver-ficha" data-volver-mascota>' + esc(tm('volver', nombre())) + '</button>');
       pie.querySelector('[data-volver-mascota]').onclick = function () {
         try { localStorage.removeItem(CLAVE); } catch (e) {}
-        this.remove(); armar();
+        this.remove(); armar(true);
       };
     }
   }
@@ -88,6 +102,11 @@
     if (oculta()) { quitar(); return; }
     armar();
   }
+  /* al cambiar de idioma: se vuelve a armar con los textos nuevos */
+  document.addEventListener('menu-idioma', function () {
+    if (!cfg) return;
+    if (raiz) { raiz.remove(); raiz = null; armar(true); } else quitar();
+  });
   /* tocar en cualquier otro lado cierra el globo */
   document.addEventListener('click', function (e) { if (raiz && !globo.hidden && !raiz.contains(e.target)) cerrar(); });
   document.addEventListener('menu-listo', iniciar);

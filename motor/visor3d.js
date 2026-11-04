@@ -1,11 +1,18 @@
 /* Menú 3D · Vista 3D con cámara (común a todos los locales)
    - open3D(id) abre la cámara trasera y muestra el plato en 3D sobre la imagen.
    - El modelo es el que armó el generador a partir de fotos reales (campo "modelo" del plato, ver relieve.js).
-   Necesita cargar-three.js y relieve.js.
+   Necesita cargar-three.js y relieve.js. Si el celular tiene AR propio, ofrece "Ver en tu mesa (AR)" (ar.js, se carga solo).
    Gestos: 1 dedo = girar / inclinar · 2 dedos = agrandar y mover · rueda = zoom. */
 (function () {
   'use strict';
   var THREE = null, ov, vid, cv, msg, ttl, S = null, stream = null, curId = null, lastEv = null, oriOn = false;
+  var yo = document.currentScript && document.currentScript.src, cargaAR = null;
+  function cargarAR() {
+    if (!cargaAR) cargaAR = window.Menu3DAR ? Promise.resolve() : new Promise(function (ok, mal) {
+      var s = document.createElement('script'); s.src = yo.replace(/visor3d\.js(\?.*)?$/, 'ar.js'); s.onload = ok; s.onerror = mal; document.head.appendChild(s);
+    });
+    return cargaAR;
+  }
 
   /* ---------- sensores de movimiento: el plato queda fijo en el espacio ---------- */
   function onOri(e) { lastEv = e; }
@@ -53,7 +60,7 @@
     var eu = new THREE.Euler().setFromQuaternion(S.qd, 'YXZ');
     S.Y0.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -eu.y);
     S.placed = false; S.holder.visible = false;
-    msg.textContent = 'Apuntá a tu mesa y tocá la pantalla para colocar el plato'; msg.hidden = false;
+    msg.textContent = v('apunta'); msg.hidden = false;
   }
 
   /* ---------- estilos ---------- */
@@ -76,28 +83,72 @@
     '#ar3d .a-bot button.p{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento);flex:1;max-width:240px}' +
     '#ar3d .a-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}' +
     '#ar3d.photo .a-bg{display:block}' +
+    '#ar3d .a-bot button[hidden]{display:none}' +
+    '#ar3d .a-bot button:disabled{opacity:.6}' +
     '#ar3d #a-photo{display:none}' +
     '#ar3d.nocam #a-photo{display:block}' +
     '@media (prefers-reduced-motion:reduce){#ar3d *{scroll-behavior:auto}}';
   document.head.appendChild(st);
 
   /* ---------- overlay ---------- */
+  /* textos del visor en el idioma que eligió el cliente en el menú (window.idiomaMenu, de menu.js) */
+  var TV = {
+    es: {
+      vista: 'Vista 3D del plato', cerrar: 'Cerrar vista 3D', ayuda: 'Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Arrastrá para girarlo · Pellizcá para agrandar',
+      ar: 'Ver en tu mesa (AR)', preparandoAR: 'Preparando AR…', foto: '📷 Foto de tu mesa', centrar: 'Centrar',
+      apuntaAR: 'Apuntá a la mesa y mové un poco el celular hasta que aparezca el plato.', apunta: 'Apuntá a tu mesa y tocá la pantalla para colocar el plato',
+      sinCamara: 'No pudimos abrir la cámara en vivo. Tocá "Foto de tu mesa", sacá una foto y ponemos el plato encima.', preparando: 'Preparando el plato en 3D…',
+      noInicia: 'No se pudo iniciar el visor 3D en este dispositivo.', sinModelo: 'Este plato todavía no tiene modelo 3D.', noCarga: 'No se pudo cargar el plato en 3D. Revisá tu conexión e intentá de nuevo.'
+    },
+    en: {
+      vista: '3D view of the dish', cerrar: 'Close 3D view', ayuda: 'Tap your table to place the dish · Tap elsewhere to move it · Drag to turn it · Pinch to resize',
+      ar: 'See it on your table (AR)', preparandoAR: 'Getting AR ready…', foto: '📷 Photo of your table', centrar: 'Center',
+      apuntaAR: 'Point at the table and move your phone a little until the dish appears.', apunta: 'Point at your table and tap the screen to place the dish',
+      sinCamara: 'We couldn\'t open the live camera. Tap "Photo of your table", take a picture and we\'ll put the dish on it.', preparando: 'Getting the dish ready in 3D…',
+      noInicia: 'The 3D viewer couldn\'t start on this device.', sinModelo: 'This dish doesn\'t have a 3D model yet.', noCarga: 'We couldn\'t load the dish in 3D. Check your connection and try again.'
+    }
+  };
+  function v(k) { return (TV[window.idiomaMenu] || TV.es)[k]; }
   ov = document.createElement('div');
   ov.id = 'ar3d';
   ov.setAttribute('role', 'dialog');
   ov.setAttribute('aria-modal', 'true');
-  ov.setAttribute('aria-label', 'Vista 3D del plato');
   ov.innerHTML =
     '<video playsinline muted autoplay></video><img class="a-bg" alt=""><canvas></canvas>' +
     '<input type="file" id="a-file" accept="image/*" capture="environment" hidden>' +
-    '<div class="a-top"><button class="a-x" aria-label="Cerrar vista 3D">✕</button><div><b id="a-t"></b><small>Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Arrastrá en cualquier dirección para girarlo · Pellizcá para agrandar</small></div></div>' +
+    '<div class="a-top"><button class="a-x">✕</button><div><b id="a-t"></b><small id="a-ayuda"></small></div></div>' +
     '<div class="a-msg" hidden></div>' +
-    '<div class="a-bot"><button id="a-photo">📷 Foto de tu mesa</button><button id="a-reset">Centrar</button></div>';
+    '<div class="a-bot"><button id="a-ar" class="p" hidden></button><button id="a-photo"></button><button id="a-reset"></button></div>';
   document.body.appendChild(ov);
+  function textosVisor() {
+    ov.setAttribute('aria-label', v('vista')); ov.querySelector('.a-x').setAttribute('aria-label', v('cerrar'));
+    ov.querySelector('#a-ayuda').textContent = v('ayuda'); ov.querySelector('#a-ar').textContent = v('ar');
+    ov.querySelector('#a-photo').textContent = v('foto'); ov.querySelector('#a-reset').textContent = v('centrar');
+  }
+  textosVisor();
   vid = ov.querySelector('video'); cv = ov.querySelector('canvas'); msg = ov.querySelector('.a-msg'); ttl = ov.querySelector('#a-t');
   ov.querySelector('.a-x').onclick = close3D;
   var bg = ov.querySelector('.a-bg'), fileIn = ov.querySelector('#a-file'), photoUrl = null;
   ov.querySelector('#a-photo').onclick = function () { fileIn.click(); };
+  /* AR del celular: tiene que abrirse en el mismo toque, por eso el plato ya está preparado de antes */
+  var btnAR = ov.querySelector('#a-ar');
+  btnAR.onclick = function () {
+    if (window.Menu3DAR && Menu3DAR.lanzar()) {
+      msg.textContent = v('apuntaAR'); msg.hidden = false;
+      setTimeout(function () { msg.hidden = true; }, 5000);
+    }
+  };
+  function ofrecerAR(d) {
+    btnAR.hidden = true;
+    if (!yo) return;
+    cargarAR().then(function () { return Menu3DAR.soportado(); }).then(function (si) {
+      if (!si || String(curId) !== String(d.id) || !ov.classList.contains('open')) return;
+      btnAR.hidden = false; btnAR.disabled = true; btnAR.textContent = v('preparandoAR');
+      return Menu3DAR.preparar(d, (window.MENU && window.MENU.base) || '').then(function () {
+        if (String(curId) === String(d.id)) { btnAR.disabled = false; btnAR.textContent = v('ar'); }
+      });
+    }).catch(function (e) { if (window.console) console.warn('AR no disponible:', e); btnAR.hidden = true; });
+  }
   fileIn.onchange = function () {
     var f = fileIn.files && fileIn.files[0]; if (!f) return;
     if (photoUrl) URL.revokeObjectURL(photoUrl);
@@ -227,7 +278,7 @@
   }
   function noCam() {
     ov.classList.add('nocam');
-    msg.textContent = 'No pudimos abrir la cámara en vivo. Tocá "Foto de tu mesa", sacá una foto y ponemos el plato encima.';
+    msg.textContent = v('sinCamara');
     msg.hidden = false; setTimeout(function () { msg.hidden = true; }, 6000);
   }
 
@@ -239,9 +290,9 @@
   function open3D(id) {
     var platos = (window.MENU && window.MENU.platos) || [];
     var d = platos.filter(function (x) { return String(x.id) === String(id); })[0];
-    curId = id; ttl.textContent = d ? d.nombre : 'Vista 3D';
+    curId = id; textosVisor(); ttl.textContent = d ? (window.textoPlato ? window.textoPlato(d).nombre : d.nombre) : v('vista');
     ov.classList.remove('nocam'); ov.classList.add('open'); document.body.style.overflow = 'hidden';
-    msg.textContent = 'Preparando el plato en 3D…'; msg.hidden = false;
+    msg.textContent = v('preparando'); msg.hidden = false;
     var cam = startOri().then(startCam);
     loadThree().then(function () {
       if (!ov.classList.contains('open')) return;
@@ -254,20 +305,22 @@
         buildScene(model);
       } catch (err) {
         if (window.console) console.error(err);
-        msg.textContent = 'No se pudo iniciar el visor 3D en este dispositivo.'; msg.hidden = false;
+        msg.textContent = v('noInicia'); msg.hidden = false;
         return;
       }
       if (!ov.classList.contains('nocam')) msg.hidden = true;
+      ofrecerAR(d);
       return cam;
     }).catch(function (e) {
       if (window.console && e !== 'sin-modelo') console.error(e);
-      msg.textContent = e === 'sin-modelo' ? 'Este plato todavía no tiene modelo 3D.' : 'No se pudo cargar el plato en 3D. Revisá tu conexión e intentá de nuevo.';
+      msg.textContent = e === 'sin-modelo' ? v('sinModelo') : v('noCarga');
       msg.hidden = false;
     });
   }
 
   function close3D() {
     ov.classList.remove('open', 'nocam', 'photo'); document.body.style.overflow = '';
+    btnAR.hidden = true; if (window.Menu3DAR) Menu3DAR.descartar();
     if (photoUrl) { URL.revokeObjectURL(photoUrl); photoUrl = null; } bg.removeAttribute('src');
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
     vid.srcObject = null; stopOri();
