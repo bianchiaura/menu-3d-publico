@@ -75,7 +75,8 @@
     '#ar3d .a-top button{pointer-events:auto}' +
     '#ar3d .a-x{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:1.1rem;flex:none}' +
     '#ar3d .a-top b{font-family:Fraunces,Georgia,serif;font-size:1.15rem;display:block;line-height:1.2}' +
-    '#ar3d .a-top small{opacity:.85;font-size:.78rem}' +
+    '#ar3d .a-top small{opacity:.85;font-size:.78rem;display:block}' +
+    '#ar3d .a-top .a-priv{opacity:.7;margin-top:3px;font-size:.72rem}' +
     '#ar3d .a-msg{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-50%);text-align:center;color:#fff;background:rgba(0,0,0,.6);padding:14px;border-radius:14px;font-size:.95rem;pointer-events:none}' +
     '#ar3d .a-msg[hidden]{display:none}' +
     '#ar3d .a-bot{position:absolute;left:0;right:0;bottom:0;padding:26px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.6))}' +
@@ -94,6 +95,7 @@
   /* textos del visor en el idioma que eligió el cliente en el menú (window.idiomaMenu, de menu.js) */
   var TV = {
     es: {
+      privacidad: 'La cámara se usa solo en tu celular: no graba ni envía nada.',
       vista: 'Vista 3D del plato', cerrar: 'Cerrar vista 3D', ayuda: 'Tocá tu mesa para apoyar el plato · Tocá otro lugar para moverlo · Arrastrá para girarlo · Pellizcá para agrandar',
       ar: 'Ver en tu mesa (AR)', preparandoAR: 'Preparando AR…', foto: '📷 Foto de tu mesa', centrar: 'Centrar',
       apuntaAR: 'Apuntá a la mesa y mové un poco el celular hasta que aparezca el plato.', apunta: 'Apuntá a tu mesa y tocá la pantalla para colocar el plato',
@@ -101,6 +103,7 @@
       noInicia: 'No se pudo iniciar el visor 3D en este dispositivo.', sinModelo: 'Este plato todavía no tiene modelo 3D.', noCarga: 'No se pudo cargar el plato en 3D. Revisá tu conexión e intentá de nuevo.'
     },
     en: {
+      privacidad: 'The camera is only used on your phone: nothing is recorded or sent.',
       vista: '3D view of the dish', cerrar: 'Close 3D view', ayuda: 'Tap your table to place the dish · Tap elsewhere to move it · Drag to turn it · Pinch to resize',
       ar: 'See it on your table (AR)', preparandoAR: 'Getting AR ready…', foto: '📷 Photo of your table', centrar: 'Center',
       apuntaAR: 'Point at the table and move your phone a little until the dish appears.', apunta: 'Point at your table and tap the screen to place the dish',
@@ -116,13 +119,14 @@
   ov.innerHTML =
     '<video playsinline muted autoplay></video><img class="a-bg" alt=""><canvas></canvas>' +
     '<input type="file" id="a-file" accept="image/*" capture="environment" hidden>' +
-    '<div class="a-top"><button class="a-x">✕</button><div><b id="a-t"></b><small id="a-ayuda"></small></div></div>' +
+    '<div class="a-top"><button class="a-x">✕</button><div><b id="a-t"></b><small id="a-ayuda"></small><small id="a-priv" class="a-priv"></small></div></div>' +
     '<div class="a-msg" hidden></div>' +
     '<div class="a-bot"><button id="a-ar" class="p" hidden></button><button id="a-photo"></button><button id="a-reset"></button></div>';
   document.body.appendChild(ov);
   function textosVisor() {
     ov.setAttribute('aria-label', v('vista')); ov.querySelector('.a-x').setAttribute('aria-label', v('cerrar'));
     ov.querySelector('#a-ayuda').textContent = v('ayuda'); ov.querySelector('#a-ar').textContent = v('ar');
+    ov.querySelector('#a-priv').textContent = '🔒 ' + v('privacidad');
     ov.querySelector('#a-photo').textContent = v('foto'); ov.querySelector('#a-reset').textContent = v('centrar');
   }
   textosVisor();

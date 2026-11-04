@@ -16,6 +16,9 @@ window.GitHub = (function () {
     return fetch(API + ruta, { method: opciones.method || 'GET', headers: h, body: opciones.body ? JSON.stringify(opciones.body) : undefined })
       .then(function (r) {
         if (r.status === 404 && opciones.permitir404) return null;
+        /* mensajes claros para los problemas más comunes con el token */
+        if (r.status === 401) throw new Error('Tu conexión con GitHub venció o el token se borró. Creá uno nuevo (github.com/settings/personal-access-tokens/new) y pegalo en el administrador, en "Conexión para publicar".');
+        if (r.status === 403 && !opciones.permitir404) throw new Error('El token no tiene permiso para publicar en este proyecto. Revisá que tenga "Contents: Read and write" sobre menu-3d-publico.');
         if (!r.ok) return r.text().then(function (t) { throw new Error('GitHub ' + r.status + ': ' + t.slice(0, 200)); });
         return opciones.accept === 'application/vnd.github.raw' ? r.text() : r.json();
       });
@@ -29,8 +32,15 @@ window.GitHub = (function () {
     });
   }
 
-  /* lee un archivo de texto del repo (null si no existe) */
-  function leer(ruta) { return pedir('/contents/' + ruta + '?ref=' + RAMA, { accept: 'application/vnd.github.raw', permitir404: true }); }
+  /* lee un archivo de texto del repo (null si no existe); "version" es un commit anterior (opcional) */
+  function leer(ruta, version) { return pedir('/contents/' + ruta + '?ref=' + (version || RAMA), { accept: 'application/vnd.github.raw', permitir404: true }); }
+
+  /* versiones publicadas de un archivo, de la más nueva a la más vieja: [{ version, fecha, mensaje }] */
+  function historial(ruta) {
+    return pedir('/commits?path=' + encodeURIComponent(ruta) + '&sha=' + RAMA + '&per_page=30').then(function (l) {
+      return l.map(function (c) { return { version: c.sha, fecha: c.commit.author.date, mensaje: c.commit.message.split('\n')[0] }; });
+    });
+  }
 
   function base64Texto(s) {
     var b = new TextEncoder().encode(s), t = '';
@@ -82,5 +92,5 @@ window.GitHub = (function () {
     });
   }
 
-  return { REPO: REPO, token: token, guardarToken: guardarToken, probar: probar, leer: leer, listar: listar, publicar: publicar };
+  return { REPO: REPO, token: token, guardarToken: guardarToken, probar: probar, leer: leer, historial: historial, listar: listar, publicar: publicar };
 })();

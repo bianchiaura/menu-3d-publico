@@ -52,7 +52,12 @@
   }
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function url(r) { return /^(https?:|data:|\/)/.test(r) ? r : base + r; }
+  /* rutas de fotos y links: nunca "javascript:" ni nada raro, aunque alguien lo escriba en el menu.json */
+  function url(r) {
+    r = String(r || '');
+    if (/^\s*(javascript|vbscript|data:text)/i.test(r)) return '#';
+    return /^(https?:|data:image\/|\/)/.test(r) ? r : base + r;
+  }
   function precio(n) { return (M.moneda || '$') + ' ' + Number(n).toLocaleString('es-AR'); }
   function visibles() { return M.platos.filter(function (d) { return !d.oculto; }); }
 

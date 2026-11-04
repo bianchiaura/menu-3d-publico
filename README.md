@@ -95,3 +95,7 @@ Brasa & Grano tiene a **Brasita**, una brasa con cara. Código: `motor/mascota.j
 - **Inglés**: con un bloque `"en"` en el `menu.json` (categorías, platos, info y frases de la mascota) aparece el botón **EN/ES**; si el celular no está en español, arranca en inglés. En el panel, cada plato tiene "Inglés (opcional)".
 - **Compartir** (`motor/compartir.js`): al publicar, el panel genera `compartir.jpg` (foto + nombre + "Menú con platos en 3D") y la página del local, para que el link se vea con imagen en WhatsApp.
 - **Paneles**: los borradores se guardan en IndexedDB (`motor/almacen.js`, sin el límite de 5 MB); avisan si alguien publicó mientras se editaba; se pueden ordenar platos y categorías, borrar categorías y, desde el administrador, eliminar un local (pide escribir su nombre).
+
+## Supabase (en preparación)
+
+En `supabase/` están los archivos para activar el login de cada local y las estadísticas: `LEEME.md` (pasos), `1-esquema.sql`, `2-hacerme-admin.sql` y `3-funcion-panel.ts`.

@@ -73,6 +73,13 @@
         '<li>Pegalo acá abajo y tocá <b>Conectar</b>. Queda guardado solo en este navegador; no lo compartas.</li></ol>' +
         '<form class="form" id="ftoken" style="margin-top:12px" onsubmit="return false"><label>Token<input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></label>' +
         '<div><button class="b p" id="conectar">Conectar</button> <span id="tmsg" style="margin-left:8px;font-size:.88rem"></span></div></form>';
+    /* con token guardado, se comprueba que siga sirviendo (por si venció) */
+    if (hay) GitHub.probar().catch(function (e) {
+      var aviso = '<b style="color:var(--mal)">⚠ La conexión dejó de funcionar.</b> ' + e.message.replace(/</g, '&lt;') +
+        ' <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token nuevo</a>';
+      document.getElementById('aviso').innerHTML = aviso;
+      c.querySelector('p').innerHTML = aviso;
+    });
     var d = document.getElementById('desconectar');
     if (d) d.onclick = function () {
       /* sin ventanita del navegador: el primer toque pregunta, el segundo desconecta */

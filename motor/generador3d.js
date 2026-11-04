@@ -156,6 +156,7 @@
     var sel = 0, principal = 0, arr = null, modo = null, resultado = null, frenar = null;
     cont.innerHTML =
       '<div class="gen">' +
+      '<p class="gen-ayuda">La primera vez el generador baja unos 25 MB: conviene usar Wi-Fi. Después tarda unos segundos por plato.</p>' +
       '<p class="gen-ayuda">Tocá cada foto e indicá qué es. En la <b>de arriba</b>, encerrá el plato con la elipse. En cada <b>de costado</b>, ajustá el recuadro: de borde a borde del plato y desde la base del plato hasta lo más alto de la comida.</p>' +
       '<div class="gen-fotos"></div>' +
       '<div class="gen-rol" role="group" aria-label="Tipo de foto"><span>Esta foto es:</span><button type="button" data-rol="arriba">De arriba</button><button type="button" data-rol="costado">De costado</button></div>' +
