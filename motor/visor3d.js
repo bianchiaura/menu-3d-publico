@@ -107,7 +107,7 @@
   /* Centrar: el plato vuelve al medio de la pantalla, apoyado en la mesa, derecho y con su tamaño original */
   ov.querySelector('#a-reset').onclick = function () {
     if (!S) return;
-    S.spin.quaternion.identity();
+    S.yaw = 0; S.incl = 0;
     if (S.gyro) placeAt(innerWidth / 2, innerHeight / 2); else resetView();
   };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov.classList.contains('open')) close3D(); });
@@ -116,9 +116,19 @@
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function camDist() { var asp = innerWidth / innerHeight; return Math.max(3.6, 3.45 / asp); }
 
+  /* giro del plato: vuelta completa sobre su eje vertical, pero inclinación limitada
+     (se puede acercar hacia vos para ver mejor, no dar vuelta hasta ver la parte de abajo) */
+  var INCL_MIN = -.12, INCL_MAX = .6;
+  function aplicarGiro() {
+    var eje = S.eje.set(1, 0, 0).applyQuaternion(S.cam.quaternion); eje.y = 0;
+    if (eje.lengthSq() < 1e-4) eje.set(1, 0, 0);
+    eje.normalize();
+    S.spin.quaternion.setFromAxisAngle(eje, S.incl).multiply(S.qy.setFromAxisAngle(S.arriba, S.yaw));
+  }
+
   function resetView() {
     S.elev = .55; S.holder.position.set(0, 0, 0); S.scale = 1; S.base = 1; S.holder.visible = true;
-    S.spin.quaternion.identity(); S.auto = true; S.calib = true; applyScale();
+    S.yaw = 0; S.incl = 0; S.auto = true; S.calib = true; applyScale();
   }
   function onResize() {
     if (!S) return;
@@ -149,7 +159,7 @@
     spin.add(model); holder.add(spin); scene.add(holder);
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.ShadowMaterial({ opacity: .38 }));
     ground.rotation.x = -Math.PI / 2; ground.position.y = -.001; ground.receiveShadow = true; holder.add(ground);
-    S = { renderer: r, scene: scene, cam: cam, holder: holder, spin: spin, elev: .55, dist: camDist(), scale: 1, auto: true, raf: 0, ptr: new Map(), sun: sun, qa: new THREE.Quaternion(), base: 1, placed: false, gyro: false, calib: true, qd: new THREE.Quaternion(), Y0: new THREE.Quaternion() };
+    S = { renderer: r, scene: scene, cam: cam, holder: holder, spin: spin, elev: .55, dist: camDist(), scale: 1, auto: true, raf: 0, ptr: new Map(), sun: sun, qa: new THREE.Quaternion(), base: 1, placed: false, gyro: false, calib: true, qd: new THREE.Quaternion(), Y0: new THREE.Quaternion(), yaw: 0, incl: 0, qy: new THREE.Quaternion(), eje: new THREE.Vector3(), arriba: new THREE.Vector3(0, 1, 0) };
     resetView(); bindGestures();
     (function loop() {
       if (!S) return;
@@ -164,6 +174,7 @@
         S.cam.position.set(0, Math.sin(S.elev) * S.dist, Math.cos(S.elev) * S.dist);
         S.cam.lookAt(0, .25, 0);
       }
+      aplicarGiro();
       S.renderer.render(S.scene, S.cam);
     })();
   }
@@ -179,9 +190,9 @@
       var p = P.get(e.pointerId); if (!p || !S) return;
       var dx = e.clientX - p.x, dy = e.clientY - p.y;
       if (P.size === 1) {
-        /* girar libre: izquierda/derecha sobre el eje vertical, arriba/abajo inclinando hacia vos */
-        S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(0, 1, 0), dx * .01));
-        S.spin.quaternion.premultiply(S.qa.setFromAxisAngle(new THREE.Vector3(1, 0, 0).applyQuaternion(S.cam.quaternion), dy * .01));
+        /* izquierda/derecha: vuelta completa; arriba/abajo: inclinar, con tope para no ver la parte de abajo */
+        S.yaw += dx * .01;
+        S.incl = clamp(S.incl + dy * .01, INCL_MIN, INCL_MAX);
       } else if (P.size === 2) {
         var o = null; P.forEach(function (v, k) { if (k !== e.pointerId) o = v; });
         var d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.clientX - o.x, e.clientY - o.y);

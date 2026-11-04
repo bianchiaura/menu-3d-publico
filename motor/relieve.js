@@ -59,6 +59,22 @@ window.Menu3DRelieve = function (THREE, m, base) {
     /* la foto ya trae su propia luz: se usa un material que la respeta y suma un poco de sombra por el volumen */
     var mat = new THREE.MeshStandardMaterial({ map: tex, roughness: .9, metalness: 0, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .55 });
     var grupo = new THREE.Group(); grupo.add(new THREE.Mesh(geo, mat));
+    /* base cerrada abajo, del color del borde del plato: si se llega a ver desde un ángulo bajo, parece la base de un plato real */
+    var base = new THREE.Mesh(new THREE.CircleGeometry(1, S), new THREE.MeshStandardMaterial({ color: colorBorde(foto), roughness: .85 }));
+    base.rotation.x = Math.PI / 2; base.position.y = .001; grupo.add(base);
     return grupo;
   });
+  /* color promedio del anillo exterior de la foto (el borde del plato) */
+  function colorBorde(foto) {
+    var c = document.createElement('canvas'), N = 48; c.width = c.height = N;
+    var g = c.getContext('2d'); g.drawImage(foto, 0, 0, N, N);
+    var d = g.getImageData(0, 0, N, N).data, r = 0, gr = 0, b = 0, n = 0;
+    for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+      var dx = (x + .5) / N * 2 - 1, dy = (y + .5) / N * 2 - 1, q = Math.sqrt(dx * dx + dy * dy);
+      if (q < .86 || q > .97) continue;
+      var k = (y * N + x) * 4; r += d[k]; gr += d[k + 1]; b += d[k + 2]; n++;
+    }
+    if (!n) return 0xeeeeee;
+    return new THREE.Color(r / n / 255, gr / n / 255, b / n / 255).convertSRGBToLinear().multiplyScalar(.82);
+  }
 };
