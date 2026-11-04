@@ -71,12 +71,19 @@
   <div class="cuerpo" id="gen3d"></div>
 </dialog>
 
+<dialog id="dlg-aviso" style="max-width:460px">
+  <div class="cuerpo"><h2 style="font-size:1.15rem;margin-bottom:10px"></h2><p style="color:var(--suave)"></p></div>
+  <div class="pie" style="flex-wrap:wrap;justify-content:flex-end"></div>
+</dialog>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="../motor/qr.js"></script>
 <script src="../motor/cargar-three.js"></script>
 <script src="../motor/relieve.js"></script>
 <script src="../motor/generador3d.js"></script>
 <script src="../motor/github.js"></script>
+<script src="../motor/almacen.js"></script>
+<script src="../motor/compartir.js"></script>
 <script>
 (function () {
   'use strict';
@@ -115,14 +122,38 @@
     });
   }
 
-  /* cada cambio se guarda como borrador en este navegador */
+  /* cada cambio se guarda como borrador en este navegador (almacen.js: sin el límite chico de antes).
+     El borrador recuerda desde qué versión publicada empezó ("desde"), para avisar si otro publicó en el medio. */
+  var desde = '', pendiente = null;
   function guardar() {
-    var s = JSON.stringify(M);
-    try { if (s === original) localStorage.removeItem(clave()); else localStorage.setItem(clave(), s); }
-    catch (e) { toast('No hay más espacio en el navegador: probá con fotos más chicas'); }
-    var sucio = s !== original;
+    var s = JSON.stringify(M), sucio = s !== original;
     $('#estado').textContent = sucio ? (nuevo ? 'Local sin publicar' : 'Cambios sin publicar') : 'Sin cambios';
     $('#estado').classList.toggle('sucio', sucio);
+    clearTimeout(pendiente);
+    pendiente = setTimeout(function () { /* se espera un instante para no guardar en cada tecla */
+      (sucio ? Almacen.guardar(clave(), JSON.stringify({ desde: desde, menu: M })) : Almacen.borrar(clave()))
+        .catch(function () { toast('No se pudo guardar el borrador en este navegador'); });
+      if (nuevo) Almacen.guardar('menu3d-borrador:' + raiz + 'plantilla/menu.json', JSON.stringify({ menu: M })); /* para la vista previa */
+    }, 400);
+  }
+  /* compara dos versiones del menú sin los datos internos del panel */
+  function igual(a, b) {
+    function limpio(t) { var o = JSON.parse(t); ['_estado', '_carpeta', '_carpetaTocada', 'base'].forEach(function (k) { delete o[k]; }); return JSON.stringify(o); }
+    try { return limpio(a) === limpio(b); } catch (e) { return false; }
+  }
+  /* ventana de aviso con opciones; devuelve una promesa con la opción elegida */
+  function preguntar(titulo, texto, opciones) {
+    return new Promise(function (ok) {
+      var d = $('#dlg-aviso');
+      d.querySelector('h2').textContent = titulo; d.querySelector('p').textContent = texto;
+      var pie = d.querySelector('.pie'); pie.innerHTML = '';
+      opciones.forEach(function (o) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'b' + (o.p ? ' p' : '') + (o.mal ? ' mal' : ''); b.textContent = o.texto;
+        b.onclick = function () { d.close(); ok(o.valor); }; pie.appendChild(b);
+      });
+      d.oncancel = function () { ok(null); };
+      d.showModal();
+    });
   }
 
   function cabecera() {
@@ -156,6 +187,7 @@
             '<div class="ctrl"><input class="precio" type="number" min="0" step="50" value="' + esc(p.precio) + '" aria-label="Precio de ' + esc(p.nombre) + '" data-precio>' +
             '<label class="sw"><input type="checkbox" data-hay' + (p.agotado ? '' : ' checked') + '> Hay stock</label>' +
             '<label class="sw"><input type="checkbox" data-vis' + (p.oculto ? '' : ' checked') + '> Visible</label>' +
+            '<span class="orden"><button class="b" data-mover="-1" aria-label="Subir ' + esc(p.nombre) + '">↑</button><button class="b" data-mover="1" aria-label="Bajar ' + esc(p.nombre) + '">↓</button></span>' +
             '<button class="b" data-editar>Editar</button></div></div>';
         }).join('') + '</section>';
     }).join('');
@@ -248,7 +280,12 @@
       '<div><b style="font-size:.88rem">Medios de pago</b><div class="checks" style="margin-top:6px">' + casillas('pago', PAGOS, i.pagos) + '</div></div>' +
       '<div><b style="font-size:.88rem">Servicios</b><div class="checks" style="margin-top:6px">' + casillas('servicio', SERVICIOS, i.servicios) + '</div></div>' +
       '<h3 style="font-size:1.05rem;margin-top:6px">Categorías</h3><div style="display:grid;gap:8px">' +
-      M.categorias.map(function (k, n) { return '<input type="text" data-cat="' + n + '" value="' + esc(k.nombre) + '" aria-label="Nombre de categoría">'; }).join('') +
+      M.categorias.map(function (k, n) {
+        return '<div class="cat-fila"><input type="text" data-cat="' + n + '" value="' + esc(k.nombre) + '" aria-label="Nombre de categoría">' +
+          '<button type="button" class="b" data-cat-mover="-1" data-n="' + n + '" aria-label="Subir categoría ' + esc(k.nombre) + '"' + (n ? '' : ' disabled') + '>↑</button>' +
+          '<button type="button" class="b" data-cat-mover="1" data-n="' + n + '" aria-label="Bajar categoría ' + esc(k.nombre) + '"' + (n < M.categorias.length - 1 ? '' : ' disabled') + '>↓</button>' +
+          '<button type="button" class="b mal" data-cat-borrar="' + n + '" aria-label="Borrar categoría ' + esc(k.nombre) + '">Borrar</button></div>';
+      }).join('') +
       '</div><div><button type="button" class="b" data-nueva-cat>+ Agregar categoría</button></div></form>';
     logoPrev();
     $('#fdatos').oninput = function (e) {
@@ -368,7 +405,36 @@
     else if (t.closest('[data-cancel-cat]')) mostrar();
     else if (t.closest('[data-nuevo]')) abrir(null, t.closest('[data-nuevo]').dataset.nuevo);
     else if (t.closest('[data-editar]')) abrir(plato(t));
+    else if (t.closest('[data-mover]')) moverPlato(plato(t), +t.closest('[data-mover]').dataset.mover);
+    else if (t.closest('[data-cat-mover]')) { var b = t.closest('[data-cat-mover]'); moverCategoria(+b.dataset.n, +b.dataset.catMover); }
+    else if (t.closest('[data-cat-borrar]')) borrarCategoria(+t.closest('[data-cat-borrar]').dataset.catBorrar);
   });
+  /* ordenar: un plato sube o baja dentro de su categoría; una categoría sube o baja en la lista */
+  function moverPlato(p, dir) {
+    var i = M.platos.indexOf(p), j = i + dir;
+    while (j >= 0 && j < M.platos.length && M.platos[j].categoria !== p.categoria) j += dir;
+    if (j < 0 || j >= M.platos.length) return;
+    M.platos[i] = M.platos[j]; M.platos[j] = p;
+    guardar(); vistaPlatos();
+    var f = document.querySelector('[data-id="' + p.id + '"] [data-mover="' + dir + '"]'); if (f) f.focus();
+  }
+  function moverCategoria(n, dir) {
+    var m = n + dir; if (m < 0 || m >= M.categorias.length) return;
+    var c = M.categorias[n]; M.categorias[n] = M.categorias[m]; M.categorias[m] = c;
+    guardar(); vistaDatos();
+  }
+  function borrarCategoria(n) {
+    var c = M.categorias[n], suyos = M.platos.filter(function (p) { return p.categoria === c.id; });
+    var hacer = function () {
+      M.categorias.splice(n, 1);
+      M.platos = M.platos.filter(function (p) { return p.categoria !== c.id; });
+      guardar(); mostrar(); toast('Categoría "' + c.nombre + '" borrada');
+    };
+    if (!suyos.length) { hacer(); return; }
+    preguntar('Borrar "' + c.nombre + '"', 'Esta categoría tiene ' + suyos.length + (suyos.length === 1 ? ' plato' : ' platos') + '. Si la borrás, se borran también. Si querés conservarlos, primero pasalos a otra categoría desde "Editar".',
+      [{ texto: 'Cancelar', valor: 'no' }, { texto: 'Borrar categoría y platos', valor: 'si', mal: true }])
+      .then(function (r) { if (r === 'si') hacer(); });
+  }
   $('#vista').addEventListener('keydown', function (e) {
     if (!e.target.hasAttribute('data-cat-nueva')) return;
     if (e.key === 'Enter') { e.preventDefault(); nuevaCategoria(e.target.value); }
@@ -403,12 +469,16 @@
     archivos.push({ ruta: dir + 'menu.json', texto: JSON.stringify(m, null, 2) + '\n' });
     return { menu: m, archivos: archivos };
   }
-  function paginaLocal(m) {
-    var n = esc(m.nombre), color = (m.colores && m.colores.claro && m.colores.claro.acento) || '#b5832f';
+  /* página de entrada del local; "imagen" es la tarjeta para compartir (con ?v= para que WhatsApp tome la nueva) */
+  function paginaLocal(m, dir, version) {
+    var n = esc(m.nombre), color = (m.colores && m.colores.claro && m.colores.claro.acento) || '#b5832f', url = raiz + dir + '/';
     return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
-      '<!-- Datos para cuando se comparte el link (WhatsApp, etc.). El menú en sí está en menu.json -->\n' +
+      '<!-- Datos para cuando se comparte el link (WhatsApp, etc.). El menú en sí está en menu.json. Esta página la genera el panel al publicar -->\n' +
       '<title>' + n + ' · Menú 3D</title>\n<meta name="description" content="Menú digital con platos en 3D. Escaneá el QR o acercá el celular al NFC y mirá cada plato sobre tu mesa.">\n' +
+      '<meta property="og:type" content="website">\n<meta property="og:url" content="' + esc(url) + '">\n' +
       '<meta property="og:title" content="' + n + ' · Menú 3D">\n<meta property="og:description" content="Mirá cada plato en 3D sobre tu mesa antes de elegir.">\n' +
+      '<meta property="og:image" content="' + esc(url + 'compartir.jpg?v=' + version) + '">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n' +
+      '<meta name="twitter:card" content="summary_large_image">\n' +
       '<meta name="theme-color" content="' + esc(color) + '">\n' +
       '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">\n' +
       '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">\n' +
@@ -428,8 +498,17 @@
     if (!M.platos.length) { falta('Para publicar, agregá al menos un plato', 'platos'); return; }
     var bot = this; bot.disabled = true; $('#estado').textContent = 'Publicando…';
     var paq = empaquetar();
-    (nuevo ? GitHub.leer(dirLocal + '/menu.json') : Promise.resolve(null)).then(function (existe) {
-      if (existe) throw new Error('Ya existe un local con la carpeta "' + dirLocal + '"');
+    GitHub.leer(dirLocal + '/menu.json').then(function (actual) {
+      if (nuevo) { if (actual) throw new Error('Ya existe un local con la carpeta "' + dirLocal + '"'); return; }
+      /* ¿alguien publicó este menú después de que empezaste a editarlo? */
+      if (actual && desde && !igual(actual, desde)) return preguntar('Alguien publicó cambios en este menú',
+        'Desde que empezaste a editar, se publicó otra versión (desde otro celular, otra compu o el panel del local). Si publicás lo tuyo, esos cambios se pierden.',
+        [{ texto: 'Cancelar', valor: 'no' }, { texto: 'Ver lo publicado (descarto lo mío)', valor: 'ver', mal: true }, { texto: 'Publicar igual', valor: 'si', p: true }])
+        .then(function (r) {
+          if (r === 'ver') { Almacen.borrar(clave()).then(function () { location.reload(); }); throw 'cancelado'; }
+          if (r !== 'si') throw 'cancelado';
+        });
+    }).then(function () {
       return GitHub.leer('locales.json');
     }).then(function (txt) {
       var locs = txt ? JSON.parse(txt) : [], ent = locs.filter(function (l) { return l.carpeta === dirLocal; })[0];
@@ -437,20 +516,26 @@
       ent.nombre = M.nombre; ent.estado = M._estado || ent.estado || 'prototipo';
       if (M.identidad) ent.nota = M.identidad;
       paq.archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
-      if (nuevo) paq.archivos.push({ ruta: dirLocal + '/index.html', texto: paginaLocal(paq.menu) });
+      /* tarjeta para compartir por WhatsApp y página de entrada, siempre al día con el menú */
+      $('#estado').textContent = 'Armando la imagen para compartir…';
+      return Compartir.tarjeta(M, link()).then(function (img) {
+        var v = Date.now().toString(36);
+        paq.archivos.push({ ruta: dirLocal + '/compartir.jpg', dataUrl: img });
+        paq.archivos.push({ ruta: dirLocal + '/index.html', texto: paginaLocal(paq.menu, dirLocal, v) });
+      });
+    }).then(function () {
       return GitHub.publicar(paq.archivos, (nuevo ? 'Crea el local ' : 'Actualiza el menú de ') + M.nombre, function (t) { $('#estado').textContent = t; });
     }).then(function () {
-      try { localStorage.removeItem(clave()); } catch (e) {}
-      if (nuevo) { location.replace('./?local=' + encodeURIComponent(dirLocal) + '&publicado=1'); return; }
-      paq.menu._estado = M._estado; M = paq.menu; original = JSON.stringify(M); guardar(); mostrar();
+      clearTimeout(pendiente);
+      return Almacen.borrar(clave());
+    }).then(function () {
+      if (nuevo) { Almacen.borrar('menu3d-borrador:' + raiz + 'plantilla/menu.json'); location.replace('./?local=' + encodeURIComponent(dirLocal) + '&publicado=1'); return; }
+      paq.menu._estado = M._estado; M = paq.menu; original = desde = JSON.stringify(M); guardar(); mostrar();
       toast('¡Publicado! En 1 o 2 minutos se ve en el menú.');
     }).catch(function (e) {
+      if (e === 'cancelado') { guardar(); return; }
       console.error(e); falta('No se pudo publicar: ' + e.message);
     }).then(function () { bot.disabled = false; });
-  };
-  $('#previa').onclick = function () {
-    if (!nuevo) return;
-    try { localStorage.setItem('menu3d-borrador:' + raiz + 'plantilla/menu.json', JSON.stringify(M)); } catch (e) {}
   };
   $('#bajar').onclick = function () {
     var a = document.createElement('a'), m = JSON.parse(JSON.stringify(M));
@@ -460,18 +545,30 @@
   };
   $('#descartar').onclick = function () {
     confirmar(this, '¿Seguro? Tocá de nuevo', function () {
-      M = JSON.parse(original); guardar(); cabecera(); mostrar(); toast(nuevo ? 'Se borró lo cargado' : 'Cambios descartados');
+      M = JSON.parse(original); desde = original; guardar(); cabecera(); mostrar(); toast(nuevo ? 'Se borró lo cargado' : 'Cambios descartados');
     });
   };
 
   /* ---------- carga ---------- */
   function arrancar(m, estado) {
     if (!nuevo && admin && estado) m._estado = estado;
-    original = JSON.stringify(m);
-    var b = null; try { b = localStorage.getItem(clave()); } catch (e) {}
-    M = b ? JSON.parse(b) : m;
-    marcarTab(); cabecera(); guardar(); mostrar();
-    if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');
+    original = desde = JSON.stringify(m);
+    Almacen.leer(clave()).then(function (b) {
+      var d = null; try { d = b && JSON.parse(b); } catch (e) {}
+      if (d && !d.menu) d = { desde: '', menu: d }; /* borrador del formato anterior */
+      M = d ? d.menu : m;
+      if (d && d.desde) desde = d.desde;
+      marcarTab(); cabecera(); guardar(); mostrar();
+      if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');
+      /* el borrador empezó sobre una versión que ya no es la publicada */
+      if (!nuevo && d && d.desde && !igual(d.desde, original)) preguntar('El menú cambió desde tu borrador',
+        'Tenés cambios sin publicar, pero mientras tanto alguien publicó otra versión de este menú. ¿Con cuál seguís?',
+        [{ texto: 'Seguir con mi borrador', valor: 'mio', p: true }, { texto: 'Descartar mi borrador', valor: 'otro', mal: true }])
+        .then(function (r) {
+          if (r === 'otro') { M = JSON.parse(original); desde = original; guardar(); cabecera(); mostrar(); toast('Se descartó tu borrador'); }
+          else if (r === 'mio') { desde = original; guardar(); } /* elegiste pisar lo publicado: ya no avisa al publicar */
+        });
+    });
   }
   if (nuevo) {
     arrancar({ nombre: '', subtitulo: 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa', identidad: '', tipografia: 'clasica', logo: '', prototipo: true, moneda: '$',
@@ -480,10 +577,13 @@
     return;
   }
   if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }
-  Promise.all([
-    fetch(raiz + carpeta + '/menu.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }),
-    fetch(raiz + 'locales.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
-  ]).then(function (r) {
+  /* con la conexión de administrador se lee directo de GitHub (lo último publicado, sin la demora de la página) */
+  function leerJson(ruta, siFalla) {
+    var web = function () { return fetch(raiz + ruta, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); };
+    var p = GitHub.token() ? GitHub.leer(ruta).then(function (t) { if (t == null) throw new Error('404'); return JSON.parse(t); }).catch(web) : web();
+    return siFalla === undefined ? p : p.catch(function () { return siFalla; });
+  }
+  Promise.all([leerJson(carpeta + '/menu.json'), leerJson('locales.json', [])]).then(function (r) {
     var ent = r[1].filter(function (l) { return l.carpeta === carpeta; })[0];
     arrancar(r[0], ent && ent.estado);
   }).catch(function () {

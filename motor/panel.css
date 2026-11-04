@@ -127,3 +127,9 @@ html.modo-compu .grilla{grid-template-columns:repeat(auto-fill,minmax(320px,1fr)
 html.modo-compu .form{max-width:760px}
 html.modo-compu .form .fila2{grid-template-columns:1fr 1fr}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--texto);color:var(--fondo);padding:10px 16px;border-radius:12px;font-weight:600;z-index:30}
+/* ordenar platos y categorías */
+.orden{display:inline-flex;gap:4px}
+.orden .b{min-width:40px;justify-content:center;padding:8px 10px}
+.cat-fila{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center}
+.cat-fila .b{min-width:40px;justify-content:center}
+.b:disabled{opacity:.35;cursor:default}

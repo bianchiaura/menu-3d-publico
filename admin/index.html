@@ -23,6 +23,13 @@
   <a class="b p" href="../panel/?nuevo">+ Nuevo local</a>
   <div class="vista" id="vista-ctrl"></div>
 </div></div>
+<dialog id="dlg-eliminar" style="max-width:460px"><div class="cuerpo form">
+  <h2 style="font-size:1.15rem">Eliminar local</h2>
+  <p style="color:var(--suave)">Se borra su menú, sus fotos y su link deja de funcionar (su QR también). Queda guardado en el historial de GitHub por si hay que recuperarlo.</p>
+  <label>Para confirmar, escribí <b class="nombre"></b><input type="text" autocomplete="off" autocapitalize="off"></label>
+  <p class="msg" style="font-size:.88rem;color:var(--mal)"></p>
+  <p style="display:flex;gap:8px;justify-content:flex-end"><button class="b" data-no>Cancelar</button><button class="b p mal" data-ok disabled>Eliminar</button></p>
+</div></dialog>
 <dialog id="dlg-ios"><div class="cuerpo">
   <h2 style="font-size:1.15rem;margin-bottom:10px">Instalar en iPhone o iPad</h2>
   <ol class="pasos"><li>Abrí este panel en <b>Safari</b>.</li><li>Tocá el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li><li>Elegí <b>Agregar a pantalla de inicio</b> y tocá <b>Agregar</b>.</li></ol>
@@ -97,6 +104,32 @@
     else document.getElementById('dlg-ios').showModal();
   };
 
+  /* ---------- eliminar un local (queda en el historial de GitHub por si hay que recuperarlo) ---------- */
+  function eliminar(l) {
+    var d = document.getElementById('dlg-eliminar'), inp = d.querySelector('input'), ok = d.querySelector('[data-ok]'), msg = d.querySelector('.msg');
+    d.querySelector('b.nombre').textContent = l.carpeta; inp.value = ''; ok.disabled = true; msg.textContent = '';
+    inp.oninput = function () { ok.disabled = inp.value.trim() !== l.carpeta; };
+    d.querySelector('[data-no]').onclick = function () { d.close(); };
+    ok.onclick = function () {
+      ok.disabled = true; msg.textContent = 'Revisando…';
+      fetch(raiz + 'index.html', { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (h) {
+        /* el link principal (el de tu QR) muestra un local: ese no se puede borrar desde acá */
+        if (h.indexOf('data-menu="' + l.carpeta + '/') >= 0) throw new Error('Es el local que muestra tu link principal; no se puede eliminar desde acá.');
+        return Promise.all([GitHub.listar(l.carpeta), GitHub.leer('locales.json')]);
+      }).then(function (r) {
+        var locs = JSON.parse(r[1] || '[]').filter(function (x) { return x.carpeta !== l.carpeta; });
+        var archivos = r[0].map(function (p) { return { ruta: p, borrar: true }; });
+        archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
+        msg.textContent = 'Eliminando…';
+        return GitHub.publicar(archivos, 'Elimina el local ' + (l.nombre || l.carpeta), function (t) { msg.textContent = t; });
+      }).then(function () {
+        msg.textContent = 'Listo: en 1 o 2 minutos desaparece su link.';
+        setTimeout(function () { location.reload(); }, 1500);
+      }).catch(function (err) { msg.textContent = '⚠ ' + err.message; ok.disabled = false; });
+    };
+    d.showModal();
+  }
+
   /* ---------- locales ---------- */
   json(raiz + 'locales.json').then(function (locs) {
     return Promise.all(locs.map(function (l) {
@@ -118,12 +151,14 @@
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
         '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
         '<button class="b" data-qr="' + i + '">Descargar QR</button>' +
-        '<button class="b" data-copiar="' + i + '">Copiar link</button></div></article>';
+        '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
+        (GitHub.token() ? '<button class="b mal" data-eliminar="' + i + '">Eliminar</button>' : '') + '</div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
     document.getElementById('locales').onclick = function (e) {
       var q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
       if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
       if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
+      var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
     };
   }).catch(function (e) {
     console.error(e);

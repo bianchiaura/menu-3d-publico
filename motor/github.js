@@ -46,7 +46,14 @@ window.GitHub = (function () {
       .then(function (u) { return { name: u.login, email: u.id + '+' + u.login + '@users.noreply.github.com' }; });
   }
 
-  /* archivos: [{ ruta, texto }] o [{ ruta, dataUrl }] */
+  /* lista los archivos del repo que están dentro de una carpeta */
+  function listar(carpeta) {
+    return pedir('/git/trees/' + RAMA + '?recursive=1').then(function (t) {
+      return t.tree.filter(function (x) { return x.type === 'blob' && x.path.indexOf(carpeta + '/') === 0; }).map(function (x) { return x.path; });
+    });
+  }
+
+  /* archivos: [{ ruta, texto }], [{ ruta, dataUrl }] o [{ ruta, borrar: true }] */
   function publicar(archivos, mensaje, aviso) {
     aviso = aviso || function () {};
     var padre, quien;
@@ -59,6 +66,7 @@ window.GitHub = (function () {
     }).then(function (commit) {
       var hechos = 0;
       return Promise.all(archivos.map(function (a) {
+        if (a.borrar) return { path: a.ruta, mode: '100644', type: 'blob', sha: null }; /* sha vacío = se borra */
         var contenido = a.dataUrl ? a.dataUrl.split(',')[1] : base64Texto(a.texto);
         return pedir('/git/blobs', { method: 'POST', body: { content: contenido, encoding: 'base64' } }).then(function (b) {
           aviso('Subiendo archivos… ' + (++hechos) + ' de ' + archivos.length);
@@ -74,5 +82,5 @@ window.GitHub = (function () {
     });
   }
 
-  return { REPO: REPO, token: token, guardarToken: guardarToken, probar: probar, leer: leer, publicar: publicar };
+  return { REPO: REPO, token: token, guardarToken: guardarToken, probar: probar, leer: leer, listar: listar, publicar: publicar };
 })();

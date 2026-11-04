@@ -171,19 +171,27 @@
     c.classList.add('destacado'); setTimeout(function () { c.classList.remove('destacado'); }, 2200);
   };
 
-  var src = document.body.getAttribute('data-menu') || 'menu.json';
+  var src = document.body.getAttribute('data-menu') || 'menu.json', yo = document.currentScript && document.currentScript.src;
   base = src.replace(/[^/]*$/, '');
-  if (/[?&]borrador\b/.test(location.search)) {
-    try {
-      var b = localStorage.getItem('menu3d-borrador:' + new URL(src, location.href).href);
-      if (b) { mostrar(JSON.parse(b), true); return; }
-    } catch (e) {}
+  function publicado() {
+    fetch(src, { cache: 'no-cache' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (m) { mostrar(m, false); })
+      .catch(function (e) {
+        if (window.console) console.error(e);
+        error('No se pudo cargar el menú. Revisá tu conexión y volvé a abrir la página.');
+      });
   }
-  fetch(src, { cache: 'no-cache' })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (m) { mostrar(m, false); })
-    .catch(function (e) {
-      if (window.console) console.error(e);
-      error('No se pudo cargar el menú. Revisá tu conexión y volvé a abrir la página.');
-    });
+  /* vista previa: el borrador lo guardó el panel con almacen.js, que se carga solo en este caso */
+  if (/[?&]borrador\b/.test(location.search) && yo) {
+    var s = document.createElement('script'); s.src = yo.replace(/menu\.js(\?.*)?$/, 'almacen.js');
+    s.onload = function () {
+      Almacen.leer('menu3d-borrador:' + new URL(src, location.href).href).then(function (b) {
+        var d = b && JSON.parse(b); if (d && d.menu) d = d.menu;
+        if (d) mostrar(d, true); else publicado();
+      }).catch(publicado);
+    };
+    s.onerror = publicado;
+    document.head.appendChild(s);
+  } else publicado();
 })();
