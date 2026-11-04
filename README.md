@@ -52,6 +52,11 @@ Lo que no aparece en ninguna foto no se puede inventar.
 
 Si es una demo con la marca de un local real, dejar activada la franja "Prototipo para…" y publicarla solo con permiso del local.
 
+## App en el celular y diseño de los paneles
+
+- **El administrador se instala como app:** abrirlo en el celular y tocar **📲 Instalar app** (Android/Chrome) o, en iPhone, Safari → Compartir → **Agregar a pantalla de inicio**. Queda con ícono propio y se abre a pantalla completa. Archivos: `admin/manifest.webmanifest`, `sw-admin.js` y `motor/iconos/`.
+- **Diseño y colores a elección:** en los dos paneles, arriba, hay dos selectores: diseño (automático, 🖥 computadora o 📱 celular/tablet) y colores (automáticos, ☀ claro u 🌙 oscuro). Se recuerdan en cada dispositivo (`motor/vista.js`).
+
 ## Los paneles hoy
 
 - Con GitHub conectado (administrador), **Publicar** sube los cambios directo.

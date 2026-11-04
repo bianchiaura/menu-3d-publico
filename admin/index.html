@@ -8,12 +8,26 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../motor/panel.css">
+<!-- para instalarlo como app en el celular -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#b5832f">
+<link rel="apple-touch-icon" href="../motor/iconos/icono-apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Menú 3D">
+<script src="../motor/vista.js"></script>
 </head>
 <body>
 <div class="barra"><div class="wrap">
   <h1>Menú 3D<small>Panel del administrador</small></h1>
+  <button class="b" id="instalar" hidden>📲 Instalar app</button>
   <a class="b p" href="../panel/?nuevo">+ Nuevo local</a>
+  <div class="vista" id="vista-ctrl"></div>
 </div></div>
+<dialog id="dlg-ios"><div class="cuerpo">
+  <h2 style="font-size:1.15rem;margin-bottom:10px">Instalar en iPhone o iPad</h2>
+  <ol class="pasos"><li>Abrí este panel en <b>Safari</b>.</li><li>Tocá el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li><li>Elegí <b>Agregar a pantalla de inicio</b> y tocá <b>Agregar</b>.</li></ol>
+  <p style="margin-top:14px"><button class="b p" onclick="this.closest('dialog').close()">Entendido</button></p>
+</div></dialog>
 
 <div class="wrap">
   <p class="aviso-demo" id="aviso"></p>
@@ -69,6 +83,19 @@
     };
   }
   conexion();
+
+  /* ---------- instalar como app ---------- */
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw-admin.js', { scope: '../' }).catch(function (e) { console.error(e); });
+  var instalar = document.getElementById('instalar'), pedido = null;
+  var yaInstalada = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!yaInstalada && ios) instalar.hidden = false;
+  addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); pedido = e; instalar.hidden = false; });
+  addEventListener('appinstalled', function () { instalar.hidden = true; });
+  instalar.onclick = function () {
+    if (pedido) { pedido.prompt(); pedido.userChoice.then(function () { pedido = null; instalar.hidden = true; }); }
+    else document.getElementById('dlg-ios').showModal();
+  };
 
   /* ---------- locales ---------- */
   json(raiz + 'locales.json').then(function (locs) {

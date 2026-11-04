@@ -60,7 +60,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .precio{width:110px;padding:7px 10px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo);text-align:right}
 .sw{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--suave);cursor:pointer;user-select:none}
 .sw input{width:18px;height:18px;accent-color:var(--acento)}
-@media (max-width:640px){.fila{grid-template-columns:44px 1fr}.mini{width:44px;height:44px}.fila .ctrl{grid-column:1/-1;justify-content:flex-start}}
+@media (max-width:640px){.fila{grid-template-columns:44px 1fr}.mini{width:44px;height:44px}.fila .ctrl{grid-column:1/-1;justify-content:flex-start}.form .fila2{grid-template-columns:1fr}}
 .form{display:grid;gap:14px;max-width:560px}
 .form label{display:grid;gap:4px;font-weight:600;font-size:.88rem}
 .form label small{font-weight:400;color:var(--suave)}
@@ -101,4 +101,29 @@ dialog .pie{display:flex;gap:8px;justify-content:space-between;padding:14px 18px
 .gen-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .gen-msg{font-size:.88rem;color:var(--suave)}
 .gen-previa{height:280px;border-radius:12px;background:radial-gradient(circle at 50% 40%,#5a4636,#1b140f 75%)}
+/* selectores de diseño y colores (vista.js) */
+.vista{display:flex;gap:6px;flex-wrap:wrap}
+.vista select{padding:7px 8px;border:1px solid var(--linea);border-radius:10px;background:var(--tarjeta);font-size:.8rem;min-height:40px;max-width:180px}
+/* diseño elegido a mano: celular / tablet */
+html.modo-celu body{font-size:16px}
+html.modo-celu .wrap{max-width:560px}
+html.modo-celu .barra h1{flex-basis:100%}
+html.modo-celu .fila{grid-template-columns:44px 1fr}
+html.modo-celu .mini{width:44px;height:44px}
+html.modo-celu .fila .ctrl{grid-column:1/-1;justify-content:flex-start}
+html.modo-celu .form .fila2,html.modo-celu .grilla{grid-template-columns:1fr}
+html.modo-celu .kpis{grid-template-columns:1fr 1fr}
+html.modo-celu .b{min-height:44px}
+html.modo-celu .precio,html.modo-celu .form input,html.modo-celu .form select,html.modo-celu .form textarea{font-size:16px}
+html.modo-celu .pie-fijo .b{flex:1;justify-content:center}
+html.modo-celu .pie-fijo .estado{flex-basis:100%}
+/* diseño elegido a mano: computadora */
+html.modo-compu body{min-width:900px} /* en un celular se ve como la versión de escritorio, desplazable */
+html.modo-compu .wrap{max-width:1180px}
+html.modo-compu .fila{grid-template-columns:52px 1fr auto}
+html.modo-compu .mini{width:52px;height:52px}
+html.modo-compu .fila .ctrl{grid-column:auto;justify-content:flex-end}
+html.modo-compu .grilla{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+html.modo-compu .form{max-width:760px}
+html.modo-compu .form .fila2{grid-template-columns:1fr 1fr}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--texto);color:var(--fondo);padding:10px 16px;border-radius:12px;font-weight:600;z-index:30}
