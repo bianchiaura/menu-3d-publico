@@ -24,10 +24,8 @@ Hacelo en este orden. Son unos 15 minutos.
 
 ## D. El "intermediario" que publica
 8. Creá un **token de GitHub nuevo** solo para Supabase (mismos pasos de siempre: solo `menu-3d-publico`, **Contents: Read and write**). Nombre: *Supabase Menú 3D*. Vencimiento: 1 año. Copialo.
-9. En Supabase: **Edge Functions** → **Secrets** → agregá estos tres y guardá:
+9. En Supabase: **Edge Functions** → **Secrets** → agregá este y guardá:
    - `GITHUB_TOKEN` → el token del paso 8
-   - `GITHUB_REPO` → `ronkstudio/menu-3d-publico`
-   - `GITHUB_AUTOR` → `ronkstudio <351777670+ronkstudio@users.noreply.github.com>`
 10. **Edge Functions** → **Deploy a new function** → **Via Editor**. Nombre: `panel`. Borrá el ejemplo, pegá [3-funcion-panel.ts](https://github.com/ronkstudio/menu-3d-publico/blob/main/supabase/3-funcion-panel.ts) (con **Copy raw file**) → **Deploy function**.
 
 ## E. Pasarle los datos a Claude

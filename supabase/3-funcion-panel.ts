@@ -7,15 +7,15 @@
 //   { accion: "publicar", carpeta, archivos: [...], mensaje }    → publica cambios de un local
 //   { accion: "crear-usuario", email, password, carpeta }        → (solo admin) crea el usuario de un local
 //
-// Secretos que hay que cargar en Supabase (Edge Functions → Secrets):
+// Secreto que hay que cargar en Supabase (Edge Functions → Secrets):
 //   GITHUB_TOKEN   token de GitHub con "Contents: Read and write" sobre menu-3d-publico
-//   GITHUB_REPO    ronkstudio/menu-3d-publico
-//   GITHUB_AUTOR   (opcional) nombre <mail> para los cambios, ej: ronkstudio <351777670+ronkstudio@users.noreply.github.com>
+// El proyecto y el autor de los cambios no son secretos: están acá abajo (si cambia el usuario de GitHub, se cambian acá).
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const ORIGENES = ['https://ronkstudio.github.io', 'http://localhost:8765'];
-const REPO = Deno.env.get('GITHUB_REPO') ?? 'ronkstudio/menu-3d-publico';
+const REPO = 'ronkstudio/menu-3d-publico';
+const AUTOR = { name: 'ronkstudio', email: '351777670+ronkstudio@users.noreply.github.com' };
 const RAMA = 'main';
 const API = 'https://api.github.com/repos/' + REPO;
 const MAX_ARCHIVOS = 40, MAX_BYTES = 20 * 1024 * 1024;
@@ -86,9 +86,7 @@ async function publicar(archivos: Archivo[], mensaje: string) {
     arbol.push({ path: a.ruta, mode: '100644', type: 'blob', sha: b.sha });
   }
   const nuevoArbol = await github('/git/trees', { method: 'POST', body: { base_tree: commit.tree.sha, tree: arbol } });
-  const autor = (Deno.env.get('GITHUB_AUTOR') ?? '').match(/^(.+?)\s*<(.+)>$/);
-  const quien = autor ? { name: autor[1], email: autor[2] } : undefined;
-  const nuevo = await github('/git/commits', { method: 'POST', body: { message: mensaje, tree: nuevoArbol.sha, parents: [padre], author: quien, committer: quien } });
+  const nuevo = await github('/git/commits', { method: 'POST', body: { message: mensaje, tree: nuevoArbol.sha, parents: [padre], author: AUTOR, committer: AUTOR } });
   await github('/git/refs/heads/' + RAMA, { method: 'PATCH', body: { sha: nuevo.sha } });
 }
 
