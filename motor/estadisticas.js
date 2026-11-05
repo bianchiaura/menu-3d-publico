@@ -127,7 +127,7 @@ window.Estadisticas = (function () {
       if (top) l.push('⭐ El plato más mirado: ' + top.nombre);
       if (a.total && horaPico(a)) l.push('⏰ La hora con más visitas: ' + horaPico(a));
       if (a.total && M && M.en && a.en) l.push('🌎 ' + pct(a.en, a.total) + ' % lo vio en inglés');
-      l.push('', 'Más detalles en tu panel, en la pestaña "Estadísticas".');
+      l.push('', 'Más detalles en tu panel, en la pestaña "Estadísticas": ' + new URL('../panel/?local=' + encodeURIComponent(carpeta), location.href).href);
       return l.join('\n');
     });
   }

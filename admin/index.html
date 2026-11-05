@@ -105,6 +105,8 @@
     if (m && (m[1] + m[2]).length === 10) n = m[1] + m[2];
     return /^\d{10}$/.test(n) ? '549' + n : null;
   }
+  /* link del panel de ese local: abre directo su panel (y si en ese celular había otra sesión, pide la de este local) */
+  function panelDe(l) { return raiz + 'panel/?local=' + encodeURIComponent(l.carpeta); }
   /* crear el usuario de un local, o (con "u") darle una contraseña nueva a uno que ya existe.
      En los dos casos termina con el mensaje listo para mandarle por WhatsApp. */
   function crearUsuario(l, u) {
@@ -139,10 +141,10 @@
       pedido.then(function (j) {
         var texto = u
           ? '¡Hola! Te paso tu nueva contraseña del panel de Menú 3D para ' + nombre + ' 🔑\n\n' +
-            'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'Entrá desde acá: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
             'La podés cambiar cuando quieras en "Mi cuenta".'
           : '¡Hola! Ya tenés tu panel de Menú 3D para ' + nombre + ' 🙌\n\n' +
-            'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'Entrá desde acá: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
             'Desde el panel cambiás precios, platos y fotos, y publicás cuando quieras. La contraseña la podés cambiar en "Mi cuenta".';
         d.querySelector('.hecho').textContent = u ? '✓ Contraseña cambiada' : '✓ Usuario creado';
         d.querySelector('pre').textContent = texto;
