@@ -216,6 +216,7 @@
     ]
   },
   "creditos": "creditos.html",
+  "fotosConCredito": ["img/1.jpg", "modelos/1-textura.jpg", "img/2.jpg", "modelos/2-textura.jpg", "img/3.jpg", "modelos/3-textura.jpg", "img/4.jpg", "modelos/4-textura.jpg", "img/5.jpg", "modelos/5-textura.jpg", "img/6.jpg", "modelos/6-textura.jpg", "img/7.jpg", "modelos/7-textura.jpg", "img/8.jpg", "modelos/8-textura.jpg", "img/9.jpg", "modelos/9-textura.jpg", "img/10.jpg", "img/11.jpg", "img/12.jpg", "modelos/12-textura.jpg", "img/13.jpg", "modelos/13-textura.jpg"],
   "colores": {
     "claro": {
       "acento": "#b5832f",

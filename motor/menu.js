@@ -122,12 +122,19 @@
       '<button class="ficha-x" data-cerrar-ficha aria-label="' + t('cerrar') + '">✕</button></div><div class="ficha-cuerpo">' + s.join('') +
       (M.muestra ? '<p class="muestra">' + t('muestra') + '</p>' : '') + '</div></dialog>';
   }
+  /* "Créditos de las fotos": solo mientras quede a la vista alguna foto (o 3D) que no es del local.
+     "fotosConCredito" lista esas fotos; las que sube el local tienen otra ruta, así que al reemplazarlas el link desaparece solo. */
+  function conCreditos() {
+    if (!M.creditos) return false;
+    var l = M.fotosConCredito; if (!l) return true;
+    return visibles().some(function (d) { return l.indexOf(d.foto) >= 0 || (d.modelo && l.indexOf(d.modelo.textura) >= 0); });
+  }
   function infoLocal() {
     var i = infoT(), l = [], hy = hoy(i), h = horarios(i);
     if (i.direccion) l.push('<span>📍 ' + esc(i.direccion) + '</span>');
     if (hy) l.push('<span>🕒 ' + t('hoyPie') + ': ' + esc(hy.horas) + '</span>'); else if (h.length === 1) l.push('<span>🕒 ' + esc(h[0].horas) + '</span>');
     if (hayInfo()) l.push('<button class="ver-ficha" data-abrir-ficha>' + t('verFicha') + '</button>');
-    if (M.creditos) l.push('<a href="' + esc(url(M.creditos)) + '">' + t('creditos') + '</a>');
+    if (conCreditos()) l.push('<a href="' + esc(url(M.creditos)) + '">' + t('creditos') + '</a>');
     return (l.length ? '<footer class="info">' + l.join('') + '</footer>' : '') + (hayInfo() ? ficha() : '');
   }
 
