@@ -2,9 +2,9 @@
    Mientras un dato esté vacío, la página lo muestra resaltado como "a completar". */
 window.NEGOCIO = {
   marca: 'Menú 3D',
-  titular: '',            /* nombre y apellido del titular (o razón social) */
+  titular: 'Bautista Bianchimani', /* nombre y apellido del titular (o razón social) */
   cuit: '',               /* CUIT, ej. 20-12345678-9 */
-  email: '',              /* mail de contacto */
+  email: 'cocobbstudio@gmail.com', /* mail de contacto */
   whatsapp: '11 2312-1409',
   ciudad: '',             /* para la jurisdicción, ej. 'la Ciudad Autónoma de Buenos Aires' */
   actualizado: '5 de noviembre de 2026'
