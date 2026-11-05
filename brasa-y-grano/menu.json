@@ -96,23 +96,46 @@
       "horarios": [
         {
           "dias": "Monday",
-          "horas": "Closed"
+          "horas": "Closed",
+          "d": [
+            1
+          ]
         },
         {
-          "dias": "Tuesday to Thursday",
-          "horas": "12–4 pm · 8 pm–12 am"
+          "dias": "Tuesday",
+          "horas": "15:00–00:30",
+          "d": [
+            2
+          ]
+        },
+        {
+          "dias": "Wednesday",
+          "horas": "11:00–15:30 · 18:00–00:30",
+          "d": [
+            3
+          ]
+        },
+        {
+          "dias": "Thursday",
+          "horas": "12:00–16:00 · 20:00–00:00",
+          "d": [
+            4
+          ]
         },
         {
           "dias": "Friday and Saturday",
-          "horas": "12–4 pm · 8 pm–1 am"
+          "horas": "12:00–16:00 · 20:00–01:00",
+          "d": [
+            5,
+            6
+          ]
         },
         {
           "dias": "Sunday",
-          "horas": "12–5 pm"
-        },
-        {
-          "dias": "Coffee shop (Tue–Sun)",
-          "horas": "9 am–12 pm"
+          "horas": "12:00–17:00",
+          "d": [
+            0
+          ]
         }
       ],
       "reservas": "By WhatsApp or phone, until 6 pm the same day. Groups of more than 8 people require a deposit.",
@@ -165,11 +188,23 @@
         ]
       },
       {
-        "dias": "Martes a jueves",
+        "dias": "Martes",
+        "horas": "15 a 24:30 h",
+        "d": [
+          2
+        ]
+      },
+      {
+        "dias": "Miércoles",
+        "horas": "11 a 15:30 h · 18 a 24:30 h",
+        "d": [
+          3
+        ]
+      },
+      {
+        "dias": "Jueves",
         "horas": "12 a 16 h · 20 a 24 h",
         "d": [
-          2,
-          3,
           4
         ]
       },
@@ -187,10 +222,6 @@
         "d": [
           0
         ]
-      },
-      {
-        "dias": "Cafetería (mar. a dom.)",
-        "horas": "9 a 12 h"
       }
     ],
     "telefono": "+54 11 0000-0000",
@@ -213,18 +244,87 @@
       "Opciones sin TACC",
       "Para llevar",
       "Cumpleaños y eventos"
-    ]
+    ],
+    "semana": [
+      {
+        "m": "corrido",
+        "a1": "12:00",
+        "c1": "17:00"
+      },
+      {
+        "m": "cerrado"
+      },
+      {
+        "m": "corrido",
+        "a1": "15:00",
+        "c1": "00:30"
+      },
+      {
+        "m": "cortado",
+        "a1": "11:00",
+        "c1": "15:30",
+        "a2": "18:00",
+        "c2": "00:30"
+      },
+      {
+        "m": "cortado",
+        "a1": "12:00",
+        "c1": "16:00",
+        "a2": "20:00",
+        "c2": "00:00"
+      },
+      {
+        "m": "cortado",
+        "a1": "12:00",
+        "c1": "16:00",
+        "a2": "20:00",
+        "c2": "01:00"
+      },
+      {
+        "m": "cortado",
+        "a1": "12:00",
+        "c1": "16:00",
+        "a2": "20:00",
+        "c2": "01:00"
+      }
+    ],
+    "horarioNota": "Cafetería (mar. a dom.): 9 a 12 h"
   },
   "creditos": "creditos.html",
-  "fotosConCredito": ["img/1.jpg", "modelos/1-textura.jpg", "img/2.jpg", "modelos/2-textura.jpg", "img/3.jpg", "modelos/3-textura.jpg", "img/4.jpg", "modelos/4-textura.jpg", "img/5.jpg", "modelos/5-textura.jpg", "img/6.jpg", "modelos/6-textura.jpg", "img/7.jpg", "modelos/7-textura.jpg", "img/8.jpg", "modelos/8-textura.jpg", "img/9.jpg", "modelos/9-textura.jpg", "img/10.jpg", "img/11.jpg", "img/12.jpg", "modelos/12-textura.jpg", "img/13.jpg", "modelos/13-textura.jpg"],
+  "fotosConCredito": [
+    "img/1.jpg",
+    "modelos/1-textura.jpg",
+    "img/2.jpg",
+    "modelos/2-textura.jpg",
+    "img/3.jpg",
+    "modelos/3-textura.jpg",
+    "img/4.jpg",
+    "modelos/4-textura.jpg",
+    "img/5.jpg",
+    "modelos/5-textura.jpg",
+    "img/6.jpg",
+    "modelos/6-textura.jpg",
+    "img/7.jpg",
+    "modelos/7-textura.jpg",
+    "img/8.jpg",
+    "modelos/8-textura.jpg",
+    "img/9.jpg",
+    "modelos/9-textura.jpg",
+    "img/10.jpg",
+    "img/11.jpg",
+    "img/12.jpg",
+    "modelos/12-textura.jpg",
+    "img/13.jpg",
+    "modelos/13-textura.jpg"
+  ],
   "colores": {
     "claro": {
-      "acento": "#b5832f",
-      "acento2": "#8f6420"
+      "acento": "#652fb6",
+      "acento2": "#8d8a20"
     },
     "oscuro": {
-      "acento": "#d6a24b",
-      "acento2": "#e6b863"
+      "acento": "#652fb6",
+      "acento2": "#8d8a20"
     }
   },
   "categorias": [
@@ -278,14 +378,16 @@
         "relieve": "modelos/1-relieve.png",
         "altura": 0.2
       },
-      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero."
+      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero.",
+      "agotado": true,
+      "oculto": true
     },
     {
       "id": 2,
       "categoria": "carnes",
       "nombre": "Ojo de bife",
       "emoji": "🥩",
-      "precio": 16900,
+      "precio": 20000,
       "etiquetas": [
         "sin-tacc"
       ],
