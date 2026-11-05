@@ -39,8 +39,8 @@
   <button class="b mal" id="descartar">Descartar cambios</button>
 </div></div>
 
-<dialog id="dlg"><form method="dialog" id="fplato">
-  <div class="cab"><h2 id="dlg-t" style="font-size:1.15rem">Editar plato</h2><button type="button" class="b" data-cerrar aria-label="Cerrar">✕</button></div>
+<dialog id="dlg" class="pantalla"><form method="dialog" id="fplato">
+  <div class="cab"><button type="button" class="b" data-cerrar>← Volver</button><h2 id="dlg-t" style="font-size:1.15rem">Editar plato</h2></div>
   <div class="cuerpo form">
     <label>Nombre<input type="text" name="nombre" required maxlength="80"></label>
     <div class="fila2">
@@ -70,7 +70,7 @@
       <div><button type="button" class="b p" id="crear3d">Crear 3D</button></div>
     </div>
   </div>
-  <div class="pie"><button type="button" class="b mal" id="borrar">Borrar plato</button><span style="display:flex;gap:8px"><button type="button" class="b" data-cerrar>Cancelar</button><button class="b p" value="ok">Guardar plato</button></span></div>
+  <div class="pie"><button type="button" class="b mal" id="borrar">Borrar plato</button><button class="b p" value="ok">Guardar plato</button></div>
 </form></dialog>
 
 <dialog id="dlg3d">
@@ -362,8 +362,13 @@
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
     F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); previa3d(); estado3d();
     $('#borrar').hidden = !p;
-    $('#dlg').showModal();
+    $('#dlg').showModal(); $('#dlg').scrollTop = 0;
+    history.pushState({ plato: 1 }, ''); /* el botón "atrás" del celular vuelve a la lista en vez de salir del panel */
   }
+  /* al cerrar el editor (Volver, Guardar o Borrar) se saca esa entrada del historial; con "atrás" se cierra el editor */
+  if (history.state && history.state.plato) history.replaceState(null, ''); /* se recargó la página con el editor abierto */
+  $('#dlg').addEventListener('close', function () { if (history.state && history.state.plato) history.back(); });
+  addEventListener('popstate', function () { if ($('#dlg').open) $('#dlg').close(); });
   function modeloActual() { return modeloNuevo !== undefined ? modeloNuevo : editando && editando.modelo; }
   function fotoActual() { return fotoNueva !== undefined ? fotoNueva : editando && editando.foto; }
   function estado3d() {

@@ -157,3 +157,17 @@ details.ingles label{margin-top:10px}
 .est-plato .barra-h{grid-column:1/-1;height:6px;border-radius:3px;background:var(--linea);overflow:hidden}
 .est-plato .barra-h i{display:block;height:100%;background:var(--acento);border-radius:3px}
 .local .est{font-size:.85rem;margin-top:8px;color:var(--texto)}
+/* que ningún campo (las fotos, sobre todo) empuje la ventana más ancha que la pantalla */
+.form label,.form>*,.form .fila2>*{min-width:0}
+.form input[type=file]{max-width:100%;width:100%}
+/* editor de plato: ocupa toda la pantalla, como una sección nueva, con "← Volver" arriba */
+dialog.pantalla{width:100%;max-width:100%;height:100%;max-height:100%;margin:0;border-radius:0;inset:0;background:var(--fondo)}
+dialog.pantalla::backdrop{background:var(--fondo)}
+dialog.pantalla form{min-height:100%;display:flex;flex-direction:column}
+dialog.pantalla .cab{justify-content:flex-start;gap:12px;background:var(--fondo)}
+dialog.pantalla .cuerpo{flex:1}
+dialog.pantalla .pie{background:var(--fondo)}
+dialog.pantalla .cab,dialog.pantalla .cuerpo,dialog.pantalla .pie{padding-left:max(16px,calc((100% - 640px)/2));padding-right:max(16px,calc((100% - 640px)/2))}
+dialog.pantalla .cuerpo.form{max-width:none}
+dialog.pantalla .pie .b.p{margin-left:auto}
+dialog.pantalla{overflow:auto}
