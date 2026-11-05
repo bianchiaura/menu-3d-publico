@@ -14,7 +14,7 @@
 <div class="barra"><div class="wrap">
   <a class="b" id="volver" href="../admin/" hidden>← Administrador</a>
   <h1 id="titulo">Panel del local<small>Cargando…</small></h1>
-  <div class="qr" id="qr" style="width:52px;height:52px" aria-label="QR del menú"></div>
+  <button type="button" class="qr" id="qr" style="width:52px;height:52px" aria-label="Ver el QR de mi menú en grande" title="QR para imprimir"></button>
   <a class="b" id="ver" href="#" target="_blank" rel="noopener">Ver mi menú</a>
   <button class="b" id="cuenta" hidden>👤 Mi cuenta</button>
   <div class="vista" id="vista-ctrl"></div>
@@ -610,6 +610,8 @@
   };
 
   $('#cuenta').onclick = function () { Sesion.cuenta(); };
+  /* el QR chiquito de arriba abre el QR grande, para guardarlo o imprimirlo */
+  $('#qr').onclick = function () { if (M && !nuevo) QR.mostrar(link(), M.nombre, 'qr-' + (M._carpeta || carpeta)); };
 
   /* ---------- carga ---------- */
   function arrancar(m, estado) {

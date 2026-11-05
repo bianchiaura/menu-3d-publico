@@ -177,3 +177,5 @@ dialog.pantalla{overflow:auto}
 .local .usuario{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:.85rem}
 .local .usuario .quien{flex:1;min-width:180px;overflow-wrap:anywhere}
 .local .usuario small{display:block;color:var(--suave);font-size:.78rem}
+button.qr{cursor:pointer;display:block}
+button.qr svg{display:block;width:100%;height:100%}

@@ -284,11 +284,11 @@
         (m && m.identidad || l.nota ? '<p class="nota">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
         '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
         '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p>' + lineaEst(l.carpeta) + '</div>' +
-        '<div class="qr" aria-label="QR del menú">' + QR.svg(link) + '</div>' +
+        '<button type="button" class="qr" data-qr="' + i + '" aria-label="Ver el QR del menú en grande">' + QR.svg(link) + '</button>' +
         bloqueUsuarios(l) +
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
         '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
-        '<button class="b" data-qr="' + i + '">Descargar QR</button>' +
+        '<button class="b" data-qr="' + i + '">🔳 QR para imprimir</button>' +
         '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
         '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
         '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
@@ -296,7 +296,7 @@
   }
   document.getElementById('locales').onclick = function (e) {
     var locs = LOCS, q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
-    if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
+    if (q) { var l = locs[q.dataset.qr]; QR.mostrar(raiz + l.carpeta + '/', (l.menu && l.menu.nombre) || l.nombre || l.carpeta, 'qr-' + l.carpeta); }
     if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
     var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
     var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
