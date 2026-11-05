@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planes y precios · Menú 3D</title>
+<meta name="description" content="Tu menú digital con los platos en 3D: tus clientes ven cada plato sobre la mesa antes de pedir. Planes mensuales y anuales.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Planes y precios · Menú 3D">
+<meta property="og:description" content="Tus clientes ven cada plato en 3D sobre la mesa antes de pedir.">
+<meta property="og:image" content="https://ronkstudio.github.io/menu-3d-publico/brasa-y-grano/compartir.jpg">
+<meta name="theme-color" content="#b5832f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--fondo:#f6f3ee;--tarjeta:#fff;--texto:#221a14;--suave:#6f6257;--acento:#b5832f;--acento2:#8f6420;--linea:#e6ddd0;--sobre-acento:#fff;--ok:#2f7d4a;--sombra:0 10px 30px rgba(60,40,10,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fondo:#14110e;--tarjeta:#1f1a15;--texto:#f2eadf;--suave:#ab9d8c;--acento:#d6a24b;--acento2:#e6b863;--linea:#352c23;--sobre-acento:#1b1410;--ok:#5cbf7d;--sombra:none}}
+:root[data-theme="dark"]{--fondo:#14110e;--tarjeta:#1f1a15;--texto:#f2eadf;--suave:#ab9d8c;--acento:#d6a24b;--acento2:#e6b863;--linea:#352c23;--sobre-acento:#1b1410;--ok:#5cbf7d;--sombra:none}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--fondo);color:var(--texto);font:16px/1.55 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:700;line-height:1.15;text-wrap:balance}
+a{color:var(--acento2)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:999px;border:1px solid var(--linea);background:var(--tarjeta);font-weight:700;text-decoration:none;color:var(--texto)}
+.b.p{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
+
+/* portada */
+.portada{padding:56px 0 28px;text-align:center}
+.marca{display:inline-block;font:700 .8rem 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--acento2);margin-bottom:14px}
+.portada h1{font-size:clamp(2rem,6vw,3.2rem);max-width:760px;margin:0 auto}
+.portada p{color:var(--suave);font-size:1.08rem;max-width:560px;margin:14px auto 0}
+.portada .botones{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.puntos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:34px 0 8px}
+.punto{background:var(--tarjeta);border:1px solid var(--linea);border-radius:16px;padding:16px;text-align:left}
+.punto b{display:block;font-size:1rem;margin:6px 0 2px}
+.punto span{color:var(--suave);font-size:.9rem}
+.punto i{font-style:normal;font-size:1.5rem}
+
+/* planes */
+.seccion{padding:36px 0 8px}
+.seccion > h2{font-size:clamp(1.5rem,4vw,2rem);text-align:center}
+.seccion > .sub{color:var(--suave);text-align:center;margin-top:6px}
+.periodo{display:flex;justify-content:center;margin:22px 0 6px}
+.periodo div{display:inline-flex;background:var(--tarjeta);border:1px solid var(--linea);border-radius:999px;padding:4px}
+.periodo button{padding:9px 18px;border-radius:999px;font-weight:700;color:var(--suave)}
+.periodo button[aria-pressed=true]{background:var(--acento);color:var(--sobre-acento)}
+.periodo em{font-style:normal;font-weight:600;font-size:.78rem;margin-left:6px;opacity:.9}
+.aviso-anual{text-align:center;color:var(--ok);font-weight:700;font-size:.92rem;min-height:1.4em;margin-bottom:14px}
+.planes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.plan{position:relative;background:var(--tarjeta);border:1px solid var(--linea);border-radius:20px;padding:24px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sombra)}
+.plan.destacado{border:2px solid var(--acento)}
+.plan .cinta{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--acento);color:var(--sobre-acento);font-weight:700;font-size:.78rem;padding:4px 14px;border-radius:999px;white-space:nowrap}
+.plan h3{font-size:1.35rem}
+.plan .para{color:var(--suave);font-size:.9rem;margin-top:-8px}
+.precio{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.precio b{font:700 2.2rem Fraunces,Georgia,serif;letter-spacing:-.01em}
+.precio span{color:var(--suave);font-size:.92rem}
+.detalle-precio{color:var(--suave);font-size:.85rem;margin-top:-10px;min-height:2.6em}
+.detalle-precio s{opacity:.8}
+.plan ul{list-style:none;padding:0;display:grid;gap:8px;font-size:.94rem;flex:1}
+.plan li{display:flex;gap:8px;align-items:flex-start}
+.plan li::before{content:'✓';color:var(--ok);font-weight:700;flex:none}
+.plan li.no{color:var(--suave)}
+.plan li.no::before{content:'–';color:var(--suave)}
+.plan .b{width:100%}
+
+/* alta y promos */
+.cajas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:20px}
+.caja{background:var(--tarjeta);border:1px solid var(--linea);border-radius:18px;padding:20px}
+.caja h3{font-size:1.15rem;margin-bottom:6px}
+.caja p{color:var(--suave);font-size:.94rem}
+.caja .monto{font:700 1.6rem Fraunces,Georgia,serif;color:var(--texto);margin:4px 0 8px}
+.caja.lanzamiento{border:2px dashed var(--acento)}
+.etiqueta{display:inline-block;background:rgba(181,131,47,.14);color:var(--acento2);font-weight:700;font-size:.75rem;padding:3px 10px;border-radius:999px;margin-bottom:8px}
+
+/* preguntas */
+.preguntas{max-width:720px;margin:20px auto 0;display:grid;gap:10px}
+.preguntas details{background:var(--tarjeta);border:1px solid var(--linea);border-radius:14px;padding:14px 16px}
+.preguntas summary{font-weight:700;cursor:pointer}
+.preguntas p{color:var(--suave);margin-top:8px;font-size:.94rem}
+
+.final{text-align:center;padding:44px 0 60px}
+.final h2{font-size:clamp(1.5rem,4vw,2rem)}
+.final p{color:var(--suave);margin:8px auto 20px;max-width:520px}
+.pie{color:var(--suave);font-size:.8rem;text-align:center;padding-bottom:30px}
+
+@media (max-width:820px){
+  .planes{grid-template-columns:1fr;max-width:460px;margin:0 auto}
+  .plan.destacado{order:-1} /* en el celular, el recomendado primero */
+}
+</style>
+</head>
+<body>
+<main>
+<section class="portada wrap">
+  <span class="marca">Menú 3D</span>
+  <h1>Que tus clientes vean cada plato en 3D antes de pedir</h1>
+  <p>Escanean el QR de la mesa, abren tu menú y miran el plato girando o apoyado sobre su mesa con la cámara del celular.</p>
+  <div class="botones">
+    <a class="b p" href="../brasa-y-grano/" target="_blank" rel="noopener">👀 Ver un menú de ejemplo</a>
+    <a class="b" data-contacto hidden target="_blank" rel="noopener">💬 Quiero el mío</a>
+  </div>
+  <div class="puntos">
+    <div class="punto"><i>🧊</i><b>Platos en 3D y sobre la mesa</b><span>Se arman a partir de fotos de tus platos reales.</span></div>
+    <div class="punto"><i>✏️</i><b>Lo cambiás vos</b><span>Precios, platos, fotos y horarios desde tu propio panel, cuando quieras.</span></div>
+    <div class="punto"><i>📊</i><b>Sabés qué miran</b><span>Cuántos abren tu menú, a qué hora y qué platos llaman la atención.</span></div>
+    <div class="punto"><i>🌎</i><b>Listo para turistas</b><span>El menú cambia solo a inglés en los celulares de afuera.</span></div>
+  </div>
+</section>
+
+<section class="seccion wrap" id="planes">
+  <h2>Planes</h2>
+  <p class="sub">Elegí cómo querés pagar. Podés cambiar de plan cuando quieras.</p>
+  <div class="periodo" role="group" aria-label="Forma de pago">
+    <div><button type="button" data-periodo="anual" aria-pressed="true">Anual<em>2 meses gratis</em></button><button type="button" data-periodo="mensual" aria-pressed="false">Mensual</button></div>
+  </div>
+  <p class="aviso-anual" id="aviso-anual"></p>
+  <div class="planes" id="planes-lista"></div>
+</section>
+
+<section class="seccion wrap">
+  <h2>Puesta en marcha y promociones</h2>
+  <div class="cajas" id="cajas"></div>
+</section>
+
+<section class="seccion wrap">
+  <h2>Preguntas frecuentes</h2>
+  <div class="preguntas" id="preguntas"></div>
+</section>
+
+<section class="final wrap">
+  <h2>¿Lo probamos en tu local?</h2>
+  <p>Mirá el menú de ejemplo desde tu celular y tocá "Ver en 3D" en cualquier plato.</p>
+  <div class="botones" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a class="b p" data-contacto hidden target="_blank" rel="noopener">💬 Escribime por WhatsApp</a>
+    <a class="b" href="../brasa-y-grano/" target="_blank" rel="noopener">👀 Ver el ejemplo</a>
+  </div>
+</section>
+<p class="pie" id="pie"></p>
+</main>
+
+<script>
+/* ======================= PRECIOS: todo lo que hay que cambiar está acá ======================= */
+var CONFIG = {
+  whatsapp: '',                 /* tu WhatsApp para el botón "Quiero el mío", ej. '5491122334455'. Vacío = no se muestra */
+  actualizado: 'noviembre de 2026',
+  impuestos: 'Precios en pesos argentinos.',
+  alta: 120000, platoExtra: 8000, platosEnAlta: 10,
+  mesesGratisAnual: 2,          /* anual: se pagan 12 - 2 = 10 meses */
+  descuentoLanzamiento: 30, cuposLanzamiento: 5,
+  planes: [
+    { id: 'esencial', nombre: 'Esencial', para: 'Para empezar con lo justo', mes: 35000,
+      incluye: ['Menú digital con fotos y QR', 'Hasta 5 platos en 3D', 'Ver el plato sobre la mesa (AR)', 'Panel para cambiar precios y platos', 'Estadísticas básicas'],
+      no: ['Menú en inglés', 'Resumen mensual por WhatsApp'] },
+    { id: 'completo', nombre: 'Completo', para: 'El que eligen la mayoría', mes: 55000, destacado: true,
+      incluye: ['Todo lo del Esencial', 'Hasta 20 platos en 3D', 'Menú en inglés para turistas', 'Estadísticas completas: horas pico, turistas y platos más mirados', 'Resumen del mes por WhatsApp'] },
+    { id: 'premium', nombre: 'Premium', para: 'Para cartas grandes o varias sucursales', mes: 85000,
+      incluye: ['Todo lo del Completo', 'Platos en 3D sin límite', 'Varias sucursales', 'Atención prioritaria'] }
+  ]
+};
+/* ============================================================================================ */
+
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var periodo = 'anual';
+  function pesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var mesesAnual = 12 - CONFIG.mesesGratisAnual;
+
+  /* contacto por WhatsApp (solo si está cargado el número) */
+  function contacto(plan) {
+    var t = 'Hola! Vi los planes de Menú 3D' + (plan ? ' y me interesa el plan ' + plan + (periodo === 'anual' ? ' anual' : ' mensual') : '') + '. ¿Me contás más?';
+    return 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(t);
+  }
+  if (CONFIG.whatsapp) [].forEach.call(document.querySelectorAll('[data-contacto]'), function (a) { a.href = contacto(); a.hidden = false; });
+
+  function planes() {
+    $('#aviso-anual').textContent = periodo === 'anual' ? '🎁 Pagando el año: ' + CONFIG.mesesGratisAnual + ' meses gratis y la puesta en marcha sin cargo' : '';
+    $('#planes-lista').innerHTML = CONFIG.planes.map(function (p) {
+      var anual = p.mes * mesesAnual, precio, detalle;
+      if (periodo === 'anual') {
+        precio = '<b>' + pesos(anual) + '</b><span>por año</span>';
+        detalle = 'Equivale a ' + pesos(anual / 12) + ' por mes · <s>' + pesos(p.mes * 12 + CONFIG.alta) + '</s> pagando mes a mes';
+      } else {
+        precio = '<b>' + pesos(p.mes) + '</b><span>por mes</span>';
+        detalle = 'Más la puesta en marcha (' + pesos(CONFIG.alta) + ', una sola vez)';
+      }
+      var boton = CONFIG.whatsapp
+        ? '<a class="b' + (p.destacado ? ' p' : '') + '" href="' + esc(contacto(p.nombre)) + '" target="_blank" rel="noopener">Quiero el ' + esc(p.nombre) + '</a>'
+        : '<a class="b' + (p.destacado ? ' p' : '') + '" href="../brasa-y-grano/" target="_blank" rel="noopener">Ver un menú de ejemplo</a>';
+      return '<article class="plan' + (p.destacado ? ' destacado' : '') + '">' + (p.destacado ? '<span class="cinta">⭐ Recomendado</span>' : '') +
+        '<h3>' + esc(p.nombre) + '</h3><p class="para">' + esc(p.para) + '</p>' +
+        '<div class="precio">' + precio + '</div><p class="detalle-precio">' + detalle + '</p>' +
+        '<ul>' + p.incluye.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+        (p.no || []).map(function (x) { return '<li class="no">' + esc(x) + '</li>'; }).join('') + '</ul>' + boton + '</article>';
+    }).join('');
+  }
+
+  function cajas() {
+    var completo = CONFIG.planes.filter(function (p) { return p.destacado; })[0] || CONFIG.planes[0];
+    $('#cajas').innerHTML =
+      '<div class="caja"><span class="etiqueta">Una sola vez</span><h3>Puesta en marcha</h3><div class="monto">' + pesos(CONFIG.alta) + '</div>' +
+        '<p>Armamos tu menú completo con tu logo y tus colores, hasta ' + CONFIG.platosEnAlta + ' platos en 3D, los QR listos para imprimir y tu usuario del panel. Cada plato en 3D extra: ' + pesos(CONFIG.platoExtra) + '.</p>' +
+        '<p style="margin-top:8px;color:var(--ok);font-weight:700">Sin cargo si pagás el año.</p></div>' +
+      '<div class="caja lanzamiento"><span class="etiqueta">Cupos limitados</span><h3>Lanzamiento: ' + CONFIG.descuentoLanzamiento + ' % menos el primer año</h3>' +
+        '<p>Para los primeros ' + CONFIG.cuposLanzamiento + ' locales, con la puesta en marcha sin cargo. A cambio, nos dejás mostrar tu menú como ejemplo y nos contás qué te pareció. Plan ' + esc(completo.nombre) + ' anual: <b style="color:var(--texto)">' +
+        pesos(completo.mes * mesesAnual * (1 - CONFIG.descuentoLanzamiento / 100)) + '</b> el primer año.</p></div>' +
+      '<div class="caja"><span class="etiqueta">Semestral</span><h3>Pagá 6 meses: 1 mes gratis</h3>' +
+        '<p>' + CONFIG.planes.map(function (p) { return esc(p.nombre) + ': ' + pesos(p.mes * 5); }).join(' · ') + ' cada 6 meses.</p></div>' +
+      '<div class="caja"><span class="etiqueta">Recomendá</span><h3>1 mes gratis por cada local</h3>' +
+        '<p>Si un colega se suma por recomendación tuya, tenés un mes sin cargo. Sin límite.</p></div>';
+  }
+
+  function preguntas() {
+    var p = [
+      ['¿Necesito una app o algo especial?', 'No. Tus clientes escanean el QR con la cámara del celular y el menú se abre solo. El 3D sobre la mesa funciona en iPhone y en la mayoría de los Android.'],
+      ['¿Quién saca las fotos para el 3D?', 'Vos o nosotros: alcanza con 1 a 5 fotos de cada plato, una desde arriba y otras de costado. Te decimos cómo sacarlas con el celular.'],
+      ['¿Puedo cambiar precios y platos yo mismo?', 'Sí. Tenés tu panel con usuario y contraseña: cambiás precios, stock, fotos, horarios y datos, y en 1 o 2 minutos se ve en el menú.'],
+      ['¿Los precios cambian?', 'El plan anual queda congelado todo el año. Los planes mensuales y semestrales se actualizan cada 3 meses.'],
+      ['¿Y si no me convence?', 'Si en el primer mes no te convence, te devolvemos el abono de ese mes. La puesta en marcha no se devuelve porque es el trabajo de armar tu menú.']
+    ];
+    $('#preguntas').innerHTML = p.map(function (x) { return '<details><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
+  }
+
+  document.querySelector('.periodo').onclick = function (e) {
+    var b = e.target.closest('[data-periodo]'); if (!b) return;
+    periodo = b.dataset.periodo;
+    [].forEach.call(document.querySelectorAll('[data-periodo]'), function (x) { x.setAttribute('aria-pressed', x === b); });
+    planes();
+  };
+  $('#pie').textContent = CONFIG.impuestos + ' Precios vigentes a ' + CONFIG.actualizado + '.';
+  planes(); cajas(); preguntas();
+})();
+</script>
+</body>
+</html>

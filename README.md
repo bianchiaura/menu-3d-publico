@@ -9,6 +9,7 @@ El 3D de cada plato se genera a partir de **fotos reales del plato**, con un gen
 - Menú de muestra (el QR original): https://ronkstudio.github.io/menu-3d-publico/
 - Cada local: https://ronkstudio.github.io/menu-3d-publico/CARPETA-DEL-LOCAL/
 - Administrador: https://ronkstudio.github.io/menu-3d-publico/admin/
+- Planes y precios (para mandarle a los locales): https://ronkstudio.github.io/menu-3d-publico/precios/ (los montos se cambian en `CONFIG`, arriba del script de `precios/index.html`)
 - Panel de cada local: https://ronkstudio.github.io/menu-3d-publico/panel/ (entra con su mail y contraseña y va solo a su local)
 
 ## Cómo está organizado
