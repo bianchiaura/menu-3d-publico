@@ -6,10 +6,10 @@ El 3D de cada plato se genera a partir de **fotos reales del plato**, con un gen
 
 ## Links
 
-- Menú de muestra (el QR original): https://bianchiaura.github.io/menu-3d-publico/
-- Cada local: https://bianchiaura.github.io/menu-3d-publico/CARPETA-DEL-LOCAL/
-- Administrador: https://bianchiaura.github.io/menu-3d-publico/admin/
-- Panel de cada local: https://bianchiaura.github.io/menu-3d-publico/panel/ (entra con su mail y contraseña y va solo a su local)
+- Menú de muestra (el QR original): https://ronkstudio.github.io/menu-3d-publico/
+- Cada local: https://ronkstudio.github.io/menu-3d-publico/CARPETA-DEL-LOCAL/
+- Administrador: https://ronkstudio.github.io/menu-3d-publico/admin/
+- Panel de cada local: https://ronkstudio.github.io/menu-3d-publico/panel/ (entra con su mail y contraseña y va solo a su local)
 
 ## Cómo está organizado
 

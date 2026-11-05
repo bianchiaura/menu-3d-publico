@@ -5,7 +5,7 @@
    Todos los archivos de una publicación van en un solo commit; GitHub Pages los pone online en 1-2 minutos. */
 window.GitHub = (function () {
   'use strict';
-  var REPO = 'bianchiaura/menu-3d-publico', RAMA = 'main';
+  var REPO = 'ronkstudio/menu-3d-publico', RAMA = 'main';
   var API = 'https://api.github.com/repos/' + REPO;
   /* antes el administrador guardaba un token de GitHub en el navegador: ya no hace falta y se borra */
   try { localStorage.removeItem('menu3d-github-token'); } catch (e) {}

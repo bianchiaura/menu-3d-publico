@@ -9,13 +9,13 @@
 //
 // Secretos que hay que cargar en Supabase (Edge Functions → Secrets):
 //   GITHUB_TOKEN   token de GitHub con "Contents: Read and write" sobre menu-3d-publico
-//   GITHUB_REPO    bianchiaura/menu-3d-publico
-//   GITHUB_AUTOR   (opcional) nombre <mail> para los cambios, ej: bianchiaura <351777670+bianchiaura@users.noreply.github.com>
+//   GITHUB_REPO    ronkstudio/menu-3d-publico
+//   GITHUB_AUTOR   (opcional) nombre <mail> para los cambios, ej: ronkstudio <351777670+ronkstudio@users.noreply.github.com>
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const ORIGENES = ['https://bianchiaura.github.io', 'http://localhost:8765'];
-const REPO = Deno.env.get('GITHUB_REPO') ?? 'bianchiaura/menu-3d-publico';
+const ORIGENES = ['https://ronkstudio.github.io', 'http://localhost:8765'];
+const REPO = Deno.env.get('GITHUB_REPO') ?? 'ronkstudio/menu-3d-publico';
 const RAMA = 'main';
 const API = 'https://api.github.com/repos/' + REPO;
 const MAX_ARCHIVOS = 40, MAX_BYTES = 20 * 1024 * 1024;
