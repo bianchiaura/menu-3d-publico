@@ -415,6 +415,11 @@
       '</div><div><button type="button" class="b" data-nueva-cat>+ Agregar categoría</button></div></form>';
     logoPrev();
     botonArchivo($('[name=logo]'), 'Elegir logo');
+    /* horarios: tocar cualquier parte del cuadro (la hora o el relojito) abre el selector de hora */
+    $('#fdatos').addEventListener('click', function (e) {
+      var t = e.target;
+      if (t.type === 'time' && t.showPicker) { try { t.showPicker(); } catch (err) { /* navegador viejo: queda el comportamiento normal */ } }
+    });
     $('#fdatos').oninput = function (e) {
       var t = e.target, n = t.name;
       if (t.type === 'file' || t.hasAttribute('data-cat-nueva')) return;
