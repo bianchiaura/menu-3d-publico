@@ -4,5 +4,11 @@
     "nombre": "Brasa & Grano",
     "estado": "demo",
     "nota": "Parrilla y cafetería de barrio, cálida y moderna. Tonos madera y dorado."
+  },
+  {
+    "carpeta": "la-vuelta-cafe",
+    "nombre": "La vuelta Cafe",
+    "estado": "prototipo",
+    "nota": "Un cafe de barrio."
   }
 ]

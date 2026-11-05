@@ -1,0 +1,108 @@
+{
+  "nombre": "La vuelta Cafe",
+  "subtitulo": "Venite a disfrutar.",
+  "identidad": "Un cafe de barrio.",
+  "tipografia": "elegante",
+  "logo": "img/logo-mw3lp6ft.jpg",
+  "prototipo": true,
+  "moneda": "$",
+  "info": {
+    "sobre": "Es un cafe de familia, disfrutamos cada  momento.",
+    "direccion": "Gandara",
+    "zona": "2996",
+    "horarios": [
+      {
+        "dias": "Lunes",
+        "horas": "Cerrado",
+        "d": [
+          1
+        ]
+      },
+      {
+        "dias": "Martes",
+        "horas": "8 a 21 h",
+        "d": [
+          2
+        ]
+      },
+      {
+        "dias": "Miércoles",
+        "horas": "8 a 14 h · 16 a 21 h",
+        "d": [
+          3
+        ]
+      }
+    ],
+    "telefono": "01123121409",
+    "whatsapp": "Argentina",
+    "email": "bautistae.bianchimani@gmail.com",
+    "instagram": "LAVUELTACAFE",
+    "reservas": "",
+    "pagos": [
+      "Efectivo"
+    ],
+    "servicios": [
+      "Wi-Fi gratis"
+    ],
+    "semana": [
+      {
+        "m": ""
+      },
+      {
+        "m": "cerrado"
+      },
+      {
+        "m": "corrido",
+        "a1": "08:00",
+        "c1": "21:00"
+      },
+      {
+        "m": "cortado",
+        "a1": "08:00",
+        "c1": "14:00",
+        "a2": "16:00",
+        "c2": "21:00"
+      },
+      {
+        "m": ""
+      },
+      {
+        "m": ""
+      },
+      {
+        "m": ""
+      }
+    ]
+  },
+  "colores": {
+    "claro": {
+      "acento": "#b5832f",
+      "acento2": "#8f6420"
+    },
+    "oscuro": {
+      "acento": "#b5832f",
+      "acento2": "#8f6420"
+    }
+  },
+  "categorias": [
+    {
+      "id": "bebidad",
+      "nombre": "Bebidad",
+      "fondo": "linear-gradient(135deg,#eadfce,#c9b49a)"
+    }
+  ],
+  "platos": [
+    {
+      "id": 1,
+      "nombre": "Latte",
+      "precio": 7000,
+      "categoria": "bebidad",
+      "descripcion": "",
+      "emoji": "🍽",
+      "etiquetas": [
+        "sin-tacc"
+      ]
+    }
+  ],
+  "muestra": true
+}
