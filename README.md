@@ -9,7 +9,7 @@ El 3D de cada plato se genera a partir de **fotos reales del plato**, con un gen
 - Menú de muestra (el QR original): https://bianchiaura.github.io/menu-3d-publico/
 - Cada local: https://bianchiaura.github.io/menu-3d-publico/CARPETA-DEL-LOCAL/
 - Administrador: https://bianchiaura.github.io/menu-3d-publico/admin/
-- Panel de un local: https://bianchiaura.github.io/menu-3d-publico/panel/?local=CARPETA-DEL-LOCAL
+- Panel de cada local: https://bianchiaura.github.io/menu-3d-publico/panel/ (entra con su mail y contraseña y va solo a su local)
 
 ## Cómo está organizado
 
@@ -22,7 +22,7 @@ motor/              código común a todos los locales
   cargar-three.js     carga la librería 3D (three.js)
   github.js           publica cambios en este repositorio desde el administrador
   panel.css, qr.js    estilos de los paneles y generador de QR
-admin/              panel del administrador: locales, links, QR, "Nuevo local" y conexión con GitHub
+admin/              panel del administrador: locales, links, QR, "Nuevo local", usuarios y estadísticas
 panel/              panel de cada local (y de "Nuevo local"): platos, fotos, 3D, identidad y datos
 brasa-y-grano/      local de muestra: menu.json, fotos (img/), modelos 3D (modelos/) y créditos
 plantilla/          base vacía; también se usa para la vista previa de un local nuevo
@@ -45,10 +45,11 @@ Lo que no aparece en ninguna foto no se puede inventar.
 
 ## Crear un local nuevo (administrador)
 
-1. En el administrador, conectar GitHub una sola vez (abajo de todo están los pasos para crear el token).
+1. Entrar al administrador con tu mail y contraseña (los de Supabase).
 2. Tocar **+ Nuevo local** y completar **Datos e identidad**: nombre, carpeta del link, estado, descripción de identidad, logo, colores, tipografía y contacto.
 3. En **Platos**: crear categorías y agregar cada plato con precio, descripción, foto de portada y su 3D.
 4. **Vista previa** para ver cómo queda y **Crear y publicar local**. En 1 o 2 minutos el link funciona y el local aparece en el administrador con su QR.
+5. En su tarjeta, **👤 Crear usuario**: mail del local y contraseña inicial. El panel arma el mensaje para mandarle por WhatsApp.
 
 Si es una demo con la marca de un local real, dejar activada la franja "Prototipo para…" y publicarla solo con permiso del local.
 
@@ -59,9 +60,10 @@ Si es una demo con la marca de un local real, dejar activada la franja "Prototip
 
 ## Los paneles hoy
 
-- Con GitHub conectado (administrador), **Publicar** sube los cambios directo.
-- Sin conexión (un local), los cambios quedan en su navegador: **Vista previa** los muestra y **Descargar menu.json** genera el archivo para mandárselo al administrador.
-- Próximo paso: login para cada local con Supabase, para que publiquen solos sin tocar GitHub.
+- **Inicio de sesión** (Supabase): vos entrás al administrador; cada local entra a su panel con su mail y contraseña y solo puede tocar su menú. Cada uno cambia su contraseña desde **👤 Mi cuenta**.
+- **Publicar** pasa por la función `panel` de Supabase, que guarda el token de GitHub: nunca llega al navegador. Un local publica su `menu.json`, sus fotos y su tarjeta para compartir; la lista de locales y la página de entrada las toca solo el administrador.
+- **Estadísticas**: el menú anota cada vez que se abre (una vez por visita) y cada plato que se mira en 3D o en AR. Se ven en la pestaña **Estadísticas** de cada local y en las tarjetas del administrador (últimos 30 días). No cuentan la vista previa ni los navegadores donde alguien inició sesión en un panel. No se guarda nada de quién mira.
+- Sin iniciar sesión, el panel de un local funciona en modo muestra: los cambios quedan en ese navegador (**Vista previa** y **Descargar menu.json**).
 
 ## El menu.json
 
@@ -96,6 +98,6 @@ Brasa & Grano tiene a **Brasita**, una brasa con cara. Código: `motor/mascota.j
 - **Compartir** (`motor/compartir.js`): al publicar, el panel genera `compartir.jpg` (foto + nombre + "Menú con platos en 3D") y la página del local, para que el link se vea con imagen en WhatsApp.
 - **Paneles**: los borradores se guardan en IndexedDB (`motor/almacen.js`, sin el límite de 5 MB); avisan si alguien publicó mientras se editaba; se pueden ordenar platos y categorías, borrar categorías y, desde el administrador, eliminar un local (pide escribir su nombre).
 
-## Supabase (en preparación)
+## Supabase
 
 En `supabase/` están los archivos para activar el login de cada local y las estadísticas: `LEEME.md` (pasos), `1-esquema.sql`, `2-hacerme-admin.sql` y `3-funcion-panel.ts`.

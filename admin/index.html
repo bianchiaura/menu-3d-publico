@@ -21,6 +21,7 @@
   <h1>Menú 3D<small>Panel del administrador</small></h1>
   <button class="b" id="instalar" hidden>📲 Instalar app</button>
   <a class="b p" href="../panel/?nuevo">+ Nuevo local</a>
+  <button class="b" id="cuenta" hidden>👤 Mi cuenta</button>
   <div class="vista" id="vista-ctrl"></div>
 </div></div>
 <dialog id="dlg-eliminar" style="max-width:460px"><div class="cuerpo form">
@@ -30,6 +31,21 @@
   <p class="msg" style="font-size:.88rem;color:var(--mal)"></p>
   <p style="display:flex;gap:8px;justify-content:flex-end"><button class="b" data-no>Cancelar</button><button class="b p mal" data-ok disabled>Eliminar</button></p>
 </div></dialog>
+<dialog id="dlg-usuario" style="max-width:460px"><form class="cuerpo form" novalidate>
+  <h2 style="font-size:1.15rem">Usuario para <span class="nombre"></span></h2>
+  <div data-paso="datos" style="display:grid;gap:14px">
+    <p style="color:var(--suave);font-size:.88rem">Con este mail y contraseña el local entra a su panel y publica solo su menú.</p>
+    <label>Mail del local<input type="email" name="email" autocomplete="off" required></label>
+    <label>Contraseña inicial<small>Después la puede cambiar desde "Mi cuenta"</small><input type="text" name="password" autocomplete="off" minlength="8" required></label>
+  </div>
+  <div data-paso="listo" hidden style="display:grid;gap:10px">
+    <p style="color:var(--ok);font-weight:700">✓ Usuario creado</p>
+    <p style="color:var(--suave);font-size:.88rem">Mandale esto al local (por WhatsApp, por ejemplo):</p>
+    <pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>
+  </div>
+  <p class="msg" style="font-size:.88rem;color:var(--mal)"></p>
+  <p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p" data-ok>Crear usuario</button><button type="button" class="b p" data-copiar hidden>Copiar mensaje</button></p>
+</form></dialog>
 <dialog id="dlg-ios"><div class="cuerpo">
   <h2 style="font-size:1.15rem;margin-bottom:10px">Instalar en iPhone o iPad</h2>
   <ol class="pasos"><li>Abrí este panel en <b>Safari</b>.</li><li>Tocá el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li><li>Elegí <b>Agregar a pantalla de inicio</b> y tocá <b>Agregar</b>.</li></ol>
@@ -43,14 +59,14 @@
 
   <div class="seccion"><h2>Locales</h2><p>Cada local tiene su link, su QR y su panel.</p></div>
   <div class="grilla" id="locales"><p>Cargando…</p></div>
-
-  <div class="seccion"><h2>Conexión para publicar</h2><p>Necesaria para crear locales y publicar cambios desde acá.</p></div>
-  <div class="caja" id="conexion"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="../motor/qr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../motor/sesion.js"></script>
 <script src="../motor/github.js"></script>
+<script src="../motor/estadisticas.js"></script>
 <script>
 (function () {
   'use strict';
@@ -59,44 +75,51 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function json(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u); return r.json(); }); }
 
-  /* ---------- conexión con GitHub (el token queda solo en este navegador) ---------- */
-  function conexion() {
-    var c = document.getElementById('conexion'), hay = !!GitHub.token();
-    document.getElementById('aviso').innerHTML = hay
-      ? 'Conectado: desde acá podés crear locales y publicar cambios. Todavía no hay usuario y contraseña para cada local (eso viene con Supabase).'
-      : 'Para crear y publicar locales desde acá, conectá tu GitHub una vez (abajo de todo). Sin conexión, los paneles solo guardan en este navegador.';
-    c.innerHTML = hay
-      ? '<p><b style="color:var(--ok)">✓ Conectado a ' + esc(GitHub.REPO) + '</b> en este navegador.</p><p style="margin-top:10px"><button class="b mal" id="desconectar">Desconectar</button></p>'
-      : '<ol class="pasos"><li>Entrá a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → crear token</a> (con tu sesión de GitHub).</li>' +
-        '<li>Nombre: <i>Menú 3D</i>. En <b>Repository access</b> elegí <b>Only select repositories</b> → <b>menu-3d-publico</b>.</li>' +
-        '<li>En <b>Permissions → Repository permissions → Contents</b> elegí <b>Read and write</b>. Tocá <b>Generate token</b> y copialo.</li>' +
-        '<li>Pegalo acá abajo y tocá <b>Conectar</b>. Queda guardado solo en este navegador; no lo compartas.</li></ol>' +
-        '<form class="form" id="ftoken" style="margin-top:12px" onsubmit="return false"><label>Token<input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></label>' +
-        '<div><button class="b p" id="conectar">Conectar</button> <span id="tmsg" style="margin-left:8px;font-size:.88rem"></span></div></form>';
-    /* con token guardado, se comprueba que siga sirviendo (por si venció) */
-    if (hay) GitHub.probar().catch(function (e) {
-      var aviso = '<b style="color:var(--mal)">⚠ La conexión dejó de funcionar.</b> ' + e.message.replace(/</g, '&lt;') +
-        ' <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token nuevo</a>';
-      document.getElementById('aviso').innerHTML = aviso;
-      c.querySelector('p').innerHTML = aviso;
-    });
-    var d = document.getElementById('desconectar');
-    if (d) d.onclick = function () {
-      /* sin ventanita del navegador: el primer toque pregunta, el segundo desconecta */
-      if (!d.dataset.seguro) { d.dataset.seguro = '1'; d.textContent = '¿Seguro? Tocá de nuevo'; setTimeout(function () { delete d.dataset.seguro; d.textContent = 'Desconectar'; }, 4000); return; }
-      GitHub.guardarToken(''); conexion();
-    };
-    var b = document.getElementById('conectar');
-    if (b) b.onclick = function () {
-      var t = document.getElementById('token').value.trim(), m = document.getElementById('tmsg');
-      if (!t) return;
-      GitHub.guardarToken(t); m.textContent = 'Probando…';
-      GitHub.probar().then(function () { conexion(); }).catch(function (e) {
-        GitHub.guardarToken(''); m.textContent = 'No funcionó: ' + e.message; m.style.color = 'var(--mal)';
+  /* ---------- sesión: solo el administrador entra acá (un local va a su panel) ---------- */
+  var sesion = null;
+  document.getElementById('cuenta').onclick = function () { Sesion.cuenta(); };
+  Sesion.actual().then(function (d) {
+    return d || Sesion.pedirLogin({ titulo: 'Menú 3D · Administrador', texto: 'Entrá con tu mail y tu contraseña de administrador.', ayuda: 'Si te olvidaste la contraseña, cambiala en Supabase → Authentication → Users.' });
+  }).then(function (d) {
+    if (!d.admin) { location.replace('../panel/'); return; }
+    sesion = d;
+    document.getElementById('cuenta').hidden = false;
+    document.getElementById('aviso').innerHTML = 'Entraste como <b>' + esc(d.email) + '</b>. Desde acá creás locales, les das su usuario y ves cuánto se usa cada menú.';
+    cargarLocales();
+  }).catch(function (e) {
+    console.error(e);
+    document.getElementById('locales').innerHTML = '<p>No se pudo conectar para iniciar sesión. Revisá tu conexión y recargá la página.</p>';
+  });
+
+  /* ---------- crear el usuario de un local ---------- */
+  function crearUsuario(l) {
+    var d = document.getElementById('dlg-usuario'), f = d.querySelector('form'), msg = d.querySelector('.msg');
+    var ok = d.querySelector('[data-ok]'), copiar = d.querySelector('[data-copiar]'), no = d.querySelector('[data-no]');
+    d.querySelector('.nombre').textContent = l.nombre || l.carpeta;
+    d.querySelector('[data-paso=datos]').hidden = false; d.querySelector('[data-paso=listo]').hidden = true;
+    f.email.value = ''; f.password.value = Sesion.claveNueva(); msg.textContent = '';
+    ok.hidden = false; ok.disabled = false; copiar.hidden = true; no.textContent = 'Cancelar';
+    no.onclick = function () { d.close(); };
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var mail = f.email.value.trim(), clave = f.password.value.trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { msg.textContent = 'Revisá el mail.'; return; }
+      if (clave.length < 8) { msg.textContent = 'La contraseña tiene que tener al menos 8 caracteres.'; return; }
+      ok.disabled = true; msg.style.color = 'var(--suave)'; msg.textContent = 'Creando…';
+      Sesion.funcion('crear-usuario', { email: mail, password: clave, carpeta: l.carpeta }).then(function () {
+        var texto = 'Panel de ' + (l.nombre || l.carpeta) + ' en Menú 3D\n' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n(Podés cambiarla desde "Mi cuenta")';
+        d.querySelector('pre').textContent = texto;
+        d.querySelector('[data-paso=datos]').hidden = true; d.querySelector('[data-paso=listo]').hidden = false;
+        msg.textContent = ''; ok.hidden = true; copiar.hidden = false; no.textContent = 'Cerrar';
+        copiar.onclick = function () { navigator.clipboard.writeText(texto).then(function () { copiar.textContent = '¡Copiado!'; setTimeout(function () { copiar.textContent = 'Copiar mensaje'; }, 1500); }); };
+      }).catch(function (err) {
+        msg.style.color = 'var(--mal)';
+        msg.textContent = /already|registered|exists/i.test(err.message) ? 'Ya hay un usuario con ese mail.' : '⚠ ' + err.message;
+        ok.disabled = false;
       });
     };
+    d.showModal();
   }
-  conexion();
 
   /* ---------- instalar como app ---------- */
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw-admin.js', { scope: '../' }).catch(function (e) { console.error(e); });
@@ -128,7 +151,7 @@
         var archivos = r[0].map(function (p) { return { ruta: p, borrar: true }; });
         archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
         msg.textContent = 'Eliminando…';
-        return GitHub.publicar(archivos, 'Elimina el local ' + (l.nombre || l.carpeta), function (t) { msg.textContent = t; });
+        return GitHub.publicar(archivos, 'Elimina el local ' + (l.nombre || l.carpeta), function (t) { msg.textContent = t; }, l.carpeta);
       }).then(function () {
         msg.textContent = 'Listo: en 1 o 2 minutos desaparece su link.';
         setTimeout(function () { location.reload(); }, 1500);
@@ -138,39 +161,52 @@
   }
 
   /* ---------- locales ---------- */
+  function cargarLocales() {
+  /* las estadísticas se piden en paralelo; si fallan, el panel igual funciona */
+  var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
   json(raiz + 'locales.json').then(function (locs) {
     return Promise.all(locs.map(function (l) {
       return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
-    }));
-  }).then(function (locs) {
-    var platos = 0, con3d = 0;
+    }).concat([est]));
+  }).then(function (r) {
+    var e = r.pop(), locs = r, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0;
     locs.forEach(function (l) { (l.menu ? l.menu.platos : []).forEach(function (p) { platos++; if (p.modelo) con3d++; }); });
+    if (e) Object.keys(e).forEach(function (c) { abiertos += e[c].menu; vistos3d += e[c].d3 + e[c].ar; });
     document.getElementById('kpis').innerHTML = [[locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D']]
+      .concat(e ? [[Estadisticas.num(abiertos), 'menús abiertos (30 días)'], [Estadisticas.num(vistos3d), 'platos vistos en 3D o AR (30 días)']] : [])
       .map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
+    function lineaEst(c) {
+      if (!e) return '';
+      var x = e[c]; if (!x) return '<p class="est">📊 Sin visitas en los últimos 30 días</p>';
+      return '<p class="est">📊 Menú abierto ' + Estadisticas.num(x.menu7) + ' veces esta semana · ' + Estadisticas.num(x.menu) + ' en 30 días · ' + Estadisticas.num(x.d3 + x.ar) + ' platos vistos en 3D</p>';
+    }
 
     document.getElementById('locales').innerHTML = locs.map(function (l, i) {
       var link = raiz + l.carpeta + '/', m = l.menu, color = m && m.colores && m.colores.claro && m.colores.claro.acento;
       return '<article class="caja local"' + (color ? ' style="border-top:4px solid ' + esc(color) + '"' : '') + '><div><h3>' + esc(m ? m.nombre : l.nombre) + '<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></h3>' +
         (m && m.identidad || l.nota ? '<p class="nota">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
         '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
-        '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p></div>' +
+        '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p>' + lineaEst(l.carpeta) + '</div>' +
         '<div class="qr" aria-label="QR del menú">' + QR.svg(link) + '</div>' +
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
         '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
         '<button class="b" data-qr="' + i + '">Descargar QR</button>' +
         '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
-        (GitHub.token() ? '<button class="b mal" data-eliminar="' + i + '">Eliminar</button>' : '') + '</div></article>';
+        '<button class="b" data-usuario="' + i + '">👤 Crear usuario</button>' +
+        '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
     document.getElementById('locales').onclick = function (e) {
       var q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
       if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
       if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
       var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
+      var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
     };
   }).catch(function (e) {
     console.error(e);
     document.getElementById('locales').innerHTML = '<p>No se pudo leer locales.json.</p>';
   });
+  }
 })();
 </script>
 </body>

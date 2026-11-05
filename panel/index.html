@@ -16,6 +16,7 @@
   <h1 id="titulo">Panel del local<small>Cargando…</small></h1>
   <div class="qr" id="qr" style="width:52px;height:52px" aria-label="QR del menú"></div>
   <a class="b" id="ver" href="#" target="_blank" rel="noopener">Ver mi menú</a>
+  <button class="b" id="cuenta" hidden>👤 Mi cuenta</button>
   <div class="vista" id="vista-ctrl"></div>
 </div></div>
 
@@ -24,6 +25,7 @@
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-vista="platos">Platos</button>
     <button role="tab" aria-selected="false" data-vista="datos">Datos e identidad</button>
+    <button role="tab" aria-selected="false" data-vista="estadisticas" id="tab-est" hidden>Estadísticas</button>
   </div>
   <div id="vista"></div>
 </div>
@@ -91,7 +93,10 @@
 <script src="../motor/cargar-three.js"></script>
 <script src="../motor/relieve.js"></script>
 <script src="../motor/generador3d.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../motor/sesion.js"></script>
 <script src="../motor/github.js"></script>
+<script src="../motor/estadisticas.js"></script>
 <script src="../motor/almacen.js"></script>
 <script src="../motor/compartir.js"></script>
 <script>
@@ -101,7 +106,7 @@
   var q = new URLSearchParams(location.search), nuevo = q.has('nuevo');
   var carpeta = (q.get('local') || '').replace(/[^a-z0-9-]/g, '');
   var raiz = new URL('../', location.href).href;
-  var admin = nuevo || !!GitHub.token();
+  var admin = false, sesion = null; /* sesion = { email, admin, locales } cuando inició sesión */
   var M = null, original = '', vista = nuevo ? 'datos' : 'platos', editando = null, fotoNueva, modeloNuevo, fotos3d = [], cerrarGen = null;
   var TIPOS = { clasica: 'Clásica (Fraunces)', moderna: 'Moderna (DM Sans)', elegante: 'Elegante (Cormorant)', rustica: 'Rústica (Bitter)' };
   var ESTADOS = { demo: 'Demo', prototipo: 'Prototipo', activo: 'Activo' };
@@ -173,13 +178,15 @@
     $('#ver').hidden = nuevo; $('#qr').hidden = nuevo; $('#volver').hidden = !admin;
     if (!nuevo) { $('#ver').href = link(); $('#qr').innerHTML = QR.svg(link()); }
     $('#previa').href = nuevo ? raiz + 'plantilla/?borrador' : link() + '?borrador';
-    $('#publicar').hidden = !GitHub.token();
+    $('#publicar').hidden = !sesion;
     $('#publicar').textContent = nuevo ? 'Crear y publicar local' : 'Publicar cambios';
-    $('#bajar').hidden = !!GitHub.token();
-    $('#versiones').hidden = !GitHub.token() || nuevo;
-    $('#aviso').innerHTML = GitHub.token()
-      ? 'Estás como <b>administrador</b>: con <b>' + (nuevo ? 'Crear y publicar local' : 'Publicar cambios') + '</b> los cambios quedan online en 1 o 2 minutos.'
-      : 'Versión de muestra: los cambios se guardan en este navegador y se ven con <b>Vista previa</b>. Para publicarlos, descargá el menu.json y mandáselo al administrador.';
+    $('#bajar').hidden = !!sesion;
+    $('#versiones').hidden = !sesion || nuevo;
+    $('#cuenta').hidden = !sesion;
+    $('#tab-est').hidden = !sesion || nuevo;
+    $('#aviso').innerHTML = sesion
+      ? 'Entraste como <b>' + esc(sesion.email) + '</b>' + (admin ? ' (administrador)' : '') + '. Con <b>' + (nuevo ? 'Crear y publicar local' : 'Publicar cambios') + '</b> los cambios quedan online en 1 o 2 minutos.'
+      : 'Versión de muestra: los cambios se guardan en este navegador y se ven con <b>Vista previa</b>. Para publicarlos, <a href="./' + (carpeta ? '?local=' + encodeURIComponent(carpeta) : '') + '">iniciá sesión</a>.';
   }
 
   /* ---------- vista: platos ---------- */
@@ -335,7 +342,11 @@
     var b = $('#quitar-logo'); if (b) b.onclick = function () { M.logo = ''; guardar(); logoPrev(); };
   }
 
-  function mostrar() { if (vista === 'platos') vistaPlatos(); else vistaDatos(); }
+  function mostrar() {
+    if (vista === 'platos') vistaPlatos();
+    else if (vista === 'estadisticas') Estadisticas.local($('#vista'), carpeta, M);
+    else vistaDatos();
+  }
 
   /* ---------- editar / agregar plato ---------- */
   var F = $('#fplato');
@@ -527,22 +538,25 @@
           if (r !== 'si') throw 'cancelado';
         });
     }).then(function () {
-      return GitHub.leer('locales.json');
+      /* la lista de locales solo la toca el administrador (un local publica su menú, sus fotos y su tarjeta) */
+      return admin ? GitHub.leer('locales.json') : null;
     }).then(function (txt) {
-      var locs = txt ? JSON.parse(txt) : [], ent = locs.filter(function (l) { return l.carpeta === dirLocal; })[0];
-      if (!ent) { ent = { carpeta: dirLocal }; locs.push(ent); }
-      ent.nombre = M.nombre; ent.estado = M._estado || ent.estado || 'prototipo';
-      if (M.identidad) ent.nota = M.identidad;
-      paq.archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
+      if (admin) {
+        var locs = txt ? JSON.parse(txt) : [], ent = locs.filter(function (l) { return l.carpeta === dirLocal; })[0];
+        if (!ent) { ent = { carpeta: dirLocal }; locs.push(ent); }
+        ent.nombre = M.nombre; ent.estado = M._estado || ent.estado || 'prototipo';
+        if (M.identidad) ent.nota = M.identidad;
+        paq.archivos.push({ ruta: 'locales.json', texto: JSON.stringify(locs, null, 2) + '\n' });
+      }
       /* tarjeta para compartir por WhatsApp y página de entrada, siempre al día con el menú */
       $('#estado').textContent = 'Armando la imagen para compartir…';
       return Compartir.tarjeta(M, link()).then(function (img) {
         var v = Date.now().toString(36);
         paq.archivos.push({ ruta: dirLocal + '/compartir.jpg', dataUrl: img });
-        paq.archivos.push({ ruta: dirLocal + '/index.html', texto: paginaLocal(paq.menu, dirLocal, v) });
+        if (admin) paq.archivos.push({ ruta: dirLocal + '/index.html', texto: paginaLocal(paq.menu, dirLocal, v) });
       });
     }).then(function () {
-      return GitHub.publicar(paq.archivos, (nuevo ? 'Crea el local ' : 'Actualiza el menú de ') + M.nombre, function (t) { $('#estado').textContent = t; });
+      return GitHub.publicar(paq.archivos, (nuevo ? 'Crea el local ' : 'Actualiza el menú de ') + M.nombre, function (t) { $('#estado').textContent = t; }, dirLocal);
     }).then(function () {
       clearTimeout(pendiente);
       return Almacen.borrar(clave());
@@ -590,6 +604,8 @@
     });
   };
 
+  $('#cuenta').onclick = function () { Sesion.cuenta(); };
+
   /* ---------- carga ---------- */
   function arrancar(m, estado) {
     if (!nuevo && admin && estado) m._estado = estado;
@@ -611,24 +627,54 @@
         });
     });
   }
-  if (nuevo) {
-    arrancar({ nombre: '', subtitulo: 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa', identidad: '', tipografia: 'clasica', logo: '', prototipo: true, moneda: '$',
-      info: { sobre: '', direccion: '', zona: '', horarios: [], telefono: '', whatsapp: '', email: '', instagram: '', reservas: '', pagos: [], servicios: [] }, colores: { claro: { acento: '#b5832f', acento2: '#8f6420' }, oscuro: { acento: '#b5832f', acento2: '#8f6420' } },
-      categorias: [], platos: [], _estado: 'prototipo', _carpeta: '' });
-    return;
-  }
-  if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }
-  /* con la conexión de administrador se lee directo de GitHub (lo último publicado, sin la demora de la página) */
+  /* con sesión iniciada se lee directo de GitHub (lo último publicado, sin la demora de la página) */
   function leerJson(ruta, siFalla) {
     var web = function () { return fetch(raiz + ruta, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); };
-    var p = GitHub.token() ? GitHub.leer(ruta).then(function (t) { if (t == null) throw new Error('404'); return JSON.parse(t); }).catch(web) : web();
+    var p = sesion ? GitHub.leer(ruta).then(function (t) { if (t == null) throw new Error('404'); return JSON.parse(t); }).catch(web) : web();
     return siFalla === undefined ? p : p.catch(function () { return siFalla; });
   }
-  Promise.all([leerJson(carpeta + '/menu.json'), leerJson('locales.json', [])]).then(function (r) {
-    var ent = r[1].filter(function (l) { return l.carpeta === carpeta; })[0];
-    arrancar(r[0], ent && ent.estado);
-  }).catch(function () {
-    $('#vista').innerHTML = '<p style="margin-top:20px">No se encontró el menú de "' + esc(carpeta) + '". Si recién lo creaste, esperá 1 o 2 minutos y recargá.</p>';
+  function cargar() {
+    if (nuevo) {
+      arrancar({ nombre: '', subtitulo: 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa', identidad: '', tipografia: 'clasica', logo: '', prototipo: true, moneda: '$',
+        info: { sobre: '', direccion: '', zona: '', horarios: [], telefono: '', whatsapp: '', email: '', instagram: '', reservas: '', pagos: [], servicios: [] }, colores: { claro: { acento: '#b5832f', acento2: '#8f6420' }, oscuro: { acento: '#b5832f', acento2: '#8f6420' } },
+        categorias: [], platos: [], _estado: 'prototipo', _carpeta: '' });
+      return;
+    }
+    if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }
+    Promise.all([leerJson(carpeta + '/menu.json'), leerJson('locales.json', [])]).then(function (r) {
+      var ent = r[1].filter(function (l) { return l.carpeta === carpeta; })[0];
+      arrancar(r[0], ent && ent.estado);
+    }).catch(function () {
+      $('#vista').innerHTML = '<p style="margin-top:20px">No se encontró el menú de "' + esc(carpeta) + '". Si recién lo creaste, esperá 1 o 2 minutos y recargá.</p>';
+    });
+  }
+
+  /* ---------- inicio de sesión ----------
+     El administrador entra a cualquier local; cada local, solo al suyo (aunque cambie el link).
+     Sin sesión, con ?local= se puede seguir en modo muestra (cambios solo en este navegador). */
+  function conSesion(d) {
+    sesion = d; admin = !!(d && d.admin);
+    if (d && !admin) {
+      if (!d.locales.length) { $('#vista').innerHTML = '<p style="margin-top:20px">Tu usuario todavía no tiene un local asignado. Avisale al administrador.</p>'; $('#titulo').innerHTML = 'Panel del local'; $('#cuenta').hidden = false; return; }
+      if (nuevo || d.locales.indexOf(carpeta) < 0) { /* un local no crea locales ni entra a otros */
+        nuevo = false; vista = 'platos'; carpeta = d.locales[0];
+        history.replaceState(null, '', './?local=' + encodeURIComponent(carpeta));
+      }
+    }
+    if (d && admin && !carpeta && !nuevo) { location.replace('../admin/'); return; }
+    cargar();
+  }
+  Sesion.actual().then(function (d) {
+    if (d) return conSesion(d);
+    $('#titulo').innerHTML = 'Panel del local<small>Iniciá sesión</small>';
+    return Sesion.pedirLogin({
+      titulo: 'Panel de tu menú',
+      texto: 'Entrá con el mail y la contraseña de tu local.',
+      sinSesion: carpeta && !nuevo ? 'Seguir sin iniciar sesión (no se publica)' : ''
+    }).then(conSesion);
+  }).catch(function (e) {
+    console.error(e);
+    $('#vista').innerHTML = '<p style="margin-top:20px">No se pudo conectar para iniciar sesión. Revisá tu conexión y recargá la página.</p>';
   });
 })();
 </script>

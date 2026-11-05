@@ -46,8 +46,8 @@ create policy "ver mis estadisticas" on public.vistas
     )
   );
 
--- 3) Resumen por día y por plato, para mostrar en los paneles
+-- 3) Resumen por día (hora de Argentina) y por plato, para mostrar en los paneles
 create or replace view public.resumen_vistas with (security_invoker = true) as
-  select carpeta, date_trunc('day', creado)::date as dia, tipo, plato, count(*)::int as cantidad
+  select carpeta, (creado at time zone 'America/Argentina/Buenos_Aires')::date as dia, tipo, plato, count(*)::int as cantidad
   from public.vistas
   group by 1, 2, 3, 4;

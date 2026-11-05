@@ -138,6 +138,7 @@
   var btnAR = ov.querySelector('#a-ar');
   btnAR.onclick = function () {
     if (window.Menu3DAR && Menu3DAR.lanzar()) {
+      if (window.contarVista) window.contarVista('ar', curId);
       msg.textContent = v('apuntaAR'); msg.hidden = false;
       setTimeout(function () { msg.hidden = true; }, 5000);
     }
@@ -294,7 +295,8 @@
   function open3D(id) {
     var platos = (window.MENU && window.MENU.platos) || [];
     var d = platos.filter(function (x) { return String(x.id) === String(id); })[0];
-    curId = id; textosVisor(); ttl.textContent = d ? (window.textoPlato ? window.textoPlato(d).nombre : d.nombre) : v('vista');
+    curId = id; textosVisor();
+    if (window.contarVista) window.contarVista('3d', id); ttl.textContent = d ? (window.textoPlato ? window.textoPlato(d).nombre : d.nombre) : v('vista');
     ov.classList.remove('nocam'); ov.classList.add('open'); document.body.style.overflow = 'hidden';
     msg.textContent = v('preparando'); msg.hidden = false;
     var cam = startOri().then(startCam);

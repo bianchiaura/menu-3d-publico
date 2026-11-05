@@ -39,4 +39,4 @@ Hacelo en este orden. Son unos 15 minutos.
 
     **Nunca compartas** la *secret key* / *service_role*, la contraseña de la base ni tus tokens.
 
-Con eso, Claude conecta los paneles: pantalla de inicio de sesión, publicar a través de Supabase, crear el usuario de cada local desde tu panel y las estadísticas.
+Listo (noviembre 2026): los paneles ya usan el inicio de sesión, publican a través de la función `panel`, el administrador crea el usuario de cada local desde su tarjeta y se ven las estadísticas.

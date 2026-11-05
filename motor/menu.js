@@ -219,7 +219,31 @@
     /* con el menú ya visible, se baja el visor 3D de antemano para que "Ver en 3D" abra al instante */
     if (visibles().some(function (d) { return d.modelo; })) setTimeout(function () { if (window.precargar3D) window.precargar3D(); }, 2500);
     document.dispatchEvent(new CustomEvent('menu-listo')); /* avisa a los agregados (ej. la mascota) */
+    contar('menu');
   }
+  /* ---------- estadísticas ----------
+     Anota en Supabase que se abrió el menú o se miró un plato en 3D / AR. Solo se guarda el local, el plato,
+     el tipo y el idioma: nada de quién mira. No cuenta la vista previa, las pruebas en la compu ni los
+     navegadores donde alguien inició sesión en un panel (para que el local no se cuente a sí mismo). */
+  var SB = 'https://nudadncqyagovqzdkbuq.supabase.co', SB_CLAVE = 'sb_publishable_TE00ghT-FzqJTFkT5WwXKA_N_943Wz6';
+  function contar(tipo, plato) {
+    if (borrador || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+    try { if (localStorage.getItem('menu3d-no-contar')) return; } catch (e) {}
+    var partes = new URL(src, location.href).pathname.split('/'), carpeta = partes[partes.length - 2] || '';
+    if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(carpeta) || carpeta === 'plantilla') return;
+    if (tipo === 'menu') { /* una vez por visita (recargar la página no suma) */
+      try { if (sessionStorage.getItem('menu3d-contado:' + carpeta)) return; sessionStorage.setItem('menu3d-contado:' + carpeta, '1'); } catch (e) {}
+    }
+    try {
+      fetch(SB + '/rest/v1/vistas', {
+        method: 'POST', keepalive: true,
+        headers: { apikey: SB_CLAVE, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ carpeta: carpeta, tipo: tipo, plato: plato == null ? null : String(plato).slice(0, 20), idioma: idioma })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  window.contarVista = contar;
+
   function cambiarIdioma(nuevo) {
     idioma = window.idiomaMenu = nuevo;
     try { localStorage.setItem('menu3d-idioma', nuevo); } catch (e) {}
