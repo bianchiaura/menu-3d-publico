@@ -49,7 +49,7 @@ Lo que no aparece en ninguna foto no se puede inventar.
 2. Tocar **+ Nuevo local** y completar **Datos e identidad**: nombre, carpeta del link, estado, descripción de identidad, logo, colores, tipografía y contacto.
 3. En **Platos**: crear categorías y agregar cada plato con precio, descripción, foto de portada y su 3D.
 4. **Vista previa** para ver cómo queda y **Crear y publicar local**. En 1 o 2 minutos el link funciona y el local aparece en el administrador con su QR.
-5. En su tarjeta, **👤 Crear usuario**: mail del local y contraseña inicial. El panel arma el mensaje para mandarle por WhatsApp.
+5. En su tarjeta, **👤 Crear usuario**: mail, WhatsApp y contraseña inicial del local. Con **📲 Enviar por WhatsApp** se abre su chat con el mensaje de acceso escrito.
 
 Si es una demo con la marca de un local real, dejar activada la franja "Prototipo para…" y publicarla solo con permiso del local.
 
@@ -64,6 +64,11 @@ Si es una demo con la marca de un local real, dejar activada la franja "Prototip
 - **Publicar** pasa por la función `panel` de Supabase, que guarda el token de GitHub: nunca llega al navegador. Un local publica su `menu.json`, sus fotos y su tarjeta para compartir; la lista de locales y la página de entrada las toca solo el administrador.
 - **Estadísticas**: el menú anota cada vez que se abre (una vez por visita) y cada plato que se mira en 3D o en AR. Se ven en la pestaña **Estadísticas** de cada local y en las tarjetas del administrador (últimos 30 días). No cuentan la vista previa ni los navegadores donde alguien inició sesión en un panel. No se guarda nada de quién mira.
 - Sin iniciar sesión, el panel de un local funciona en modo muestra: los cambios quedan en ese navegador (**Vista previa** y **Descargar menu.json**).
+- **Usuarios de cada local** (en su tarjeta del administrador): se ve el mail del usuario y cuándo entró por última vez. **🔑 Nueva contraseña** le pone otra y arma el mensaje de WhatsApp; **Borrar** le quita el acceso (dos toques). **Eliminar** un local borra también su usuario.
+- **Bienvenida**: la primera vez que un local entra a su panel ve un mensaje corto de qué puede hacer. Sale una sola vez por usuario (queda anotado en su cuenta).
+- **Versiones** (volver a un menú publicado antes) y la **lista de locales** son solo del administrador.
+- **Editor de plato**: "+ Agregar plato" y "Editar" abren una pantalla completa con **← Volver**; el botón "atrás" del celular vuelve a la lista.
+- **Créditos de las fotos** (`"creditos"` + `"fotosConCredito"` en el menu.json): el link aparece solo mientras quede a la vista alguna foto que no es del local.
 
 ## El menu.json
 
@@ -100,4 +105,6 @@ Brasa & Grano tiene a **Brasita**, una brasa con cara. Código: `motor/mascota.j
 
 ## Supabase
 
-En `supabase/` están los archivos para activar el login de cada local y las estadísticas: `LEEME.md` (pasos), `1-esquema.sql`, `2-hacerme-admin.sql` y `3-funcion-panel.ts`.
+En `supabase/` están los archivos del login y las estadísticas: `LEEME.md` (pasos), `1-esquema.sql`, `2-hacerme-admin.sql` y `3-funcion-panel.ts`.
+
+La función `panel` (Edge Function) hace: `mis-locales`, `publicar`, `crear-usuario`, `usuarios`, `nueva-clave` y `borrar-usuario` (estas cuatro, solo el administrador). Su único secreto es `GITHUB_TOKEN`; el proyecto (`ronkstudio/menu-3d-publico`), el autor de los cambios y las direcciones permitidas están escritos en el código. Para cambiarla: Supabase → Edge Functions → panel → Code → pegar el archivo → **Deploy updates**.
