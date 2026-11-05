@@ -62,3 +62,18 @@ create or replace view public.resumen_aperturas with (security_invoker = true) a
   from public.vistas
   where tipo = 'menu'
   group by 1, 2, 3, 4;
+
+-- 5) Plan de cada local (lo que contrató y cómo pagó). Solo el administrador lo ve y lo cambia: no va al repo público.
+create table if not exists public.planes (
+  carpeta     text primary key check (carpeta ~ '^[a-z0-9][a-z0-9-]{0,59}$'),
+  plan        text not null check (plan in ('esencial', 'completo', 'premium')),
+  pago        text not null check (pago in ('mensual', 'semestral', 'anual')),
+  desde       date not null default current_date,   -- fecha del último pago
+  actualizado timestamptz not null default now()
+);
+alter table public.planes enable row level security;
+drop policy if exists "solo el administrador" on public.planes;
+create policy "solo el administrador" on public.planes
+  for all to authenticated
+  using (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'))
+  with check (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'));

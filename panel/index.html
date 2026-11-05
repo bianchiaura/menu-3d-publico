@@ -96,6 +96,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../motor/sesion.js"></script>
 <script src="../motor/github.js"></script>
+<script src="../motor/planes.js"></script>
 <script src="../motor/estadisticas.js"></script>
 <script src="../motor/almacen.js"></script>
 <script src="../motor/compartir.js"></script>
@@ -153,7 +154,7 @@
   }
   /* compara dos versiones del menú sin los datos internos del panel */
   function igual(a, b) {
-    function limpio(t) { var o = JSON.parse(t); ['_estado', '_carpeta', '_carpetaTocada', 'base'].forEach(function (k) { delete o[k]; }); return JSON.stringify(o); }
+    function limpio(t) { var o = JSON.parse(t); ['_estado', '_carpeta', '_carpetaTocada', 'base', '_plan', '_pago', '_desde'].forEach(function (k) { delete o[k]; }); return JSON.stringify(o); }
     try { return limpio(a) === limpio(b); } catch (e) { return false; }
   }
   /* ventana de aviso con opciones; devuelve una promesa con la opción elegida */
@@ -376,6 +377,25 @@
     return d;
   }
 
+  /* ---------- plan que contrató el local (solo al crearlo; después se cambia desde su tarjeta del administrador) ----------
+     Se guarda en Supabase (tabla "planes", solo el administrador la ve), nunca en el menu.json público. */
+  function hoyISO() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function pesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+  function textoCobro() {
+    var P = window.PRECIOS, p = P && P.planes.filter(function (x) { return x.id === M._plan; })[0], f = P && P.formas[M._pago];
+    if (!p || !f) return 'Sin plan: no se registra cobro (por ejemplo, una demo o una prueba).';
+    return 'Cobro: ' + pesos(p.mes * f.cobra) + (M._pago === 'anual' ? ' (puesta en marcha sin cargo)' : ' + puesta en marcha ' + pesos(P.alta) + ' (una sola vez)');
+  }
+  function cajaPlan() {
+    var P = window.PRECIOS || { planes: [], formas: {} };
+    return '<div class="caja" style="display:grid;gap:12px"><div><b>Plan que contrató</b><small style="display:block;color:var(--suave);font-weight:400">Solo lo ves vos: no aparece en su menú ni en su panel.</small></div>' +
+      '<label>Plan<select name="_plan"><option value="">Sin plan (demo o prueba)</option>' +
+      P.planes.map(function (p) { return '<option value="' + p.id + '"' + (M._plan === p.id ? ' selected' : '') + '>' + esc(p.nombre) + ' (' + pesos(p.mes) + ' por mes)</option>'; }).join('') + '</select></label>' +
+      '<label>Forma de pago<select name="_pago">' + Object.keys(P.formas).map(function (k) { return '<option value="' + k + '"' + ((M._pago || 'anual') === k ? ' selected' : '') + '>' + esc(P.formas[k].nombre) + '</option>'; }).join('') + '</select></label>' +
+      '<label>Fecha del pago<small>Desde ahí se cuenta cuándo vence</small><input type="date" name="_desde" value="' + esc(M._desde || hoyISO()) + '"></label>' +
+      '<p id="cobro" style="font-weight:700;color:var(--ok)">' + esc(textoCobro()) + '</p></div>';
+  }
+
   /* ---------- vista: datos e identidad ---------- */
   function vistaDatos() {
     var i = M.info || {}, c = (M.colores && M.colores.claro) || {};
@@ -385,6 +405,7 @@
         '<label>Estado<select name="_estado">' + Object.keys(ESTADOS).map(function (k) { return '<option value="' + k + '"' + ((M._estado || 'prototipo') === k ? ' selected' : '') + '>' + ESTADOS[k] + '</option>'; }).join('') + '</select></label></div>' +
         '<label class="checks" style="font-weight:400"><input type="checkbox" name="prototipo"' + (M.prototipo ? ' checked' : '') + '> Mostrar la franja "Prototipo para ' + esc(M.nombre || '…') + '" (obligatorio si es una demo con la marca de un local real)</label>' +
         '<label class="checks" style="font-weight:400"><input type="checkbox" name="muestra"' + (M.muestra ? ' checked' : '') + '> Datos de muestra (inventados): se muestran, pero teléfonos, mails y redes no se pueden tocar</label>' : '') +
+      (admin && nuevo ? cajaPlan() : '') +
       '<h3 style="font-size:1.05rem;margin-top:6px">Identidad</h3>' +
       '<label>Descripción de identidad<small>Estilo, ambiente y tono del local (ej. "Bodegón familiar, clásico, tonos rojos")</small><textarea name="identidad" maxlength="300">' + esc(M.identidad) + '</textarea></label>' +
       '<label>Frase debajo del nombre<input type="text" name="subtitulo" value="' + esc(M.subtitulo) + '"></label>' +
@@ -424,6 +445,7 @@
       var t = e.target, n = t.name;
       if (t.type === 'file' || t.hasAttribute('data-cat-nueva')) return;
       if (t.closest('#semana') || n === 'horarioNota') { leerSemana(); guardar(); return; }
+      if (n === '_plan' || n === '_pago' || n === '_desde') { M[n] = t.value; $('#cobro').textContent = textoCobro(); guardar(); return; }
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
@@ -606,7 +628,7 @@
   /* menú listo para publicar: sin campos internos y con las fotos nuevas pasadas a archivos */
   function empaquetar() {
     var m = JSON.parse(JSON.stringify(M)), archivos = [], t = Date.now().toString(36);
-    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m.base;
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m.base; delete m._plan; delete m._pago; delete m._desde;
     function archivo(d, ruta) { archivos.push({ ruta: ruta, dataUrl: d }); return ruta.split('/').slice(1).join('/'); }
     var dir = (M._carpeta || carpeta) + '/';
     if (/^data:/.test(m.logo || '')) m.logo = archivo(m.logo, dir + 'img/logo-' + t + '.jpg');
@@ -681,7 +703,13 @@
       clearTimeout(pendiente);
       return Almacen.borrar(clave());
     }).then(function () {
-      if (nuevo) { Almacen.borrar('menu3d-borrador:' + raiz + 'plantilla/menu.json'); location.replace('./?local=' + encodeURIComponent(dirLocal) + '&publicado=1'); return; }
+      if (nuevo) {
+        Almacen.borrar('menu3d-borrador:' + raiz + 'plantilla/menu.json');
+        /* el plan que contrató queda guardado en Supabase (solo lo ve el administrador) */
+        var plan = M._plan ? Sesion.guardarPlan(dirLocal, { plan: M._plan, pago: M._pago || 'anual', desde: M._desde || hoyISO() })
+          .catch(function (e) { alert('El local se creó, pero no se pudo guardar su plan: ' + e.message + '\nCargalo desde su tarjeta, con "💳 Plan".'); }) : Promise.resolve();
+        return plan.then(function () { location.replace('./?local=' + encodeURIComponent(dirLocal) + '&publicado=1'); });
+      }
       paq.menu._estado = M._estado; M = paq.menu; original = desde = JSON.stringify(M); guardar(); mostrar();
       toast('¡Publicado! En 1 o 2 minutos se ve en el menú.');
     }).catch(function (e) {
@@ -714,7 +742,7 @@
   };
   $('#bajar').onclick = function () {
     var a = document.createElement('a'), m = JSON.parse(JSON.stringify(M));
-    delete m._carpeta; delete m._estado; delete m._carpetaTocada;
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m._plan; delete m._pago; delete m._desde;
     a.href = URL.createObjectURL(new Blob([JSON.stringify(m, null, 2)], { type: 'application/json' }));
     a.download = 'menu.json'; a.click();
   };
@@ -768,7 +796,7 @@
     if (nuevo) {
       arrancar({ nombre: '', subtitulo: 'Tocá "Ver en 3D" y mirá tu plato sobre la mesa', identidad: '', tipografia: 'clasica', logo: '', prototipo: true, moneda: '$',
         info: { sobre: '', direccion: '', zona: '', horarios: [], telefono: '', whatsapp: '', email: '', instagram: '', reservas: '', pagos: [], servicios: [] }, colores: { claro: { acento: '#b5832f', acento2: '#8f6420' }, oscuro: { acento: '#b5832f', acento2: '#8f6420' } },
-        categorias: [], platos: [], _estado: 'prototipo', _carpeta: '' });
+        categorias: [], platos: [], _estado: 'prototipo', _carpeta: '', _plan: '', _pago: 'anual', _desde: hoyISO() });
       return;
     }
     if (!carpeta) { $('#vista').innerHTML = '<p style="margin-top:20px">Falta indicar el local en el link (…/panel/?local=nombre-del-local).</p>'; return; }

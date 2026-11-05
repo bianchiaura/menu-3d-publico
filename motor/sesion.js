@@ -150,6 +150,21 @@ window.Sesion = (function () {
     return tanda(0);
   }
 
+  /* plan de cada local (tabla "planes": solo el administrador la ve) → { carpeta: { plan, pago, desde } } */
+  function planes() {
+    return sb.from('planes').select('carpeta,plan,pago,desde').then(function (r) {
+      if (r.error) throw new Error(r.error.message);
+      var o = {}; (r.data || []).forEach(function (p) { o[p.carpeta] = p; }); return o;
+    });
+  }
+  function guardarPlan(carpeta, p) {
+    return sb.from('planes').upsert({ carpeta: carpeta, plan: p.plan, pago: p.pago, desde: p.desde, actualizado: new Date().toISOString() })
+      .then(function (r) { if (r.error) throw new Error(r.error.message); });
+  }
+  function borrarPlan(carpeta) {
+    return sb.from('planes').delete().eq('carpeta', carpeta).then(function (r) { if (r.error) throw new Error(r.error.message); });
+  }
+
   /* la bienvenida del panel se muestra una sola vez por usuario (queda anotado en su cuenta, sirve en cualquier celular) */
   function bienvenidaVista() {
     if (datos) datos.bienvenida = true;
@@ -163,5 +178,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, guardarPlan: guardarPlan, borrarPlan: borrarPlan };
 })();

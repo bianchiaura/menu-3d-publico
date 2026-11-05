@@ -68,6 +68,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../motor/sesion.js"></script>
 <script src="../motor/github.js"></script>
+<script src="../motor/planes.js"></script>
 <script src="../motor/estadisticas.js"></script>
 <script>
 (function () {
@@ -241,7 +242,8 @@
         msg.textContent = 'Eliminando…';
         return GitHub.publicar(archivos, 'Elimina el local ' + (l.nombre || l.carpeta), function (t) { msg.textContent = t; }, l.carpeta);
       }).then(function () {
-        /* sus usuarios ya no tienen nada que editar: se borran también */
+        /* su plan y sus usuarios ya no tienen sentido: se borran también */
+        if (PLANES && PLANES[l.carpeta]) Sesion.borrarPlan(l.carpeta).catch(function (e) { console.error(e); });
         var suyos = (USUARIOS || []).filter(function (u) { return u.carpeta === l.carpeta; });
         if (!suyos.length) return;
         msg.textContent = 'Borrando su usuario…';
@@ -259,17 +261,18 @@
   }
 
   /* ---------- locales ---------- */
-  var LOCS = [], EST = null, USUARIOS = null; /* USUARIOS = null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
+  var LOCS = [], EST = null, USUARIOS = null, PLANES = null; /* null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
   function cargarLocales() {
-    /* estadísticas y usuarios se piden en paralelo; si fallan, el panel igual funciona */
+    /* estadísticas, usuarios y planes se piden en paralelo; si fallan, el panel igual funciona */
     var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
     var usu = Sesion.funcion('usuarios').then(function (j) { return j.usuarios || []; }, function (e) { console.error(e); return null; });
+    var pla = Sesion.planes().catch(function (e) { console.error(e); return null; });
     json(raiz + 'locales.json').then(function (locs) {
       return Promise.all(locs.map(function (l) {
         return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
-      }).concat([est, usu]));
+      }).concat([est, usu, pla]));
     }).then(function (r) {
-      USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
+      PLANES = r.pop(); USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
       pintar();
     }).catch(function (e) {
       console.error(e);
@@ -291,11 +294,62 @@
     }).join('') + '</div>';
   }
 
+  /* ---------- plan de cada local: qué contrató, cuánto se cobra y cuándo vence ---------- */
+  function pesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+  function hoyISO() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function infoPlan(pl) {
+    var P = window.PRECIOS, p = P.planes.filter(function (x) { return x.id === pl.plan; })[0], f = P.formas[pl.pago];
+    if (!p || !f) return null;
+    var d = String(pl.desde).split('-'), vence = new Date(+d[0], +d[1] - 1 + f.dura, +d[2]);
+    var dias = Math.ceil((vence - new Date(new Date().toDateString())) / 864e5);
+    return { nombre: p.nombre, forma: f.nombre, cobro: p.mes * f.cobra, porMes: p.mes * f.cobra / f.dura, vence: vence, dias: dias };
+  }
+  function bloquePlan(l) {
+    if (!PLANES) return '';
+    var pl = PLANES[l.carpeta], x = pl && infoPlan(pl);
+    if (!x) return '<p class="plan-local">💳 <span style="color:var(--suave)">Sin plan cargado</span></p>';
+    var f = x.vence.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+    var estado = x.dias < 0 ? '<span class="vence-mal">⚠ Venció el ' + f + '</span>'
+      : x.dias <= 7 ? '<span class="vence-pronto">Vence pronto: ' + f + '</span>' : '<span>Próximo pago: ' + f + '</span>';
+    return '<p class="plan-local">💳 <b>' + esc(x.nombre) + '</b><span>' + esc(x.forma) + ' · ' + pesos(x.cobro) + '</span>' + estado + '</p>';
+  }
+  /* ventana para cargar o cambiar el plan (también para registrar una renovación: se cambia la fecha del pago) */
+  function editarPlan(l) {
+    var P = window.PRECIOS, pl = (PLANES && PLANES[l.carpeta]) || { plan: '', pago: 'anual', desde: hoyISO() };
+    var d = document.createElement('dialog'); d.style.maxWidth = '440px';
+    d.innerHTML = '<form class="cuerpo form" novalidate><h2 style="font-size:1.15rem">Plan de ' + esc((l.menu && l.menu.nombre) || l.carpeta) + '</h2>' +
+      '<label>Plan<select name="plan"><option value="">Sin plan (demo o prueba)</option>' + P.planes.map(function (p) { return '<option value="' + p.id + '"' + (pl.plan === p.id ? ' selected' : '') + '>' + esc(p.nombre) + ' (' + pesos(p.mes) + ' por mes)</option>'; }).join('') + '</select></label>' +
+      '<label>Forma de pago<select name="pago">' + Object.keys(P.formas).map(function (k) { return '<option value="' + k + '"' + (pl.pago === k ? ' selected' : '') + '>' + esc(P.formas[k].nombre) + '</option>'; }).join('') + '</select></label>' +
+      '<label>Fecha del pago<small>Si renovó, poné la fecha del pago nuevo</small><input type="date" name="desde" value="' + esc(pl.desde || hoyISO()) + '"></label>' +
+      '<p class="cobro" style="font-weight:700;color:var(--ok)"></p><p class="msg" style="font-size:.88rem;color:var(--mal)"></p>' +
+      '<p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p">Guardar</button></p></form>';
+    var f = d.querySelector('form'), cobro = d.querySelector('.cobro'), msg = d.querySelector('.msg');
+    function mostrarCobro() {
+      var x = f.plan.value && infoPlan({ plan: f.plan.value, pago: f.pago.value, desde: f.desde.value || hoyISO() });
+      cobro.textContent = x ? 'Cobro: ' + pesos(x.cobro) + ' · vence el ' + x.vence.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin plan: no se registra cobro.';
+    }
+    f.oninput = mostrarCobro; mostrarCobro();
+    d.querySelector('[data-no]').onclick = function () { d.close(); };
+    d.addEventListener('close', function () { d.remove(); });
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var nuevoPlan = { plan: f.plan.value, pago: f.pago.value, desde: f.desde.value || hoyISO() };
+      msg.style.color = 'var(--suave)'; msg.textContent = 'Guardando…';
+      (nuevoPlan.plan ? Sesion.guardarPlan(l.carpeta, nuevoPlan) : Sesion.borrarPlan(l.carpeta)).then(function () {
+        if (nuevoPlan.plan) PLANES[l.carpeta] = nuevoPlan; else delete PLANES[l.carpeta];
+        d.close(); pintar();
+      }).catch(function (err) { msg.style.color = 'var(--mal)'; msg.textContent = '⚠ ' + err.message; });
+    };
+    document.body.appendChild(d); d.showModal();
+  }
+
   function pintar() {
-    var locs = LOCS, e = EST, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0;
+    var locs = LOCS, e = EST, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0, abonos = 0, vencidos = 0;
     locs.forEach(function (l) { (l.menu ? l.menu.platos : []).forEach(function (p) { platos++; if (p.modelo) con3d++; }); });
     if (e) Object.keys(e).forEach(function (c) { abiertos += e[c].menu; vistos3d += e[c].d3 + e[c].ar; });
+    if (PLANES) locs.forEach(function (l) { var x = PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]); if (x) { abonos += x.porMes; if (x.dias < 0) vencidos++; } });
     document.getElementById('kpis').innerHTML = [[locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D']]
+      .concat(PLANES ? [[pesos(abonos), 'por mes en abonos (promedio)']].concat(vencidos ? [[vencidos, vencidos === 1 ? 'pago vencido' : 'pagos vencidos']] : []) : [])
       .concat(e ? [[Estadisticas.num(abiertos), 'menús abiertos (30 días)'], [Estadisticas.num(vistos3d), 'platos vistos en 3D o AR (30 días)']] : [])
       .map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
     function lineaEst(c) {
@@ -312,6 +366,7 @@
         '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
         '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p>' + lineaEst(l.carpeta) + '</div>' +
         '<button type="button" class="qr" data-qr="' + i + '" aria-label="Ver el QR del menú en grande">' + QR.svg(link) + '</button>' +
+        bloquePlan(l) +
         bloqueUsuarios(l) +
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
         '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
@@ -319,6 +374,7 @@
         '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
         '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
         '<button class="b" data-resumen="' + i + '">📊 Resumen</button>' +
+        (PLANES ? '<button class="b" data-plan="' + i + '">💳 Plan</button>' : '') +
         '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
   }
@@ -329,6 +385,7 @@
     var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
     var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
     var rs = e.target.closest('[data-resumen]'); if (rs) enviarResumen(locs[rs.dataset.resumen], rs);
+    var pp = e.target.closest('[data-plan]'); if (pp) editarPlan(locs[pp.dataset.plan]);
     /* botones de cada usuario */
     var k = e.target.closest('[data-clave]'), b = e.target.closest('[data-borrar-u]'), id = k ? k.dataset.clave : b ? b.dataset.borrarU : null;
     if (id) {
