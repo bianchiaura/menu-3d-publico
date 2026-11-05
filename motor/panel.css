@@ -192,3 +192,8 @@ button.qr svg{display:block;width:100%;height:100%}
 .semana input[type=time]{padding:6px 8px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo);color:var(--texto);font-size:16px}
 .semana input[type=time]{cursor:pointer}
 .semana input[type=time]::-webkit-calendar-picker-indicator{cursor:pointer}
+/* estadísticas: datos sueltos y barras de horas */
+.est-dato{font-size:.92rem}
+.est-barras.horas{height:100px}
+/* en pantallas angostas el nombre del local va en su propio renglón (si no, queda apretado detrás del QR y los botones) */
+@media (max-width:640px){html:not(.modo-compu) .barra h1{flex-basis:100%}}

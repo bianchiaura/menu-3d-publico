@@ -180,6 +180,30 @@
       alertar('No se pudo borrar el usuario: ' + err.message);
     });
   }
+  /* resumen del último mes para mandarle al local: se arma el texto y se abre su WhatsApp con el mensaje escrito */
+  function enviarResumen(l, boton) {
+    var antes = boton.textContent; boton.disabled = true; boton.textContent = 'Armando…';
+    Estadisticas.resumen(l.carpeta, l.menu).then(function (texto) {
+      if (!texto) { alertar('Este local todavía no tuvo visitas en los últimos 30 días.'); return; }
+      /* a quién: el WhatsApp de su usuario o el de su ficha; si no hay, WhatsApp pregunta a quién mandarlo */
+      var u = (USUARIOS || []).filter(function (x) { return x.carpeta === l.carpeta && x.whatsapp; })[0];
+      var ficha = l.menu && !l.menu.muestra && l.menu.info && l.menu.info.whatsapp;
+      var tel = (u && u.whatsapp) || numeroWhatsApp(ficha) || '';
+      var d = document.createElement('dialog'); d.style.maxWidth = '460px';
+      d.innerHTML = '<div class="cuerpo" style="display:grid;gap:12px"><h2 style="font-size:1.15rem">Resumen para ' + esc((l.menu && l.menu.nombre) || l.carpeta) + '</h2>' +
+        '<pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>' +
+        (tel ? '' : '<p style="color:var(--suave);font-size:.85rem">No tengo su WhatsApp guardado: al tocar el botón, WhatsApp te pregunta a quién mandarlo.</p>') +
+        '<p style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="b" data-cerrar>Cerrar</button><button type="button" class="b" data-copiar-r>Copiar</button>' +
+        '<a class="b p" target="_blank" rel="noopener">📲 Enviar por WhatsApp</a></p></div>';
+      d.querySelector('pre').textContent = texto;
+      d.querySelector('a').href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
+      d.querySelector('[data-cerrar]').onclick = function () { d.close(); };
+      d.querySelector('[data-copiar-r]').onclick = function (ev) { var b = ev.target; navigator.clipboard.writeText(texto).then(function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar'; }, 1500); }); };
+      d.addEventListener('close', function () { d.remove(); });
+      document.body.appendChild(d); d.showModal();
+    }).catch(function (err) { alertar('No se pudo armar el resumen: ' + err.message); })
+      .then(function () { boton.disabled = false; boton.textContent = antes; });
+  }
   function alertar(t) { var p = document.createElement('div'); p.className = 'toast'; p.textContent = t; document.body.appendChild(p); setTimeout(function () { p.remove(); }, 4000); }
 
   /* ---------- instalar como app ---------- */
@@ -291,6 +315,7 @@
         '<button class="b" data-qr="' + i + '">🔳 QR para imprimir</button>' +
         '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
         '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
+        '<button class="b" data-resumen="' + i + '">📊 Resumen</button>' +
         '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
   }
@@ -300,6 +325,7 @@
     if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
     var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
     var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
+    var rs = e.target.closest('[data-resumen]'); if (rs) enviarResumen(locs[rs.dataset.resumen], rs);
     /* botones de cada usuario */
     var k = e.target.closest('[data-clave]'), b = e.target.closest('[data-borrar-u]'), id = k ? k.dataset.clave : b ? b.dataset.borrarU : null;
     if (id) {

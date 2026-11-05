@@ -51,3 +51,14 @@ create or replace view public.resumen_vistas with (security_invoker = true) as
   select carpeta, (creado at time zone 'America/Argentina/Buenos_Aires')::date as dia, tipo, plato, count(*)::int as cantidad
   from public.vistas
   group by 1, 2, 3, 4;
+
+-- 4) Aperturas del menú por día, hora (de Argentina) e idioma: para "horas pico" y "turistas"
+create or replace view public.resumen_aperturas with (security_invoker = true) as
+  select carpeta,
+         (creado at time zone 'America/Argentina/Buenos_Aires')::date as dia,
+         extract(hour from creado at time zone 'America/Argentina/Buenos_Aires')::int as hora,
+         coalesce(idioma, 'es') as idioma,
+         count(*)::int as cantidad
+  from public.vistas
+  where tipo = 'menu'
+  group by 1, 2, 3, 4;

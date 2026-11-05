@@ -128,10 +128,18 @@ window.Sesion = (function () {
   /* resumen de los últimos "dias" días: [{ carpeta, dia, tipo, plato, cantidad }] (carpeta null = todos los locales).
      Supabase devuelve como mucho 1000 filas por pedido: se piden de a tandas hasta traer todo. */
   function estadisticas(carpeta, dias) {
+    return consulta('resumen_vistas', 'carpeta,dia,tipo,plato,cantidad', ['carpeta', 'dia', 'tipo', 'plato'], carpeta, dias);
+  }
+  /* aperturas del menú por día, hora e idioma: [{ carpeta, dia, hora, idioma, cantidad }] (para horas pico y turistas) */
+  function aperturas(carpeta, dias) {
+    return consulta('resumen_aperturas', 'carpeta,dia,hora,idioma,cantidad', ['carpeta', 'dia', 'hora', 'idioma'], carpeta, dias);
+  }
+  function consulta(vista, columnas, orden, carpeta, dias) {
     var desde = new Date(Date.now() - (dias - 1) * 864e5).toISOString().slice(0, 10), TANDA = 1000, todo = [];
     function tanda(n) {
-      var q = sb.from('resumen_vistas').select('carpeta,dia,tipo,plato,cantidad').gte('dia', desde)
-        .order('carpeta').order('dia').order('tipo').order('plato', { nullsFirst: true }).range(n * TANDA, n * TANDA + TANDA - 1);
+      var q = sb.from(vista).select(columnas).gte('dia', desde);
+      orden.forEach(function (c) { q = q.order(c, { nullsFirst: true }); });
+      q = q.range(n * TANDA, n * TANDA + TANDA - 1);
       if (carpeta) q = q.eq('carpeta', carpeta);
       return q.then(function (r) {
         if (r.error) throw new Error(r.error.message);
@@ -155,5 +163,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista };
 })();
