@@ -181,7 +181,7 @@
     $('#publicar').hidden = !sesion;
     $('#publicar').textContent = nuevo ? 'Crear y publicar local' : 'Publicar cambios';
     $('#bajar').hidden = !!sesion;
-    $('#versiones').hidden = !sesion || nuevo;
+    $('#versiones').hidden = !admin || nuevo; /* volver a versiones viejas: solo el administrador */
     $('#cuenta').hidden = !sesion;
     $('#tab-est').hidden = !sesion || nuevo;
     $('#aviso').innerHTML = sesion

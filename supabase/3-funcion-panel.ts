@@ -50,6 +50,29 @@ function base64Texto(s: string) {
 
 type Archivo = { ruta: string; texto?: string; dataUrl?: string; borrar?: boolean };
 
+/* página de entrada del local (la que lee WhatsApp al compartir el link: título e imagen).
+   Cuando publica un local, se arma acá a partir de su menú, así queda al día aunque cambie el nombre.
+   Es la misma que arma el panel del administrador (paginaLocal en panel/index.html). */
+const SITIO = 'https://' + REPO.split('/')[0] + '.github.io/' + REPO.split('/')[1] + '/';
+function esc(s: unknown) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]); }
+function paginaLocal(m: { nombre?: string; colores?: { claro?: { acento?: string } } }, dir: string) {
+  const n = esc(m.nombre), url = SITIO + dir + '/', v = Date.now().toString(36);
+  const acento = m.colores?.claro?.acento ?? '', color = /^#[0-9a-f]{3,8}$/i.test(acento) ? acento : '#b5832f';
+  const js = (f: string) => '<script src="../motor/' + f + '"></' + 'script>\n';
+  return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+    '<!-- Datos para cuando se comparte el link (WhatsApp, etc.). El menú en sí está en menu.json. Esta página se genera al publicar -->\n' +
+    '<title>' + n + ' · Menú 3D</title>\n<meta name="description" content="Menú digital con platos en 3D. Escaneá el QR o acercá el celular al NFC y mirá cada plato sobre tu mesa.">\n' +
+    '<meta property="og:type" content="website">\n<meta property="og:url" content="' + esc(url) + '">\n' +
+    '<meta property="og:title" content="' + n + ' · Menú 3D">\n<meta property="og:description" content="Mirá cada plato en 3D sobre tu mesa antes de elegir.">\n' +
+    '<meta property="og:image" content="' + esc(url + 'compartir.jpg?v=' + v) + '">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n' +
+    '<meta name="twitter:card" content="summary_large_image">\n' +
+    '<meta name="theme-color" content="' + color + '">\n' +
+    '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8D%BD%3C/text%3E%3C/svg%3E">\n' +
+    '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;700&display=swap" rel="stylesheet">\n' +
+    '<link rel="stylesheet" href="../motor/menu.css">\n</head>\n<body data-menu="menu.json">\n' +
+    js('menu.js') + js('cargar-three.js') + js('relieve.js') + js('visor3d.js') + js('mascota.js') + '</body>\n</html>\n';
+}
+
 /* publica varios archivos en un solo cambio (commit) */
 async function publicar(archivos: Archivo[], mensaje: string) {
   const ref = await github('/git/ref/heads/' + RAMA);
@@ -103,6 +126,9 @@ Deno.serve(async (req) => {
         }
       }
       if (total > MAX_BYTES) return responder(req, { error: 'Los archivos son demasiado grandes.' }, 413);
+      /* un local no manda páginas: si cambió su menú, su página de entrada se arma acá (nombre al día al compartir) */
+      const menu = archivos.find((a) => a.ruta === carpeta + '/menu.json');
+      if (!esAdmin && menu) archivos.push({ ruta: carpeta + '/index.html', texto: paginaLocal(JSON.parse(menu.texto ?? '{}'), carpeta) });
       await publicar(archivos, String(cuerpo.mensaje ?? 'Actualiza el menú de ' + carpeta).slice(0, 120));
       return responder(req, { ok: true });
     }
