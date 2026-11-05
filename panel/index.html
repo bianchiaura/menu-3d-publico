@@ -623,13 +623,22 @@
       marcarTab(); cabecera(); guardar(); mostrar();
       if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');
       /* el borrador empezó sobre una versión que ya no es la publicada */
-      if (!nuevo && d && d.desde && !igual(d.desde, original)) preguntar('El menú cambió desde tu borrador',
-        'Tenés cambios sin publicar, pero mientras tanto alguien publicó otra versión de este menú. ¿Con cuál seguís?',
-        [{ texto: 'Seguir con mi borrador', valor: 'mio', p: true }, { texto: 'Descartar mi borrador', valor: 'otro', mal: true }])
-        .then(function (r) {
-          if (r === 'otro') { M = JSON.parse(original); desde = original; guardar(); cabecera(); mostrar(); toast('Se descartó tu borrador'); }
-          else if (r === 'mio') { desde = original; guardar(); } /* elegiste pisar lo publicado: ya no avisa al publicar */
-        });
+      function revisarBorrador() {
+        if (!nuevo && d && d.desde && !igual(d.desde, original)) preguntar('El menú cambió desde tu borrador',
+          'Tenés cambios sin publicar, pero mientras tanto alguien publicó otra versión de este menú. ¿Con cuál seguís?',
+          [{ texto: 'Seguir con mi borrador', valor: 'mio', p: true }, { texto: 'Descartar mi borrador', valor: 'otro', mal: true }])
+          .then(function (r) {
+            if (r === 'otro') { M = JSON.parse(original); desde = original; guardar(); cabecera(); mostrar(); toast('Se descartó tu borrador'); }
+            else if (r === 'mio') { desde = original; guardar(); } /* elegiste pisar lo publicado: ya no avisa al publicar */
+          });
+      }
+      /* la primera vez que un local entra a su panel: una bienvenida corta (una sola vez por usuario) */
+      if (sesion && !admin && !sesion.bienvenida) {
+        preguntar('¡Bienvenido a tu panel!',
+          'Acá cambiás precios, platos, fotos y los datos de tu local. Cuando termines, tocá "Publicar cambios" y en 1 o 2 minutos se ve en tu menú.',
+          [{ texto: 'Empezar', valor: 'ok', p: true }])
+          .then(function () { Sesion.bienvenidaVista(); revisarBorrador(); });
+      } else revisarBorrador();
     });
   }
   /* con sesión iniciada se lee directo de GitHub (lo último publicado, sin la demora de la página) */

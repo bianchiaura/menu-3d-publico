@@ -5,7 +5,10 @@
 // Acciones (POST con JSON, siempre con la sesión del usuario):
 //   { accion: "mis-locales" }                                   → qué locales puede editar
 //   { accion: "publicar", carpeta, archivos: [...], mensaje }    → publica cambios de un local
-//   { accion: "crear-usuario", email, password, carpeta }        → (solo admin) crea el usuario de un local
+//   { accion: "crear-usuario", email, password, carpeta, whatsapp } → (solo admin) crea el usuario de un local
+//   { accion: "usuarios" }                                       → (solo admin) lista los usuarios de los locales
+//   { accion: "nueva-clave", id, password, whatsapp }             → (solo admin) le pone otra contraseña a un local
+//   { accion: "borrar-usuario", id }                             → (solo admin) borra el usuario de un local
 //
 // Secreto que hay que cargar en Supabase (Edge Functions → Secrets):
 //   GITHUB_TOKEN   token de GitHub con "Contents: Read and write" sobre menu-3d-publico
@@ -131,13 +134,63 @@ Deno.serve(async (req) => {
       return responder(req, { ok: true });
     }
 
+    /* ---------- usuarios de los locales: todo esto es solo para el administrador ---------- */
+    const whatsapp = String(cuerpo.whatsapp ?? '').replace(/\D/g, '').slice(0, 15); /* se guarda para volver a escribirle */
+
     if (cuerpo.accion === 'crear-usuario') {
       if (!esAdmin) return responder(req, { error: 'Solo el administrador puede crear usuarios.' }, 403);
       const carpeta = String(cuerpo.carpeta ?? '');
       if (!/^[a-z0-9][a-z0-9-]*$/.test(carpeta)) return responder(req, { error: 'Carpeta inválida.' }, 400);
-      const { data, error } = await servidor.auth.admin.createUser({ email: cuerpo.email, password: cuerpo.password, email_confirm: true });
+      const { data, error } = await servidor.auth.admin.createUser({
+        email: cuerpo.email, password: cuerpo.password, email_confirm: true, user_metadata: whatsapp ? { whatsapp } : {},
+      });
       if (error) return responder(req, { error: error.message }, 400);
-      await servidor.from('usuarios_locales').insert({ user_id: data.user.id, carpeta, rol: 'local' });
+      const { error: sinLocal } = await servidor.from('usuarios_locales').insert({ user_id: data.user.id, carpeta, rol: 'local' });
+      if (sinLocal) { /* no se pudo asignar el local: se borra el usuario para no dejarlo a medias */
+        await servidor.auth.admin.deleteUser(data.user.id);
+        return responder(req, { error: 'No se pudo asignar el local: ' + sinLocal.message }, 500);
+      }
+      return responder(req, { ok: true, id: data.user.id });
+    }
+
+    /* lista de usuarios de los locales: [{ id, carpeta, email, whatsapp, creado, ultimoIngreso }] */
+    if (cuerpo.accion === 'usuarios') {
+      if (!esAdmin) return responder(req, { error: 'Solo el administrador puede ver los usuarios.' }, 403);
+      const { data: filas, error } = await servidor.from('usuarios_locales').select('user_id, carpeta, rol, creado');
+      if (error) throw error;
+      const cuentas = new Map<string, { email?: string; created_at?: string; last_sign_in_at?: string; user_metadata?: Record<string, unknown> }>();
+      for (let pagina = 1; pagina <= 20; pagina++) {
+        const { data, error: e } = await servidor.auth.admin.listUsers({ page: pagina, perPage: 1000 });
+        if (e) throw e;
+        for (const u of data.users) cuentas.set(u.id, u);
+        if (data.users.length < 1000) break;
+      }
+      const usuarios = (filas ?? []).filter((f) => f.rol === 'local').map((f) => {
+        const u = cuentas.get(f.user_id);
+        return {
+          id: f.user_id, carpeta: f.carpeta, email: u?.email ?? '', whatsapp: String(u?.user_metadata?.whatsapp ?? ''),
+          creado: u?.created_at ?? f.creado, ultimoIngreso: u?.last_sign_in_at ?? null,
+        };
+      });
+      return responder(req, { usuarios });
+    }
+
+    /* nueva contraseña o borrar: solo usuarios de locales (al administrador no se lo toca desde acá) */
+    if (cuerpo.accion === 'nueva-clave' || cuerpo.accion === 'borrar-usuario') {
+      if (!esAdmin) return responder(req, { error: 'Solo el administrador puede cambiar usuarios.' }, 403);
+      const id = String(cuerpo.id ?? '');
+      const { data: suyos } = await servidor.from('usuarios_locales').select('rol').eq('user_id', id);
+      if (!suyos?.length) return responder(req, { error: 'Ese usuario ya no existe.' }, 404);
+      if (suyos.some((p) => p.rol === 'admin')) return responder(req, { error: 'Ese usuario es administrador: se cambia desde Supabase.' }, 403);
+      if (cuerpo.accion === 'nueva-clave') {
+        const password = String(cuerpo.password ?? '');
+        if (password.length < 8) return responder(req, { error: 'La contraseña tiene que tener al menos 8 caracteres.' }, 400);
+        const { error } = await servidor.auth.admin.updateUserById(id, whatsapp ? { password, user_metadata: { whatsapp } } : { password });
+        if (error) return responder(req, { error: error.message }, 400);
+        return responder(req, { ok: true });
+      }
+      const { error } = await servidor.auth.admin.deleteUser(id); /* sus permisos se borran solos (on delete cascade) */
+      if (error) return responder(req, { error: error.message }, 400);
       return responder(req, { ok: true });
     }
 

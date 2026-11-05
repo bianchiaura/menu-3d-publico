@@ -26,21 +26,21 @@
 </div></div>
 <dialog id="dlg-eliminar" style="max-width:460px"><div class="cuerpo form">
   <h2 style="font-size:1.15rem">Eliminar local</h2>
-  <p style="color:var(--suave)">Se borra su menú, sus fotos y su link deja de funcionar (su QR también). Queda guardado en el historial de GitHub por si hay que recuperarlo.</p>
+  <p style="color:var(--suave)">Se borra su menú, sus fotos y su usuario, y su link deja de funcionar (su QR también). El menú queda guardado en el historial de GitHub por si hay que recuperarlo.</p>
   <label>Para confirmar, escribí <b class="nombre"></b><input type="text" autocomplete="off" autocapitalize="off"></label>
   <p class="msg" style="font-size:.88rem;color:var(--mal)"></p>
   <p style="display:flex;gap:8px;justify-content:flex-end"><button class="b" data-no>Cancelar</button><button class="b p mal" data-ok disabled>Eliminar</button></p>
 </div></dialog>
 <dialog id="dlg-usuario" style="max-width:460px"><form class="cuerpo form" novalidate>
-  <h2 style="font-size:1.15rem">Usuario para <span class="nombre"></span></h2>
+  <h2 style="font-size:1.15rem"><span class="titulo">Usuario para</span> <span class="nombre"></span></h2>
   <div data-paso="datos" style="display:grid;gap:14px">
-    <p style="color:var(--suave);font-size:.88rem">Con este mail y contraseña el local entra a su panel y publica solo su menú.</p>
+    <p class="intro" style="color:var(--suave);font-size:.88rem"></p>
     <label>Mail del local<input type="email" name="email" autocomplete="off" required></label>
     <label>WhatsApp del local<small>Con característica, sin 0 ni 15. Ej. 11 2233 4455</small><input type="tel" name="whatsapp" autocomplete="off" inputmode="tel" required></label>
-    <label>Contraseña inicial<small>Después la puede cambiar desde "Mi cuenta"</small><input type="text" name="password" autocomplete="off" minlength="8" required></label>
+    <label><span class="etiqueta-clave">Contraseña inicial</span><small>Después la puede cambiar desde "Mi cuenta"</small><input type="text" name="password" autocomplete="off" minlength="8" required></label>
   </div>
   <div data-paso="listo" hidden style="display:grid;gap:10px">
-    <p style="color:var(--ok);font-weight:700">✓ Usuario creado</p>
+    <p class="hecho" style="color:var(--ok);font-weight:700"></p>
     <p style="color:var(--suave);font-size:.88rem">Tocá <b>Enviar por WhatsApp</b>: se abre el chat del local con este mensaje escrito, y vos lo mandás.</p>
     <pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>
   </div>
@@ -104,16 +104,25 @@
     if (m && (m[1] + m[2]).length === 10) n = m[1] + m[2];
     return /^\d{10}$/.test(n) ? '549' + n : null;
   }
-  function crearUsuario(l) {
+  /* crear el usuario de un local, o (con "u") darle una contraseña nueva a uno que ya existe.
+     En los dos casos termina con el mensaje listo para mandarle por WhatsApp. */
+  function crearUsuario(l, u) {
     var d = document.getElementById('dlg-usuario'), f = d.querySelector('form'), msg = d.querySelector('.msg');
     var ok = d.querySelector('[data-ok]'), copiar = d.querySelector('[data-copiar]'), no = d.querySelector('[data-no]'), wa = d.querySelector('[data-wa]');
-    var nombre = (l.menu && l.menu.nombre) || l.nombre || l.carpeta, info = (l.menu && l.menu.info) || {};
+    var nombre = (l.menu && l.menu.nombre) || l.nombre || l.carpeta, info = (l.menu && l.menu.info) || {}, propios = l.menu && !l.menu.muestra;
+    d.querySelector('.titulo').textContent = u ? 'Nueva contraseña para' : 'Usuario para';
     d.querySelector('.nombre').textContent = nombre;
+    d.querySelector('.intro').textContent = u
+      ? 'Se le pone esta contraseña y la anterior deja de servir. Después le mandás el mensaje por WhatsApp.'
+      : 'Con este mail y contraseña el local entra a su panel y publica solo su menú.';
+    d.querySelector('.etiqueta-clave').textContent = u ? 'Contraseña nueva' : 'Contraseña inicial';
     d.querySelector('[data-paso=datos]').hidden = false; d.querySelector('[data-paso=listo]').hidden = true;
-    /* si el local ya tiene mail o WhatsApp en su ficha (y no son datos inventados de una demo), vienen cargados */
-    f.email.value = l.menu && !l.menu.muestra && info.email || '';
-    f.whatsapp.value = l.menu && !l.menu.muestra && info.whatsapp || '';
+    /* si el local ya tiene mail o WhatsApp (en su usuario o en su ficha, si no son datos inventados de una demo), vienen cargados */
+    f.email.value = u ? u.email : (propios && info.email || '');
+    f.email.readOnly = !!u;
+    f.whatsapp.value = (u && u.whatsapp) || (propios && info.whatsapp) || '';
     f.password.value = Sesion.claveNueva(); msg.textContent = '';
+    ok.textContent = u ? 'Cambiar contraseña' : 'Crear usuario';
     ok.hidden = false; ok.disabled = false; copiar.hidden = true; wa.hidden = true; no.textContent = 'Cancelar';
     no.onclick = function () { d.close(); };
     f.onsubmit = function (e) {
@@ -123,16 +132,29 @@
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { msg.textContent = 'Revisá el mail.'; return; }
       if (!tel) { msg.textContent = 'Revisá el WhatsApp: característica y número, sin 0 ni 15 (ej. 11 2233 4455).'; return; }
       if (clave.length < 8) { msg.textContent = 'La contraseña tiene que tener al menos 8 caracteres.'; return; }
-      ok.disabled = true; msg.style.color = 'var(--suave)'; msg.textContent = 'Creando…';
-      Sesion.funcion('crear-usuario', { email: mail, password: clave, carpeta: l.carpeta }).then(function () {
-        var texto = '¡Hola! Ya tenés tu panel de Menú 3D para ' + nombre + ' 🙌\n\n' +
-          'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
-          'Desde el panel cambiás precios, platos y fotos, y publicás cuando quieras. La contraseña la podés cambiar en "Mi cuenta".';
+      ok.disabled = true; msg.style.color = 'var(--suave)'; msg.textContent = u ? 'Cambiando…' : 'Creando…';
+      var pedido = u ? Sesion.funcion('nueva-clave', { id: u.id, password: clave, whatsapp: tel })
+        : Sesion.funcion('crear-usuario', { email: mail, password: clave, carpeta: l.carpeta, whatsapp: tel });
+      pedido.then(function (j) {
+        var texto = u
+          ? '¡Hola! Te paso tu nueva contraseña del panel de Menú 3D para ' + nombre + ' 🔑\n\n' +
+            'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'La podés cambiar cuando quieras en "Mi cuenta".'
+          : '¡Hola! Ya tenés tu panel de Menú 3D para ' + nombre + ' 🙌\n\n' +
+            'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'Desde el panel cambiás precios, platos y fotos, y publicás cuando quieras. La contraseña la podés cambiar en "Mi cuenta".';
+        d.querySelector('.hecho').textContent = u ? '✓ Contraseña cambiada' : '✓ Usuario creado';
         d.querySelector('pre').textContent = texto;
         wa.href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
         d.querySelector('[data-paso=datos]').hidden = true; d.querySelector('[data-paso=listo]').hidden = false;
         msg.textContent = ''; ok.hidden = true; copiar.hidden = false; wa.hidden = false; no.textContent = 'Cerrar';
         copiar.onclick = function () { navigator.clipboard.writeText(texto).then(function () { copiar.textContent = '¡Copiado!'; setTimeout(function () { copiar.textContent = 'Copiar mensaje'; }, 1500); }); };
+        /* la tarjeta del local se actualiza con el usuario nuevo (o el WhatsApp nuevo) */
+        if (USUARIOS) {
+          if (u) u.whatsapp = tel;
+          else USUARIOS.push({ id: j && j.id, carpeta: l.carpeta, email: mail, whatsapp: tel, creado: new Date().toISOString(), ultimoIngreso: null });
+          pintar();
+        }
       }).catch(function (err) {
         msg.style.color = 'var(--mal)';
         msg.textContent = /already|registered|exists/i.test(err.message) ? 'Ya hay un usuario con ese mail.' : '⚠ ' + err.message;
@@ -141,6 +163,24 @@
     };
     d.showModal();
   }
+
+  /* borrar el usuario de un local: el primer toque pregunta, el segundo borra (el menú del local no se toca) */
+  function borrarUsuario(u, boton) {
+    if (!boton.dataset.seguro) {
+      boton.dataset.seguro = '1'; boton.textContent = '¿Seguro? Tocá de nuevo';
+      setTimeout(function () { if (boton.isConnected && boton.dataset.seguro) { delete boton.dataset.seguro; boton.textContent = 'Borrar'; } }, 4000);
+      return;
+    }
+    boton.disabled = true; boton.textContent = 'Borrando…';
+    Sesion.funcion('borrar-usuario', { id: u.id }).then(function () {
+      USUARIOS = USUARIOS.filter(function (x) { return x.id !== u.id; });
+      pintar();
+    }).catch(function (err) {
+      boton.disabled = false; delete boton.dataset.seguro; boton.textContent = 'Borrar';
+      alertar('No se pudo borrar el usuario: ' + err.message);
+    });
+  }
+  function alertar(t) { var p = document.createElement('div'); p.className = 'toast'; p.textContent = t; document.body.appendChild(p); setTimeout(function () { p.remove(); }, 4000); }
 
   /* ---------- instalar como app ---------- */
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw-admin.js', { scope: '../' }).catch(function (e) { console.error(e); });
@@ -174,23 +214,58 @@
         msg.textContent = 'Eliminando…';
         return GitHub.publicar(archivos, 'Elimina el local ' + (l.nombre || l.carpeta), function (t) { msg.textContent = t; }, l.carpeta);
       }).then(function () {
+        /* sus usuarios ya no tienen nada que editar: se borran también */
+        var suyos = (USUARIOS || []).filter(function (u) { return u.carpeta === l.carpeta; });
+        if (!suyos.length) return;
+        msg.textContent = 'Borrando su usuario…';
+        return Promise.all(suyos.map(function (u) { return Sesion.funcion('borrar-usuario', { id: u.id }); }))
+          .catch(function (err) { console.error(err); msg.textContent = 'El local se eliminó, pero no se pudo borrar su usuario: ' + err.message; throw 'aviso'; });
+      }).then(function () {
         msg.textContent = 'Listo: en 1 o 2 minutos desaparece su link.';
         setTimeout(function () { location.reload(); }, 1500);
-      }).catch(function (err) { msg.textContent = '⚠ ' + err.message; ok.disabled = false; });
+      }).catch(function (err) {
+        if (err === 'aviso') { setTimeout(function () { location.reload(); }, 4000); return; }
+        msg.textContent = '⚠ ' + err.message; ok.disabled = false;
+      });
     };
     d.showModal();
   }
 
   /* ---------- locales ---------- */
+  var LOCS = [], EST = null, USUARIOS = null; /* USUARIOS = null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
   function cargarLocales() {
-  /* las estadísticas se piden en paralelo; si fallan, el panel igual funciona */
-  var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
-  json(raiz + 'locales.json').then(function (locs) {
-    return Promise.all(locs.map(function (l) {
-      return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
-    }).concat([est]));
-  }).then(function (r) {
-    var e = r.pop(), locs = r, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0;
+    /* estadísticas y usuarios se piden en paralelo; si fallan, el panel igual funciona */
+    var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
+    var usu = Sesion.funcion('usuarios').then(function (j) { return j.usuarios || []; }, function (e) { console.error(e); return null; });
+    json(raiz + 'locales.json').then(function (locs) {
+      return Promise.all(locs.map(function (l) {
+        return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
+      }).concat([est, usu]));
+    }).then(function (r) {
+      USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
+      pintar();
+    }).catch(function (e) {
+      console.error(e);
+      document.getElementById('locales').innerHTML = '<p>No se pudo leer locales.json.</p>';
+    });
+  }
+
+  function fecha(t) { return new Date(t).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
+  /* quién entra al panel de ese local, con sus botones */
+  function bloqueUsuarios(l) {
+    if (!USUARIOS) return '';
+    var suyos = USUARIOS.filter(function (u) { return u.carpeta === l.carpeta; });
+    if (!suyos.length) return '<div class="usuarios"><p class="sin">👤 Todavía no tiene usuario para su panel.</p></div>';
+    return '<div class="usuarios">' + suyos.map(function (u) {
+      return '<div class="usuario"><div class="quien">👤 <b>' + esc(u.email) + '</b>' +
+        '<small>' + (u.ultimoIngreso ? 'Entró por última vez el ' + esc(fecha(u.ultimoIngreso)) : 'Todavía no entró a su panel') + '</small></div>' +
+        '<button class="b" data-clave="' + esc(u.id) + '">🔑 Nueva contraseña</button>' +
+        '<button class="b mal" data-borrar-u="' + esc(u.id) + '">Borrar</button></div>';
+    }).join('') + '</div>';
+  }
+
+  function pintar() {
+    var locs = LOCS, e = EST, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0;
     locs.forEach(function (l) { (l.menu ? l.menu.platos : []).forEach(function (p) { platos++; if (p.modelo) con3d++; }); });
     if (e) Object.keys(e).forEach(function (c) { abiertos += e[c].menu; vistos3d += e[c].d3 + e[c].ar; });
     document.getElementById('kpis').innerHTML = [[locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D']]
@@ -204,30 +279,36 @@
 
     document.getElementById('locales').innerHTML = locs.map(function (l, i) {
       var link = raiz + l.carpeta + '/', m = l.menu, color = m && m.colores && m.colores.claro && m.colores.claro.acento;
+      var tieneUsuario = USUARIOS && USUARIOS.some(function (u) { return u.carpeta === l.carpeta; });
       return '<article class="caja local"' + (color ? ' style="border-top:4px solid ' + esc(color) + '"' : '') + '><div><h3>' + esc(m ? m.nombre : l.nombre) + '<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></h3>' +
         (m && m.identidad || l.nota ? '<p class="nota">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
         '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
         '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p>' + lineaEst(l.carpeta) + '</div>' +
         '<div class="qr" aria-label="QR del menú">' + QR.svg(link) + '</div>' +
+        bloqueUsuarios(l) +
         '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
         '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
         '<button class="b" data-qr="' + i + '">Descargar QR</button>' +
         '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
-        '<button class="b" data-usuario="' + i + '">👤 Crear usuario</button>' +
+        '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
         '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
-    document.getElementById('locales').onclick = function (e) {
-      var q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
-      if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
-      if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
-      var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
-      var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
-    };
-  }).catch(function (e) {
-    console.error(e);
-    document.getElementById('locales').innerHTML = '<p>No se pudo leer locales.json.</p>';
-  });
   }
+  document.getElementById('locales').onclick = function (e) {
+    var locs = LOCS, q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
+    if (q) { var l = locs[q.dataset.qr]; QR.descargar(raiz + l.carpeta + '/', 'qr-' + l.carpeta); }
+    if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
+    var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
+    var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
+    /* botones de cada usuario */
+    var k = e.target.closest('[data-clave]'), b = e.target.closest('[data-borrar-u]'), id = k ? k.dataset.clave : b ? b.dataset.borrarU : null;
+    if (id) {
+      var usuario = USUARIOS.filter(function (z) { return z.id === id; })[0];
+      var suLocal = usuario && locs.filter(function (z) { return z.carpeta === usuario.carpeta; })[0];
+      if (!usuario || !suLocal) return;
+      if (k) crearUsuario(suLocal, usuario); else borrarUsuario(usuario, b);
+    }
+  };
 })();
 </script>
 </body>

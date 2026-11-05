@@ -171,3 +171,9 @@ dialog.pantalla .cab,dialog.pantalla .cuerpo,dialog.pantalla .pie{padding-left:m
 dialog.pantalla .cuerpo.form{max-width:none}
 dialog.pantalla .pie .b.p{margin-left:auto}
 dialog.pantalla{overflow:auto}
+/* usuarios de cada local (en el administrador) */
+.local .usuarios{grid-column:1/-1;border-top:1px solid var(--linea);padding-top:10px;display:grid;gap:8px}
+.local .usuarios .sin{font-size:.85rem;color:var(--suave)}
+.local .usuario{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:.85rem}
+.local .usuario .quien{flex:1;min-width:180px;overflow-wrap:anywhere}
+.local .usuario small{display:block;color:var(--suave);font-size:.78rem}

@@ -5,6 +5,7 @@
    - Sesion.funcion(accion, {…}) → llama a la función "panel" de Supabase (publicar, crear-usuario, mis-locales)
    - Sesion.estadisticas(carpeta, dias) → resumen de vistas por día, tipo y plato
    - Sesion.cuenta()            → ventana con el mail, cambiar contraseña y cerrar sesión
+   - Sesion.bienvenidaVista()   → anota que el local ya vio la bienvenida del panel
    La URL y la clave publicable son públicas: se pueden ver sin riesgo. */
 window.Sesion = (function () {
   'use strict';
@@ -28,8 +29,10 @@ window.Sesion = (function () {
       });
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
-        if (r.status === 413) throw new Error('Son demasiadas fotos juntas. Publicá de a menos platos nuevos por vez.');
-        if (!r.ok || j.error) throw new Error(j.error || j.msg || j.message || ('Error ' + r.status));
+        var e;
+        if (r.status === 413) e = new Error('Son demasiadas fotos juntas. Publicá de a menos platos nuevos por vez.');
+        else if (!r.ok || j.error) e = new Error(j.error || j.msg || j.message || ('Error ' + r.status));
+        if (e) { e.status = r.status; throw e; }
         return j;
       });
     });
@@ -41,11 +44,14 @@ window.Sesion = (function () {
       var s = r.data && r.data.session; if (!s) return null;
       return funcion('mis-locales').then(function (j) {
         noContar();
-        datos = { email: s.user.email, admin: !!j.admin, locales: (j.locales || []).filter(function (c) { return c !== '*'; }) };
+        var meta = s.user.user_metadata || {};
+        datos = { email: s.user.email, admin: !!j.admin, locales: (j.locales || []).filter(function (c) { return c !== '*'; }), bienvenida: !!meta.bienvenida_vista };
         return datos;
       }, function (e) {
-        /* sesión vieja o inválida: se cierra y se vuelve a pedir */
-        console.error(e); return sb.auth.signOut().then(function () { return null; });
+        console.error(e);
+        /* sesión vencida o inválida: se cierra y se vuelve a pedir. Si es un corte de internet, NO se cierra la sesión */
+        if (e.status === 401) return sb.auth.signOut().then(function () { return null; });
+        throw e;
       });
     });
   }
@@ -119,12 +125,27 @@ window.Sesion = (function () {
     d.showModal();
   }
 
-  /* resumen de los últimos "dias" días: [{ carpeta, dia, tipo, plato, cantidad }] (carpeta null = todos los locales) */
+  /* resumen de los últimos "dias" días: [{ carpeta, dia, tipo, plato, cantidad }] (carpeta null = todos los locales).
+     Supabase devuelve como mucho 1000 filas por pedido: se piden de a tandas hasta traer todo. */
   function estadisticas(carpeta, dias) {
-    var desde = new Date(Date.now() - (dias - 1) * 864e5).toISOString().slice(0, 10);
-    var q = sb.from('resumen_vistas').select('carpeta,dia,tipo,plato,cantidad').gte('dia', desde).limit(10000);
-    if (carpeta) q = q.eq('carpeta', carpeta);
-    return q.then(function (r) { if (r.error) throw new Error(r.error.message); return r.data || []; });
+    var desde = new Date(Date.now() - (dias - 1) * 864e5).toISOString().slice(0, 10), TANDA = 1000, todo = [];
+    function tanda(n) {
+      var q = sb.from('resumen_vistas').select('carpeta,dia,tipo,plato,cantidad').gte('dia', desde)
+        .order('carpeta').order('dia').order('tipo').order('plato', { nullsFirst: true }).range(n * TANDA, n * TANDA + TANDA - 1);
+      if (carpeta) q = q.eq('carpeta', carpeta);
+      return q.then(function (r) {
+        if (r.error) throw new Error(r.error.message);
+        todo = todo.concat(r.data || []);
+        return (r.data || []).length === TANDA && n < 50 ? tanda(n + 1) : todo;
+      });
+    }
+    return tanda(0);
+  }
+
+  /* la bienvenida del panel se muestra una sola vez por usuario (queda anotado en su cuenta, sirve en cualquier celular) */
+  function bienvenidaVista() {
+    if (datos) datos.bienvenida = true;
+    return sb.auth.updateUser({ data: { bienvenida_vista: true } }).catch(function (e) { console.error(e); });
   }
 
   /* contraseña inicial fácil de dictar (sin letras que se confunden: l, 1, o, 0) */
@@ -134,5 +155,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, cuenta: cuenta, claveNueva: claveNueva };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista };
 })();
