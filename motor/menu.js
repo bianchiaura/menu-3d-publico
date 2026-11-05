@@ -96,7 +96,7 @@
   function hoy(i) { var d = new Date().getDay(); return horarios(i).filter(function (h) { return h.d && h.d.indexOf(d) >= 0; })[0]; }
   function hayInfo() {
     var i = M.info || {};
-    return !!(i.sobre || i.direccion || horarios(i).length || i.telefono || i.whatsapp || i.email || i.instagram || i.reservas || (i.pagos || []).length || (i.servicios || []).length);
+    return !!(i.sobre || i.direccion || horarios(i).length || i.horarioNota || i.telefono || i.whatsapp || i.email || i.instagram || i.reservas || (i.pagos || []).length || (i.servicios || []).length);
   }
   function enlace(texto, href) { return M.muestra || !href ? esc(texto) : '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(texto) + '</a>'; }
   function ficha() {
@@ -105,10 +105,10 @@
     if (i.sobre) bloque('🔥', t('sobre'), '<p>' + esc(i.sobre) + '</p>');
     if (i.direccion) bloque('📍', t('donde'), '<p>' + esc(i.direccion) + (i.zona ? '<br><span class="suave">' + esc(i.zona) + '</span>' : '') + '</p>' +
       (M.muestra ? '' : '<p><a class="btn-sec" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(i.direccion + ' ' + (i.zona || '')) + '" target="_blank" rel="noopener">' + t('llegar') + '</a></p>'));
-    if (h.length) bloque('🕒', t('horarios'), '<dl class="horas">' + h.map(function (x) {
+    if (h.length || i.horarioNota) bloque('🕒', t('horarios'), (h.length ? '<dl class="horas">' + h.map(function (x) {
       var esHoy = hy && x.d === hy.d && x.dias === hy.dias;
       return '<div' + (esHoy ? ' class="hoy"' : '') + '><dt>' + esc(x.dias) + (esHoy ? ' <em>' + t('hoy') + '</em>' : '') + '</dt><dd>' + esc(x.horas) + '</dd></div>';
-    }).join('') + '</dl>');
+    }).join('') + '</dl>' : '') + (i.horarioNota ? '<p class="suave">' + esc(i.horarioNota) + '</p>' : '')); /* la aclaración (ej. la cafetería) va abajo */
     var c = [];
     if (i.telefono) c.push([t('telefono'), enlace(i.telefono, 'tel:' + String(i.telefono).replace(/[^\d+]/g, ''))]);
     if (i.whatsapp) c.push(['WhatsApp', enlace(i.whatsapp, 'https://wa.me/' + String(i.whatsapp).replace(/\D/g, ''))]);

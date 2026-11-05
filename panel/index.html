@@ -236,9 +236,125 @@
     elegidos = elegidos || [];
     return lista.map(function (x) { return '<label><input type="checkbox" name="' + nombre + '" value="' + esc(x) + '"' + (elegidos.indexOf(x) >= 0 ? ' checked' : '') + '> ' + esc(x) + '</label>'; }).join('');
   }
-  function textoHorarios(i) {
-    if (i.horarios && i.horarios.length) return i.horarios.map(function (h) { return h.dias + ': ' + h.horas; }).join('\n');
-    return i.horario ? 'Todos los días: ' + i.horario.replace(/^todos los d[ií]as,?\s*(de\s*)?/i, '') : '';
+  /* ---------- botones para elegir fotos ----------
+     El botón de archivo del navegador corta su texto ("No se eligió…gún archivo") en espacios chicos:
+     se oculta y en su lugar va un botón propio con lo elegido al lado. */
+  function botonArchivo(input, texto) {
+    if (input.dataset.boton) return;
+    input.dataset.boton = '1'; input.hidden = true;
+    var c = document.createElement('span'); c.className = 'elegir-archivo';
+    c.innerHTML = '<button type="button" class="b">📷 ' + esc(texto) + '</button><span class="cual"></span>';
+    c.querySelector('button').onclick = function (e) { e.preventDefault(); input.click(); };
+    input.insertAdjacentElement('afterend', c);
+    input.addEventListener('change', function () { estadoArchivo(input); });
+  }
+  function estadoArchivo(input) {
+    var c = input.nextElementSibling; if (!c || !c.classList.contains('elegir-archivo')) return;
+    var n = input.files ? input.files.length : 0;
+    c.querySelector('.cual').textContent = !n ? '' : n === 1 ? '✓ ' + input.files[0].name : '✓ ' + n + ' fotos elegidas';
+  }
+
+  /* ---------- horarios: los 7 días fijos y, al lado de cada uno, cómo abre ----------
+     Se guarda en info.semana[0..6] (0 = domingo): { m: '' | 'cerrado' | 'corrido' | 'cortado', a1, c1, a2, c2 } (horas "HH:MM").
+     Con eso se arma info.horarios (lo que muestra el menú), juntando días seguidos iguales: "Martes a jueves: 12 a 16 h · 20 a 24 h".
+     Si el menú está en inglés, también se arma en.info.horarios. La aclaración (ej. la cafetería) va en info.horarioNota. */
+  var DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var ORDEN = [1, 2, 3, 4, 5, 6, 0]; /* la semana arranca el lunes */
+  function hhmm(h, m) { h = Number(h) % 24; return ('0' + h).slice(-2) + ':' + ('0' + (Number(m) || 0)).slice(-2); }
+  /* lee los horarios que ya tenía el local (texto como "12 a 16 h · 20 a 24 h") para cargarlos en el editor */
+  function semanaDesde(i) {
+    var s = [0, 1, 2, 3, 4, 5, 6].map(function () { return { m: '' }; }), nota = [];
+    var lista = i.horarios && i.horarios.length ? i.horarios : (i.horario ? [{ dias: 'Todos los días', horas: i.horario, d: [0, 1, 2, 3, 4, 5, 6] }] : []);
+    lista.forEach(function (h) {
+      /* solo se toman como días los renglones que dicen días y nada más ("Cafetería (mar. a dom.)" va a la aclaración) */
+      var soloDias = !String(h.dias || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/todos los dias|lunes|martes|miercoles|jueves|viernes|sabado|domingo|lun|mar|mie|jue|vie|sab|dom|\ba\b|\by\b|[^a-z]/g, '');
+      var d = h.d && h.d.length ? h.d : soloDias ? diasDe(h.dias || '') : [], r = [], x, re = /(\d{1,2})(?:[:.](\d{2}))?\s*(?:a|–|-|hasta)\s*(\d{1,2})(?:[:.](\d{2}))?/g;
+      while ((x = re.exec(h.horas || ''))) r.push([hhmm(x[1], x[2]), hhmm(x[3], x[4])]);
+      var cerrado = /cerrad/i.test(h.horas || '');
+      if (!d.length || (!r.length && !cerrado)) { nota.push((h.dias ? h.dias + ': ' : '') + (h.horas || '')); return; } /* no se entiende: queda como aclaración */
+      d.forEach(function (n) {
+        s[n] = cerrado ? { m: 'cerrado' } : r.length > 1 ? { m: 'cortado', a1: r[0][0], c1: r[0][1], a2: r[1][0], c2: r[1][1] } : { m: 'corrido', a1: r[0][0], c1: r[0][1] };
+      });
+    });
+    return { semana: s, nota: nota.join('\n') };
+  }
+  function semanaActual() {
+    var i = M.info || {};
+    if (i.semana && i.semana.length === 7) return { semana: i.semana, nota: i.horarioNota || '' };
+    var x = semanaDesde(i); if (i.horarioNota) x.nota = i.horarioNota; return x;
+  }
+  function horaTexto(t, en) { /* "16:00" → "16"; "00:00" al cerrar → "24"; "12:30" → "12:30" */
+    var p = String(t || '').split(':'), h = Number(p[0]), m = p[1] || '00';
+    if (!en && h === 0) h = 24;
+    return h + (m !== '00' ? ':' + m : '');
+  }
+  function turnos(x, en) {
+    if (x.m === 'cerrado') return en ? 'Closed' : 'Cerrado';
+    var t = [[x.a1, x.c1]]; if (x.m === 'cortado') t.push([x.a2, x.c2]);
+    return t.map(function (p) { return en ? (p[0] || '') + '–' + (p[1] || '') : horaTexto(p[0]) + ' a ' + horaTexto(p[1]) + ' h'; }).join(' · ');
+  }
+  function nombreGrupo(g, en) {
+    var N = en ? DAYS : DIAS, despues = function (n) { return en ? N[n] : N[n].toLowerCase(); }; /* "Martes a jueves" / "Tuesday to Thursday" */
+    if (g.length === 7) return en ? 'Every day' : 'Todos los días';
+    if (g.length === 1) return N[g[0]];
+    if (g.length === 2) return N[g[0]] + (en ? ' and ' : ' y ') + despues(g[1]);
+    return N[g[0]] + (en ? ' to ' : ' a ') + despues(g[g.length - 1]);
+  }
+  /* junta los días seguidos que abren igual (de lunes a domingo) */
+  function armarHorarios(semana, en) {
+    var grupos = [], clave = function (x) { return [x.m, x.a1, x.c1, x.a2, x.c2].join('|'); };
+    ORDEN.forEach(function (n) {
+      var x = semana[n]; if (!x || !x.m) return;
+      var ult = grupos[grupos.length - 1], ant = ult && ult.d[ult.d.length - 1];
+      if (ult && clave(semana[ant]) === clave(x) && ORDEN.indexOf(ant) === ORDEN.indexOf(n) - 1) ult.d.push(n);
+      else grupos.push({ d: [n], x: x });
+    });
+    return grupos.map(function (g) {
+      return { dias: nombreGrupo(g.d, en), horas: turnos(g.x, en), d: g.d };
+    });
+  }
+  function editorHorarios() {
+    var x = semanaActual();
+    var hora = function (n, k, v) { return '<input type="time" step="900" data-h="' + k + '" value="' + esc(v || '') + '" aria-label="' + (k.charAt(0) === 'a' ? 'Abre' : 'Cierra') + ' el ' + DIAS[n].toLowerCase() + '">'; };
+    return '<div class="semana" id="semana">' + ORDEN.map(function (n) {
+      var d = x.semana[n] || { m: '' };
+      return '<div class="dia" data-dia="' + n + '"><b>' + DIAS[n] + '</b>' +
+        '<select data-h="m" aria-label="Horario del ' + DIAS[n].toLowerCase() + '">' +
+        [['', 'Sin cargar'], ['cerrado', 'Cerrado'], ['corrido', 'Abre (horario corrido)'], ['cortado', 'Abre en dos turnos']].map(function (o) {
+          return '<option value="' + o[0] + '"' + (d.m === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+        }).join('') + '</select>' +
+        '<span class="turno"' + (d.m === 'corrido' || d.m === 'cortado' ? '' : ' hidden') + '>' + hora(n, 'a1', d.a1) + ' a ' + hora(n, 'c1', d.c1) + '</span>' +
+        '<span class="turno"' + (d.m === 'cortado' ? '' : ' hidden') + '>y de ' + hora(n, 'a2', d.a2) + ' a ' + hora(n, 'c2', d.c2) + '</span></div>';
+    }).join('') + '</div>' +
+      '<label>Aclaración (opcional)<small>Algo que no entra arriba, por ejemplo: "Cafetería de martes a domingo, de 9 a 12 h"</small><textarea name="horarioNota" rows="2" maxlength="200">' + esc(x.nota) + '</textarea></label>';
+  }
+  /* lee el editor y actualiza lo que muestra el menú */
+  function leerSemana() {
+    var semana = [0, 1, 2, 3, 4, 5, 6].map(function () { return { m: '' }; });
+    [].forEach.call(document.querySelectorAll('#semana .dia'), function (fila) {
+      var n = Number(fila.dataset.dia), v = function (k) { return fila.querySelector('[data-h="' + k + '"]').value; }, m = v('m'), x = { m: m };
+      if (m === 'corrido' || m === 'cortado') {
+        /* al elegir "abre", horarios típicos para no empezar de cero */
+        if (!v('a1')) fila.querySelector('[data-h=a1]').value = '12:00';
+        if (!v('c1')) fila.querySelector('[data-h=c1]').value = m === 'cortado' ? '16:00' : '00:00';
+        x.a1 = v('a1'); x.c1 = v('c1');
+      }
+      if (m === 'cortado') {
+        if (!v('a2')) fila.querySelector('[data-h=a2]').value = '20:00';
+        if (!v('c2')) fila.querySelector('[data-h=c2]').value = '00:00';
+        x.a2 = v('a2'); x.c2 = v('c2');
+      }
+      var t = fila.querySelectorAll('.turno'); t[0].hidden = !(m === 'corrido' || m === 'cortado'); t[1].hidden = m !== 'cortado';
+      semana[n] = x;
+    });
+    M.info = M.info || {};
+    M.info.semana = semana;
+    M.info.horarios = armarHorarios(semana);
+    delete M.info.horario;
+    var nota = $('[name=horarioNota]'); if (nota) { if (nota.value.trim()) M.info.horarioNota = nota.value.trim(); else delete M.info.horarioNota; }
+    if (M.en) { M.en.info = M.en.info || {}; M.en.info.horarios = armarHorarios(semana, 'en'); }
   }
   /* "Martes a jueves: 12 a 16 h" → { dias, horas, d: [2,3,4] } (d sirve para marcar "hoy" en el menú) */
   function numeroDia(p) {
@@ -258,14 +374,6 @@
       if (d.indexOf(n) < 0) d.push(n); antes = n;
     });
     return d;
-  }
-  function leerHorarios(texto) {
-    return texto.split('\n').map(function (l) {
-      var m = l.split(':'), dias = m.shift().trim(), horas = m.join(':').trim();
-      if (!dias) return null;
-      var h = { dias: dias, horas: horas }, d = diasDe(dias); if (d.length) h.d = d;
-      return h;
-    }).filter(Boolean);
   }
 
   /* ---------- vista: datos e identidad ---------- */
@@ -289,7 +397,7 @@
       '<label>Sobre el local<small>Dos o tres líneas: qué hacen, desde cuándo, qué los distingue</small><textarea name="sobre" maxlength="400">' + esc(i.sobre) + '</textarea></label>' +
       '<div class="fila2"><label>Dirección<input type="text" name="direccion" value="' + esc(i.direccion) + '"></label>' +
       '<label>Barrio y ciudad<input type="text" name="zona" value="' + esc(i.zona) + '"></label></div>' +
-      '<label>Horarios<small>Una línea por día o grupo de días, así: "Martes a jueves: 12 a 16 h · 20 a 24 h"</small><textarea name="horarios" rows="5">' + esc(textoHorarios(i)) + '</textarea></label>' +
+      '<div><b style="font-size:.88rem">Horarios</b><small style="display:block;color:var(--suave);font-size:.8rem;margin:2px 0 8px">Elegí cómo abre cada día. Los días que abren igual se juntan solos en el menú.</small>' + editorHorarios() + '</div>' +
       '<div class="fila2"><label>Teléfono<input type="text" name="telefono" value="' + esc(i.telefono) + '"></label>' +
       '<label>WhatsApp<small>Con código de país, ej. +54 9 11 2233-4455</small><input type="text" name="whatsapp" value="' + esc(i.whatsapp) + '"></label></div>' +
       '<div class="fila2"><label>Mail<input type="text" name="email" value="' + esc(i.email) + '"></label>' +
@@ -306,14 +414,15 @@
       }).join('') +
       '</div><div><button type="button" class="b" data-nueva-cat>+ Agregar categoría</button></div></form>';
     logoPrev();
+    botonArchivo($('[name=logo]'), 'Elegir logo');
     $('#fdatos').oninput = function (e) {
       var t = e.target, n = t.name;
       if (t.type === 'file' || t.hasAttribute('data-cat-nueva')) return;
+      if (t.closest('#semana') || n === 'horarioNota') { leerSemana(); guardar(); return; }
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
       else if (n === 'prototipo' || n === 'muestra') M[n] = t.checked;
-      else if (n === 'horarios') { M.info = M.info || {}; M.info.horarios = leerHorarios(t.value); delete M.info.horario; }
       else if (n === 'pago' || n === 'servicio') {
         var lista = n === 'pago' ? PAGOS : SERVICIOS, clave = n === 'pago' ? 'pagos' : 'servicios';
         M.info = M.info || {};
@@ -350,6 +459,7 @@
 
   /* ---------- editar / agregar plato ---------- */
   var F = $('#fplato');
+  botonArchivo(F.foto, 'Elegir foto'); botonArchivo(F.fotos3d, 'Elegir fotos');
   function abrir(p, catNueva) {
     editando = p; fotoNueva = undefined; modeloNuevo = undefined; fotos3d = [];
     $('#dlg-t').textContent = p ? 'Editar plato' : 'Nuevo plato';
@@ -360,7 +470,7 @@
     F.querySelector('details.ingles').open = !!(tr.nombre || tr.descripcion);
     F.emoji.value = p ? p.emoji || '' : '🍽';
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
-    F.foto.value = ''; F.fotos3d.value = ''; previaFoto(p && p.foto); previa3d(); estado3d();
+    F.foto.value = ''; F.fotos3d.value = ''; estadoArchivo(F.foto); estadoArchivo(F.fotos3d); previaFoto(p && p.foto); previa3d(); estado3d();
     $('#borrar').hidden = !p;
     $('#dlg').showModal(); $('#dlg').scrollTop = 0;
     history.pushState({ plato: 1 }, ''); /* el botón "atrás" del celular vuelve a la lista en vez de salir del panel */
