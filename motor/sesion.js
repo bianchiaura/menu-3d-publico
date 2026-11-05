@@ -74,7 +74,7 @@ window.Sesion = (function () {
         '<p class="sub">' + esc(o.texto || 'Entrá con el mail y la contraseña que te dieron.') + '</p>' +
         '<label>Mail<input type="email" name="email" autocomplete="username" required></label>' +
         '<label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label>' +
-        '<p class="msg" role="alert"></p>' +
+        '<p class="msg" role="alert">' + esc(o.error || '') + '</p>' +
         '<button class="b p">Entrar</button>' +
         (o.sinSesion ? '<button type="button" class="b" data-sin>' + esc(o.sinSesion) + '</button>' : '') +
         '<p class="sub" style="font-size:.8rem">' + esc(o.ayuda || '¿Te olvidaste la contraseña? Pedile una nueva al administrador.') + '</p></form>';

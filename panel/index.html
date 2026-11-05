@@ -783,11 +783,15 @@
   /* ---------- inicio de sesión ----------
      El administrador entra a cualquier local; cada local, solo al suyo (aunque cambie el link).
      Sin sesión, con ?local= se puede seguir en modo muestra (cambios solo en este navegador). */
+  var delLink = !nuevo && carpeta; /* el local que pide el link (…/panel/?local=la-vuelta-cafe): nunca se muestra otro */
   function conSesion(d) {
+    /* entró con un usuario que no es de este local (por ejemplo, el celular completó solo el mail de otro):
+       no se lo lleva a "su" local; se cierra esa sesión y se pide el usuario de este local */
+    if (d && !d.admin && delLink && d.locales.indexOf(delLink) < 0) { Sesion.salir().then(function () { pedirEntrar('otro-usuario'); }); return; }
     sesion = d; admin = !!(d && d.admin);
     if (d && !admin) {
       if (!d.locales.length) { $('#vista').innerHTML = '<p style="margin-top:20px">Tu usuario todavía no tiene un local asignado. Avisale al administrador.</p>'; $('#titulo').innerHTML = 'Panel del local'; $('#cuenta').hidden = false; return; }
-      if (nuevo || d.locales.indexOf(carpeta) < 0) { /* un local no crea locales ni entra a otros */
+      if (nuevo || d.locales.indexOf(carpeta) < 0) { /* sin local en el link: va al suyo. Un local no crea locales ni entra a otros */
         nuevo = false; vista = 'platos'; carpeta = d.locales[0];
         history.replaceState(null, '', './?local=' + encodeURIComponent(carpeta));
       }
@@ -801,12 +805,16 @@
     return fetch(raiz + carpeta + '/menu.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (m) { return m.nombre || ''; }, function () { return ''; });
   }
-  function pedirEntrar(otraSesion) {
+  /* motivo: '' (normal), 'otra-sesion' (en este celular estaba abierto otro local) u 'otro-usuario' (entró con el usuario de otro local) */
+  function pedirEntrar(motivo) {
     $('#titulo').innerHTML = 'Panel del local<small>Iniciá sesión</small>';
+    $('#vista').innerHTML = '';
     return nombreDelLink().then(function (n) {
+      var deQuien = n ? 'de ' + n : 'de este local';
       return Sesion.pedirLogin({
         titulo: n ? 'Panel de ' + n : 'Panel de tu menú',
-        texto: (otraSesion ? 'En este celular estaba abierto el panel de otro local. ' : '') + 'Entrá con el mail y la contraseña ' + (n ? 'de ' + n : 'de tu local') + '.',
+        texto: (motivo === 'otra-sesion' ? 'En este celular estaba abierto el panel de otro local. ' : '') + 'Entrá con el mail y la contraseña ' + (n ? 'de ' + n : 'de tu local') + '.',
+        error: motivo === 'otro-usuario' ? 'Ese mail es de otro local. Entrá con el mail y la contraseña ' + deQuien + ' (los que te llegaron por WhatsApp).' : '',
         sinSesion: carpeta && !nuevo ? 'Seguir sin iniciar sesión (no se publica)' : ''
       });
     }).then(conSesion);
@@ -814,9 +822,9 @@
   Sesion.actual().then(function (d) {
     /* el link es de otro local que el de la sesión abierta en este celular (por ejemplo, un usuario de prueba):
        se cierra esa sesión y se pide entrar con el usuario del local del link */
-    if (d && !d.admin && carpeta && !nuevo && d.locales.indexOf(carpeta) < 0) return Sesion.salir().then(function () { return pedirEntrar(true); });
+    if (d && !d.admin && delLink && d.locales.indexOf(delLink) < 0) return Sesion.salir().then(function () { return pedirEntrar('otra-sesion'); });
     if (d) return conSesion(d);
-    return pedirEntrar(false);
+    return pedirEntrar('');
   }).catch(function (e) {
     console.error(e);
     $('#vista').innerHTML = '<p style="margin-top:20px">No se pudo conectar para iniciar sesión. Revisá tu conexión y recargá la página.</p>';
