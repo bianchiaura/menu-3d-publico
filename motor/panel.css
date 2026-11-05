@@ -64,7 +64,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .form{display:grid;gap:14px;max-width:560px}
 .form label{display:grid;gap:4px;font-weight:600;font-size:.88rem}
 .form label small{font-weight:400;color:var(--suave)}
-.form input[type=text],.form input[type=email],.form input[type=password],.form input[type=number],.form input[type=url],.form select,.form textarea{padding:9px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo);width:100%}
+.form input[type=text],.form input[type=email],.form input[type=tel],.form input[type=password],.form input[type=number],.form input[type=url],.form select,.form textarea{padding:9px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo);width:100%}
 .form textarea{min-height:90px;resize:vertical}
 .form .fila2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .form .checks{display:flex;gap:14px;flex-wrap:wrap;font-weight:400}

@@ -36,15 +36,16 @@
   <div data-paso="datos" style="display:grid;gap:14px">
     <p style="color:var(--suave);font-size:.88rem">Con este mail y contraseña el local entra a su panel y publica solo su menú.</p>
     <label>Mail del local<input type="email" name="email" autocomplete="off" required></label>
+    <label>WhatsApp del local<small>Con característica, sin 0 ni 15. Ej. 11 2233 4455</small><input type="tel" name="whatsapp" autocomplete="off" inputmode="tel" required></label>
     <label>Contraseña inicial<small>Después la puede cambiar desde "Mi cuenta"</small><input type="text" name="password" autocomplete="off" minlength="8" required></label>
   </div>
   <div data-paso="listo" hidden style="display:grid;gap:10px">
     <p style="color:var(--ok);font-weight:700">✓ Usuario creado</p>
-    <p style="color:var(--suave);font-size:.88rem">Mandale esto al local (por WhatsApp, por ejemplo):</p>
+    <p style="color:var(--suave);font-size:.88rem">Tocá <b>Enviar por WhatsApp</b>: se abre el chat del local con este mensaje escrito, y vos lo mandás.</p>
     <pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>
   </div>
   <p class="msg" style="font-size:.88rem;color:var(--mal)"></p>
-  <p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p" data-ok>Crear usuario</button><button type="button" class="b p" data-copiar hidden>Copiar mensaje</button></p>
+  <p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p" data-ok>Crear usuario</button><button type="button" class="b" data-copiar hidden>Copiar mensaje</button><a class="b p" data-wa hidden target="_blank" rel="noopener">📲 Enviar por WhatsApp</a></p>
 </form></dialog>
 <dialog id="dlg-ios"><div class="cuerpo">
   <h2 style="font-size:1.15rem;margin-bottom:10px">Instalar en iPhone o iPad</h2>
@@ -92,25 +93,45 @@
   });
 
   /* ---------- crear el usuario de un local ---------- */
+  /* número de WhatsApp argentino como lo pide wa.me (54 9 + característica + número); null si no parece válido.
+     Acepta "11 2233-4455", "011 15 2233-4455", "+54 9 11 2233 4455", etc. */
+  function numeroWhatsApp(t) {
+    var n = String(t || '').replace(/\D/g, '');
+    if (/^549\d{10}$/.test(n)) return n;
+    if (/^54\d{10}$/.test(n)) return '549' + n.slice(2);
+    n = n.replace(/^0/, '');
+    var m = n.match(/^(\d{2,4})15(\d{6,8})$/); /* característica + 15 + número */
+    if (m && (m[1] + m[2]).length === 10) n = m[1] + m[2];
+    return /^\d{10}$/.test(n) ? '549' + n : null;
+  }
   function crearUsuario(l) {
     var d = document.getElementById('dlg-usuario'), f = d.querySelector('form'), msg = d.querySelector('.msg');
-    var ok = d.querySelector('[data-ok]'), copiar = d.querySelector('[data-copiar]'), no = d.querySelector('[data-no]');
-    d.querySelector('.nombre').textContent = l.nombre || l.carpeta;
+    var ok = d.querySelector('[data-ok]'), copiar = d.querySelector('[data-copiar]'), no = d.querySelector('[data-no]'), wa = d.querySelector('[data-wa]');
+    var nombre = (l.menu && l.menu.nombre) || l.nombre || l.carpeta, info = (l.menu && l.menu.info) || {};
+    d.querySelector('.nombre').textContent = nombre;
     d.querySelector('[data-paso=datos]').hidden = false; d.querySelector('[data-paso=listo]').hidden = true;
-    f.email.value = ''; f.password.value = Sesion.claveNueva(); msg.textContent = '';
-    ok.hidden = false; ok.disabled = false; copiar.hidden = true; no.textContent = 'Cancelar';
+    /* si el local ya tiene mail o WhatsApp en su ficha (y no son datos inventados de una demo), vienen cargados */
+    f.email.value = l.menu && !l.menu.muestra && info.email || '';
+    f.whatsapp.value = l.menu && !l.menu.muestra && info.whatsapp || '';
+    f.password.value = Sesion.claveNueva(); msg.textContent = '';
+    ok.hidden = false; ok.disabled = false; copiar.hidden = true; wa.hidden = true; no.textContent = 'Cancelar';
     no.onclick = function () { d.close(); };
     f.onsubmit = function (e) {
       e.preventDefault();
-      var mail = f.email.value.trim(), clave = f.password.value.trim();
+      var mail = f.email.value.trim(), clave = f.password.value.trim(), tel = numeroWhatsApp(f.whatsapp.value);
+      msg.style.color = 'var(--mal)';
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { msg.textContent = 'Revisá el mail.'; return; }
+      if (!tel) { msg.textContent = 'Revisá el WhatsApp: característica y número, sin 0 ni 15 (ej. 11 2233 4455).'; return; }
       if (clave.length < 8) { msg.textContent = 'La contraseña tiene que tener al menos 8 caracteres.'; return; }
       ok.disabled = true; msg.style.color = 'var(--suave)'; msg.textContent = 'Creando…';
       Sesion.funcion('crear-usuario', { email: mail, password: clave, carpeta: l.carpeta }).then(function () {
-        var texto = 'Panel de ' + (l.nombre || l.carpeta) + ' en Menú 3D\n' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n(Podés cambiarla desde "Mi cuenta")';
+        var texto = '¡Hola! Ya tenés tu panel de Menú 3D para ' + nombre + ' 🙌\n\n' +
+          'Entrá desde acá: ' + raiz + 'panel/\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+          'Desde el panel cambiás precios, platos y fotos, y publicás cuando quieras. La contraseña la podés cambiar en "Mi cuenta".';
         d.querySelector('pre').textContent = texto;
+        wa.href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
         d.querySelector('[data-paso=datos]').hidden = true; d.querySelector('[data-paso=listo]').hidden = false;
-        msg.textContent = ''; ok.hidden = true; copiar.hidden = false; no.textContent = 'Cerrar';
+        msg.textContent = ''; ok.hidden = true; copiar.hidden = false; wa.hidden = false; no.textContent = 'Cerrar';
         copiar.onclick = function () { navigator.clipboard.writeText(texto).then(function () { copiar.textContent = '¡Copiado!'; setTimeout(function () { copiar.textContent = 'Copiar mensaje'; }, 1500); }); };
       }).catch(function (err) {
         msg.style.color = 'var(--mal)';
