@@ -684,14 +684,16 @@
       return est.indexOf(p.estado) >= 0 && (!filtroDif.barrio || p.barrio === filtroDif.barrio) && (!t || (p.nombre + ' ' + (p.direccion || '')).toLowerCase().indexOf(t) >= 0);
     });
     var vacio = { enviar: 'No hay restaurantes por enviar.', enviados: 'Todavía no enviaste ningún mensaje.', respondieron: 'Todavía no hay respuestas. Cuando te contesten, marcalos en Enviados.', descartados: 'No hay restaurantes descartados.' }[pes];
-    return tabla('dif-' + pes, ['Nombre', 'Barrio', 'Dirección', 'Mail', 'Número', ''], lista.map(function (p) {
-      var acciones = pes === 'enviar' ? botonEnviar(p) + accionDif(p.id, 'descartar', 'Descartar')
-        : pes === 'enviados' ? accionDif(p.id, 'respondio', 'Respondió', 'p') + (p.via === 'whatsapp' ? accionDif(p.id, 'sin-whatsapp', 'No tiene WhatsApp') : '') + accionDif(p.id, 'descartar', 'Descartar')
-        : pes === 'respondieron' ? accionDif(p.id, 'enviado', 'Volver a Enviados') : accionDif(p.id, 'nuevo', 'Volver a Por enviar');
+    return tabla('dif-' + pes, ['Nombre', 'Barrio', 'Dirección', 'Mail', 'Número', 'Opciones', ''], lista.map(function (p) {
+      /* el nombre y un solo botón quedan fijos a los costados; lo demás va en su columna, así en el celular nada tapa el nombre */
+      var principal = pes === 'enviar' ? botonEnviar(p) : pes === 'enviados' ? accionDif(p.id, 'respondio', 'Respondió', 'p')
+        : pes === 'respondieron' ? accionDif(p.id, 'enviado', 'A Enviados') : accionDif(p.id, 'nuevo', 'A Por enviar');
+      var otras = pes === 'enviar' ? accionDif(p.id, 'descartar', 'Descartar')
+        : pes === 'enviados' ? (p.via === 'whatsapp' ? accionDif(p.id, 'sin-whatsapp', 'No tiene WhatsApp') : '') + accionDif(p.id, 'descartar', 'Descartar') : '';
       return [celda('<button type="button" class="nombre-local" data-dif-editar="' + p.id + '" title="Editar">' + esc(p.nombre) + '</button>', p.nombre),
         p.barrio ? celda(esc(p.barrio)) : celda(VACIO, ''), p.direccion ? celda(esc(p.direccion)) : celda(VACIO, ''),
         p.mail ? celda(esc(p.mail)) : celda(VACIO, ''), p.telefono ? celda(esc(p.telefono)) : celda(VACIO, ''),
-        celda('<span class="botones sin-salto">' + acciones + '</span>', '')];
+        otras ? celda('<span class="botones sin-salto">' + otras + '</span>', '') : celda(VACIO, ''), celda(principal, '')];
     }), vacio);
   }
   function vistaDifusion() {
