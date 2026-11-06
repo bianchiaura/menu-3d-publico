@@ -77,7 +77,7 @@ window.Sesion = (function () {
         '<p class="msg" role="alert">' + esc(o.error || '') + '</p>' +
         '<button class="b p">Entrar</button>' +
         (o.sinSesion ? '<button type="button" class="b" data-sin>' + esc(o.sinSesion) + '</button>' : '') +
-        '<p class="sub" style="font-size:.8rem">' + esc(o.ayuda || '¿Te olvidaste la contraseña? Pedile una nueva al administrador.') + '</p></form>';
+        '<p class="sub" style="font-size:.8rem">' + esc(o.ayuda || 'Si olvidaste tu contraseña, escribinos y te enviamos una nueva.') + '</p></form>';
       document.body.appendChild(d);
       var f = d.querySelector('form'), msg = d.querySelector('.msg'), bot = f.querySelector('.b.p');
       f.email.focus();

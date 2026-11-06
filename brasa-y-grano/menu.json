@@ -365,7 +365,7 @@
       "categoria": "carnes",
       "nombre": "Bife de chorizo",
       "emoji": "🥩",
-      "precio": 34000,
+      "precio": 14500,
       "etiquetas": [
         "sin-tacc",
         "chef"
@@ -378,16 +378,14 @@
         "relieve": "modelos/1-relieve.png",
         "altura": 0.2
       },
-      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero.",
-      "agotado": true,
-      "oculto": true
+      "descripcion": "350 g de bife de chorizo de novillo grillado a las brasas, servido en tabla de madera con sal gruesa y chimichurri casero."
     },
     {
       "id": 2,
       "categoria": "carnes",
       "nombre": "Ojo de bife",
       "emoji": "🥩",
-      "precio": 20000,
+      "precio": 16900,
       "etiquetas": [
         "sin-tacc"
       ],

@@ -6,13 +6,13 @@ window.PRECIOS = {
   impuestos: 'Precios en pesos argentinos.',
   mesesGratisAnual: 2,          /* anual: se pagan 12 - 2 = 10 meses */
   planes: [
-    { id: 'esencial', nombre: 'Esencial', para: 'Para la mayoría de las cartas', mes: 60000,
-      incluye: ['Diseño y armado del menú incluidos', 'Hasta 20 platos en 3D (las bebidas no cuentan)', 'Ver el plato sobre la mesa (AR)', 'QR listos para imprimir', 'Panel para cambiar precios, platos y categorías', 'Estadísticas básicas'],
-      no: ['Menú en inglés', 'Resumen mensual por WhatsApp'] },
-    { id: 'completo', nombre: 'Completo', para: 'El que eligen la mayoría', mes: 75000, destacado: true,
-      incluye: ['Todo lo del Esencial', 'Hasta 40 platos en 3D (las bebidas no cuentan)', 'Menú en inglés para turistas', 'Estadísticas completas: horas pico, turistas y platos más mirados', 'Resumen del mes por WhatsApp'] },
-    { id: 'premium', nombre: 'Premium', para: 'Para cartas grandes o varias sucursales', mes: 85000,
-      incluye: ['Todo lo del Completo', 'Platos en 3D sin límite', 'Varias sucursales', 'Atención prioritaria'] }
+    { id: 'esencial', nombre: 'Esencial', para: 'Para sumar el 3D a tu carta', mes: 60000,
+      incluye: ['Diseño y carga del menú incluidos', 'Hasta 20 platos en 3D (sin contar bebidas)', 'Platos sobre la mesa con realidad aumentada', 'Códigos QR listos para imprimir', 'Panel propio para gestionar precios, platos y categorías', 'Estadísticas básicas: visitas y platos vistos'],
+      no: ['Menú en inglés', 'Mascota del local', 'Estadísticas completas y resumen mensual'] },
+    { id: 'completo', nombre: 'Completo', para: 'Para destacarte y entender qué buscan tus clientes', mes: 75000, destacado: true,
+      incluye: ['Todo lo del plan Esencial', 'Hasta 40 platos en 3D (sin contar bebidas)', 'Menú en inglés para turistas', 'Mascota que recomienda platos de tu carta', 'Estadísticas completas: horas pico, turistas y platos más vistos', 'Resumen mensual por WhatsApp'] },
+    { id: 'premium', nombre: 'Premium', para: 'Para cartas extensas, cadenas y varias sucursales', mes: 85000,
+      incluye: ['Todo lo del plan Completo', 'Platos en 3D sin límite', 'Un menú por sucursal, cada uno con su QR', 'Mascota a medida, con la personalidad de tu marca', 'Atención prioritaria por WhatsApp'] }
   ]
 };
 /* cuántos meses se cobran en cada forma de pago y cuánto dura (en meses) */

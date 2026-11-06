@@ -98,24 +98,25 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
 <main>
 <section class="portada wrap">
   <span class="marca">Menú 3D</span>
-  <h1>Que tus clientes vean cada plato en 3D antes de pedir</h1>
-  <p>Escanean el QR de la mesa, abren tu menú y miran el plato girando o apoyado sobre su mesa con la cámara del celular.</p>
+  <h1>Tus clientes ven cada plato en 3D antes de pedirlo</h1>
+  <p>Escanean el QR, abren tu menú y miran cada plato en 3D o apoyado sobre la mesa, con la cámara del celular.</p>
   <div class="botones">
     <a class="b p" href="../brasa-y-grano/" target="_blank" rel="noopener">👀 Ver un menú de ejemplo</a>
-    <a class="b" data-contacto hidden target="_blank" rel="noopener">💬 Quiero el mío</a>
+    <a class="b" href="../panel/?demo" target="_blank" rel="noopener">🎛 Probar el panel</a>
+    <a class="b" data-contacto hidden target="_blank" rel="noopener">💬 Consultar</a>
   </div>
   <div class="puntos">
-    <div class="punto"><i>🧊</i><b>Platos en 3D y sobre la mesa</b><span>Se arman a partir de fotos de tus platos reales.</span></div>
-    <div class="punto"><i>🤝</i><b>Te lo armamos nosotros</b><span>El diseño y el armado de tu menú están incluidos. No tenés que hacer nada.</span></div>
-    <div class="punto"><i>✏️</i><b>Después lo cambiás vos</b><span>Precios, platos, categorías, fotos y horarios desde tu propio panel, cuando quieras.</span></div>
-    <div class="punto"><i>📊</i><b>Sabés qué miran</b><span>Cuántos abren tu menú, a qué hora y qué platos llaman la atención.</span></div>
-    <div class="punto"><i>🌎</i><b>Listo para turistas</b><span>El menú cambia solo a inglés en los celulares de afuera.</span></div>
+    <div class="punto"><i>🧊</i><b>Platos en 3D y sobre la mesa</b><span>Creados a partir de fotos de tus platos reales.</span></div>
+    <div class="punto"><i>🎨</i><b>Diseño y carga incluidos</b><span>Recibís tu menú listo para usar, con tu identidad.</span></div>
+    <div class="punto"><i>✏️</i><b>Autogestión simple</b><span>Actualizás precios, platos, categorías y horarios desde tu panel.</span></div>
+    <div class="punto"><i>📊</i><b>Información útil</b><span>Conocés cuántas personas abren tu menú y qué platos despiertan más interés.</span></div>
+    <div class="punto"><i>🌎</i><b>Preparado para turistas</b><span>El menú se muestra en inglés en los celulares configurados en otro idioma.</span></div>
   </div>
 </section>
 
 <section class="seccion wrap" id="planes">
   <h2>Planes</h2>
-  <p class="sub">Elegí cómo querés pagar. Podés cambiar de plan cuando quieras.</p>
+  <p class="sub">Elegí la forma de pago que prefieras. Podés cambiar de plan cuando lo necesites.</p>
   <div class="periodo" role="group" aria-label="Forma de pago">
     <div><button type="button" data-periodo="anual" aria-pressed="true">Anual<em>2 meses gratis</em></button><button type="button" data-periodo="mensual" aria-pressed="false">Mensual</button></div>
   </div>
@@ -124,7 +125,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
 </section>
 
 <section class="seccion wrap">
-  <h2>Qué incluye y promociones</h2>
+  <h2>Qué incluye y beneficios</h2>
   <div class="cajas" id="cajas"></div>
 </section>
 
@@ -134,11 +135,12 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
 </section>
 
 <section class="final wrap">
-  <h2>¿Lo probamos en tu local?</h2>
-  <p>Mirá el menú de ejemplo desde tu celular y tocá "Ver en 3D" en cualquier plato.</p>
+  <h2>¿Querés verlo en tu local?</h2>
+  <p>Abrí el menú de ejemplo desde tu celular, tocá "Ver en 3D" y probá el panel con el que se administra.</p>
   <div class="botones" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-    <a class="b p" data-contacto hidden target="_blank" rel="noopener">💬 Escribime por WhatsApp</a>
+    <a class="b p" data-contacto hidden target="_blank" rel="noopener">💬 Escribinos por WhatsApp</a>
     <a class="b" href="../brasa-y-grano/" target="_blank" rel="noopener">👀 Ver el ejemplo</a>
+    <a class="b" href="../panel/?demo" target="_blank" rel="noopener">🎛 Probar el panel</a>
   </div>
 </section>
 <p class="pie" id="pie"></p>
@@ -159,7 +161,7 @@ var CONFIG = window.PRECIOS;
 
   /* contacto por WhatsApp (solo si está cargado el número) */
   function contacto(plan) {
-    var t = 'Hola! Vi los planes de Menú 3D' + (plan ? ' y me interesa el plan ' + plan + (periodo === 'anual' ? ' anual' : ' mensual') : '') + '. ¿Me contás más?';
+    var t = '¡Hola! Vi los planes de Menú 3D' + (plan ? ' y me interesa el plan ' + plan + (periodo === 'anual' ? ' anual' : ' mensual') : '') + '. ¿Me darían más información?';
     return 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(t);
   }
   if (CONFIG.whatsapp) [].forEach.call(document.querySelectorAll('[data-contacto]'), function (a) { a.href = contacto(); a.hidden = false; });
@@ -173,10 +175,10 @@ var CONFIG = window.PRECIOS;
         detalle = 'Equivale a ' + pesos(anual / 12) + ' por mes · <s>' + pesos(p.mes * 12) + '</s> pagando mes a mes';
       } else {
         precio = '<b>' + pesos(p.mes) + '</b><span>por mes</span>';
-        detalle = 'Diseño y armado del menú incluidos';
+        detalle = 'Diseño y carga del menú incluidos';
       }
       var boton = CONFIG.whatsapp
-        ? '<a class="b' + (p.destacado ? ' p' : '') + '" href="' + esc(contacto(p.nombre)) + '" target="_blank" rel="noopener">Quiero el ' + esc(p.nombre) + '</a>'
+        ? '<a class="b' + (p.destacado ? ' p' : '') + '" href="' + esc(contacto(p.nombre)) + '" target="_blank" rel="noopener">Consultar por el plan ' + esc(p.nombre) + '</a>'
         : '<a class="b' + (p.destacado ? ' p' : '') + '" href="../brasa-y-grano/" target="_blank" rel="noopener">Ver un menú de ejemplo</a>';
       return '<article class="plan' + (p.destacado ? ' destacado' : '') + '">' + (p.destacado ? '<span class="cinta">⭐ Recomendado</span>' : '') +
         '<h3>' + esc(p.nombre) + '</h3><p class="para">' + esc(p.para) + '</p>' +
@@ -188,24 +190,25 @@ var CONFIG = window.PRECIOS;
 
   function cajas() {
     $('#cajas').innerHTML =
-      '<div class="caja destacada"><span class="etiqueta">Incluido en todos los planes</span><h3>Te armamos todo</h3>' +
-        '<p>El diseño y el armado de tu menú están incluidos: lo hacemos nosotros, con tu logo, tus colores, tus platos y tus precios, sin costo extra.</p>' +
-        '<p style="margin-top:8px">Después, vos podés cambiar lo que quieras desde tu panel: precios, platos, categorías, fotos, horarios y datos del local.</p></div>' +
+      '<div class="caja destacada"><span class="etiqueta">Incluido en todos los planes</span><h3>Tu menú, listo para usar</h3>' +
+        '<p>Diseñamos y cargamos tu menú con la identidad de tu local: logo, colores, platos y precios, sin costo adicional.</p>' +
+        '<p style="margin-top:8px">Una vez publicado, lo administrás desde tu panel: precios, platos, categorías, fotos, horarios y datos del local.</p>' +
+        '<p style="margin-top:10px"><a href="../panel/?demo" target="_blank" rel="noopener">Probá cómo funciona el panel</a></p></div>' +
       '<div class="caja"><span class="etiqueta">Semestral</span><h3>Pagá 6 meses: 1 mes gratis</h3>' +
         '<p>' + CONFIG.planes.map(function (p) { return esc(p.nombre) + ': ' + pesos(p.mes * 5); }).join(' · ') + ' cada 6 meses.</p></div>' +
       '<div class="caja"><span class="etiqueta">Recomendá</span><h3>1 mes gratis por cada local</h3>' +
-        '<p>Si un colega se suma por recomendación tuya, tenés un mes sin cargo. Sin límite.</p></div>';
+        '<p>Por cada local que se sume con tu recomendación, tenés un mes sin cargo.</p></div>';
   }
 
   function preguntas() {
     var p = [
-      ['¿Necesito una app o algo especial?', 'No. Tus clientes escanean el QR con la cámara del celular y el menú se abre solo. El 3D sobre la mesa funciona en iPhone y en la mayoría de los Android.'],
-      ['¿Quién saca las fotos para el 3D?', 'Vos o nosotros: alcanza con 1 a 5 fotos de cada plato, una desde arriba y otras de costado. Te decimos cómo sacarlas con el celular.'],
-      ['¿Quién arma el menú?', 'Nosotros. El diseño y el armado están incluidos en todos los planes: nos pasás tu carta y tu logo, y te lo entregamos listo.'],
-      ['¿Puedo cambiar precios y platos yo mismo?', 'Sí. Tenés tu panel con usuario y contraseña: cambiás precios, platos, categorías, stock, fotos, horarios y datos, y en 1 o 2 minutos se ve en el menú.'],
-      ['¿Las bebidas cuentan como platos en 3D?', 'No. El límite de cada plan es solo para la comida: las bebidas no cuentan.'],
-      ['¿Los precios cambian?', 'El plan anual queda congelado todo el año. Los planes mensuales y semestrales se actualizan cada 3 meses.'],
-      ['¿Y si no me convence?', 'Si en el primer mes no te convence, te devolvemos el abono de ese mes.']
+      ['¿Mis clientes necesitan instalar algo?', 'No. Escanean el QR con la cámara del celular y el menú se abre en el navegador. La vista sobre la mesa funciona en iPhone y en la mayoría de los teléfonos Android.'],
+      ['¿Quién arma el menú?', 'Nosotros. El diseño y la carga inicial están incluidos en todos los planes: nos enviás tu carta, tu logo y las fotos, y te entregamos el menú listo para usar.'],
+      ['¿Cómo se consiguen las fotos para el 3D?', 'Con el celular alcanza. Te explicamos cómo sacarlas para que cada plato se vea bien.'],
+      ['¿Puedo hacer cambios por mi cuenta?', 'Sí. Desde tu panel actualizás precios, platos, categorías, stock, fotos, horarios y datos del local. Los cambios se ven en el menú en 1 o 2 minutos.'],
+      ['¿Las bebidas cuentan como platos en 3D?', 'No. El límite de cada plan se aplica solo a la comida.'],
+      ['¿Los precios pueden cambiar?', 'El plan anual mantiene su precio durante todo el año. Los planes mensual y semestral pueden actualizarse cada 3 meses, con aviso previo.'],
+      ['¿Puedo darme de baja?', 'Sí, en cualquier momento. El servicio sigue activo hasta el final del período que ya pagaste.']
     ];
     $('#preguntas').innerHTML = p.map(function (x) { return '<details><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
   }

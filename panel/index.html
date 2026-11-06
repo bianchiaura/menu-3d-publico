@@ -114,7 +114,10 @@
   'use strict';
   var $ = function (s) { return document.querySelector(s); };
   var q = new URLSearchParams(location.search), nuevo = q.has('nuevo');
-  var carpeta = (q.get('local') || '').replace(/[^a-z0-9-]/g, '');
+  /* panel de prueba (…/panel/?demo): cualquiera prueba el panel de la demo sin usuario.
+     Los cambios quedan solo en su dispositivo: no hay sesión, así que nada se puede publicar. */
+  var demo = q.has('demo'); if (demo) nuevo = false;
+  var carpeta = demo ? 'brasa-y-grano' : (q.get('local') || '').replace(/[^a-z0-9-]/g, '');
   var raiz = new URL('../', location.href).href;
   var admin = false, sesion = null; /* sesion = { email, admin, locales } cuando inició sesión */
   var M = null, original = '', vista = nuevo ? 'datos' : 'platos', editando = null, fotoNueva, modeloNuevo, fotos3d = [], cerrarGen = null;
@@ -194,6 +197,13 @@
     $('#versiones').hidden = !admin || nuevo; /* volver a versiones viejas: solo el administrador */
     $('#cuenta').hidden = !sesion;
     $('#tab-est').hidden = !sesion || nuevo;
+    if (demo) {
+      $('#publicar').hidden = false; $('#bajar').hidden = true; $('#tab-est').hidden = false;
+      var v = $('#volver'); v.hidden = false; v.href = '../precios/'; v.textContent = '← Planes y precios';
+      $('#descartar').textContent = 'Empezar de nuevo';
+      $('#aviso').innerHTML = '<b>Panel de prueba.</b> Cambiá precios, agregá platos o editá los datos del local, y mirá el resultado con <b>Vista previa</b>. Los cambios quedan solo en tu dispositivo.';
+      return;
+    }
     $('#aviso').innerHTML = sesion
       ? 'Entraste como <b>' + esc(sesion.email) + '</b>' + (admin ? ' (administrador)' : '') + '. Con <b>' + (nuevo ? 'Crear y publicar local' : 'Publicar cambios') + '</b> los cambios quedan online en 1 o 2 minutos.'
       : 'Versión de muestra: los cambios se guardan en este navegador y se ven con <b>Vista previa</b>. Para publicarlos, <a href="./' + (carpeta ? '?local=' + encodeURIComponent(carpeta) : '') + '">iniciá sesión</a>.';
@@ -540,7 +550,7 @@
 
   function mostrar() {
     if (vista === 'platos') vistaPlatos();
-    else if (vista === 'estadisticas') Estadisticas.local($('#vista'), carpeta, M);
+    else if (vista === 'estadisticas') Estadisticas.local($('#vista'), carpeta, M, demo);
     else vistaDatos();
   }
 
@@ -729,6 +739,16 @@
     if (irA && vista !== irA) { vista = irA; marcarTab(); mostrar(); }
   }
   $('#publicar').onclick = function () {
+    if (demo) {
+      /* en el panel de prueba no se publica nada: se explica qué pasaría y se invita a ver el resultado */
+      preguntar('Así se publica', 'En tu panel, este botón publica los cambios y se ven en el menú en 1 o 2 minutos. En esta prueba quedan solo en tu dispositivo.',
+        [{ texto: 'Seguir probando', valor: 'no' }, { texto: 'Ver planes', valor: 'planes' }, { texto: 'Ver cómo quedó', valor: 'ver', p: true }])
+        .then(function (r) {
+          if (r === 'ver') window.open($('#previa').href, '_blank', 'noopener');
+          if (r === 'planes') location.href = '../precios/';
+        });
+      return;
+    }
     var dirLocal = M._carpeta || carpeta;
     if (!M.nombre) { falta('Falta el nombre del local', 'datos'); return; }
     if (!/^[a-z0-9][a-z0-9-]*$/.test(dirLocal) || /^(admin|panel|motor|plantilla)$/.test(dirLocal)) { falta('Revisá la carpeta del link: solo minúsculas, números y guiones', 'datos'); return; }
@@ -844,6 +864,13 @@
             else if (r === 'mio') { desde = original; guardar(); } /* elegiste pisar lo publicado: ya no avisa al publicar */
           });
       }
+      if (demo) {
+        /* panel de prueba: una explicación corta, una vez por visita, y sin avisos de borradores */
+        var visto = false; try { visto = sessionStorage.getItem('menu3d-demo-visto'); sessionStorage.setItem('menu3d-demo-visto', '1'); } catch (e) {}
+        if (!visto) preguntar('Probá el panel de Brasa & Grano', 'Este es el panel con el que cada local administra su menú. Cambiá lo que quieras: el menú real no se modifica y tus cambios quedan solo en tu dispositivo.',
+          [{ texto: 'Empezar', valor: 'ok', p: true }]);
+        return;
+      }
       /* la primera vez que un local entra a su panel: una bienvenida corta (una sola vez por usuario) */
       if (sesion && !admin && !sesion.bienvenida) {
         preguntar('¡Bienvenido a tu panel!',
@@ -914,6 +941,7 @@
       });
     }).then(conSesion);
   }
+  if (demo) { cargar(); return; } /* panel de prueba: nunca usa la sesión, aunque el navegador tenga una abierta */
   Sesion.actual().then(function (d) {
     /* el link es de otro local que el de la sesión abierta en este celular (por ejemplo, un usuario de prueba):
        se cierra esa sesión y se pide entrar con el usuario del local del link */

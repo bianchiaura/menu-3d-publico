@@ -60,9 +60,26 @@ window.Estadisticas = (function () {
     ]);
   }
 
-  function local(cont, carpeta, M) {
+  /* números inventados para el panel de prueba: siempre los mismos, con forma de un mes real */
+  function ejemplo(M) {
+    var dias = ultimosDias(DIAS), filas = [], ap = [], c = 'demo';
+    dias.forEach(function (d, i) {
+      var dia = new Date(d + 'T12:00:00').getDay(), base = dia === 5 || dia === 6 ? 46 : dia === 0 ? 38 : dia === 1 ? 12 : 24;
+      var v = base + (i * 7) % 11;
+      filas.push({ carpeta: c, dia: d, tipo: 'menu', plato: null, cantidad: v });
+      [[12, 9], [13, 22], [14, 14], [20, 12], [21, 26], [22, 17]].forEach(function (h) { ap.push({ carpeta: c, dia: d, hora: h[0], idioma: 'es', cantidad: Math.round(v * h[1] / 100) }); });
+      ap.push({ carpeta: c, dia: d, hora: 21, idioma: 'en', cantidad: Math.round(v * .12) });
+    });
+    (M && M.platos || []).filter(function (p) { return p.modelo; }).slice(0, 9).forEach(function (p, i) {
+      filas.push({ carpeta: c, dia: dias[20], tipo: '3d', plato: String(p.id), cantidad: 118 - i * 13 });
+      filas.push({ carpeta: c, dia: dias[20], tipo: 'ar', plato: String(p.id), cantidad: 31 - i * 3 });
+    });
+    return [filas, ap];
+  }
+
+  function local(cont, carpeta, M, deEjemplo) {
     cont.innerHTML = '<p style="margin-top:20px;color:var(--suave)">Cargando estadísticas…</p>';
-    datos(carpeta).then(function (x) {
+    (deEjemplo ? Promise.resolve(ejemplo(M)) : datos(carpeta)).then(function (x) {
       var filas = x[0], r = sumar(filas), a = sumarAperturas(x[1]);
       var dias = Object.keys(r.porDia), max = Math.max.apply(null, dias.map(function (d) { return r.porDia[d]; }).concat([1]));
       var platos = platosVistos(r, M).slice(0, 10), maxP = platos.length ? platos[0].d3 + platos[0].ar : 1;
@@ -100,7 +117,7 @@ window.Estadisticas = (function () {
           '<p class="est-dato">' + nadie.map(function (p) { return esc(p.nombre); }).join(' · ') + '</p>' +
           '<p style="color:var(--suave);font-size:.82rem;margin-top:6px">Puede que su foto no llame la atención o que estén muy abajo en el menú.</p></div>';
       }
-      h += '<p style="color:var(--suave);font-size:.8rem;margin-top:12px">Últimos 30 días. No se guarda ningún dato de quién mira el menú.</p>';
+      h += '<p style="color:var(--suave);font-size:.8rem;margin-top:12px">' + (deEjemplo ? 'Datos de ejemplo. En tu panel vas a ver los de tu local.' : 'Últimos 30 días. No se guarda ningún dato de quién mira el menú.') + '</p>';
       cont.innerHTML = h;
     }).catch(function (e) {
       cont.innerHTML = '<p style="margin-top:20px">⚠ No se pudieron leer las estadísticas: ' + esc(e.message) + '</p>';
@@ -121,13 +138,13 @@ window.Estadisticas = (function () {
     return datos(carpeta).then(function (x) {
       var r = sumar(x[0]), a = sumarAperturas(x[1]), top = platosVistos(r, M)[0], nombre = (M && M.nombre) || carpeta;
       if (!r.menu && !r.d3 && !r.ar) return null;
-      var l = ['¡Hola! Te paso cómo le fue a tu menú de ' + nombre + ' en los últimos 30 días 📊', ''];
+      var l = ['¡Hola! Te compartimos el resumen de tu menú de ' + nombre + ' de los últimos 30 días 📊', ''];
       l.push('📱 Abrieron el menú ' + num(r.menu) + (r.menu === 1 ? ' vez' : ' veces'));
-      if (r.d3 + r.ar) l.push('🧊 Miraron platos en 3D ' + num(r.d3 + r.ar) + (r.d3 + r.ar === 1 ? ' vez' : ' veces'));
-      if (top) l.push('⭐ El plato más mirado: ' + top.nombre);
-      if (a.total && horaPico(a)) l.push('⏰ La hora con más visitas: ' + horaPico(a));
+      if (r.d3 + r.ar) l.push('🧊 Vieron platos en 3D ' + num(r.d3 + r.ar) + (r.d3 + r.ar === 1 ? ' vez' : ' veces'));
+      if (top) l.push('⭐ Plato más visto: ' + top.nombre);
+      if (a.total && horaPico(a)) l.push('⏰ Horario con más visitas: ' + horaPico(a));
       if (a.total && M && M.en && a.en) l.push('🌎 ' + pct(a.en, a.total) + ' % lo vio en inglés');
-      l.push('', 'Más detalles en tu panel, en la pestaña "Estadísticas": ' + new URL('../panel/?local=' + encodeURIComponent(carpeta), location.href).href);
+      l.push('', 'Podés ver el detalle en la pestaña "Estadísticas" de tu panel: ' + new URL('../panel/?local=' + encodeURIComponent(carpeta), location.href).href);
       return l.join('\n');
     });
   }

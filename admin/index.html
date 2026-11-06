@@ -143,12 +143,12 @@
         : Sesion.funcion('crear-usuario', { email: mail, password: clave, carpeta: l.carpeta, whatsapp: tel });
       pedido.then(function (j) {
         var texto = u
-          ? '¡Hola! Te paso tu nueva contraseña del panel de Menú 3D para ' + nombre + ' 🔑\n\n' +
-            'Entrá desde acá: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
-            'La podés cambiar cuando quieras en "Mi cuenta".'
-          : '¡Hola! Ya tenés tu panel de Menú 3D para ' + nombre + ' 🙌\n\n' +
-            'Entrá desde acá: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
-            'Desde el panel cambiás precios, platos y fotos, y publicás cuando quieras. La contraseña la podés cambiar en "Mi cuenta".';
+          ? '¡Hola! Te compartimos la nueva contraseña del panel de ' + nombre + ' en Menú 3D 🔑\n\n' +
+            'Ingresá a tu panel: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'Podés cambiarla cuando quieras desde "Mi cuenta".'
+          : '¡Hola! El menú de ' + nombre + ' ya está listo 🙌\n\n' +
+            'Ingresá a tu panel: ' + panelDe(l) + '\nMail: ' + mail + '\nContraseña: ' + clave + '\n\n' +
+            'Desde ahí podés actualizar precios, platos y fotos. Te recomendamos cambiar la contraseña en "Mi cuenta".';
         d.querySelector('.hecho').textContent = u ? '✓ Contraseña cambiada' : '✓ Usuario creado';
         d.querySelector('pre').textContent = texto;
         wa.href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
@@ -238,14 +238,14 @@
   }
   /* aviso de vencimiento con el monto y los datos para pagar */
   function textoPago(l, x) {
-    var c = window.PRECIOS.cobro || {}, l1 = '¡Hola! Te escribo por tu plan ' + x.nombre + ' de Menú 3D para ' + nombreDe(l) + '.';
-    var estado = x.dias < 0 ? 'Venció el ' + fechaLarga(x.vence) + '.' : x.dias === 0 ? 'Vence hoy.' : 'Vence el ' + fechaLarga(x.vence) + '.';
+    var c = window.PRECIOS.cobro || {}, l1 = '¡Hola! Te recordamos que el plan ' + x.nombre + ' de ' + nombreDe(l) + ' en Menú 3D';
+    var estado = x.dias < 0 ? 'venció el ' + fechaLarga(x.vence) + '.' : x.dias === 0 ? 'vence hoy.' : 'vence el ' + fechaLarga(x.vence) + '.';
     var pago = [];
     if (c.link) pago.push('Link de pago: ' + c.link);
     if (c.alias) pago.push('Alias: ' + c.alias + (c.titular ? ' (a nombre de ' + c.titular + ')' : ''));
     return l1 + ' ' + estado + '\n\n💳 Para renovar (' + x.forma.toLowerCase() + '): ' + pesos(x.cobro) + '\n' +
-      (pago.length ? pago.join('\n') : 'Ahora te paso los datos para el pago.') +
-      '\n\nCuando pagues, mandame el comprobante por acá y te dejo todo al día. ¡Gracias!';
+      (pago.length ? pago.join('\n') : 'En breve te enviamos los datos para el pago.') +
+      '\n\nUna vez realizado el pago, envianos el comprobante por este medio. ¡Muchas gracias!';
   }
   function enviarAvisoPago(l) {
     var x = PLANES && PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]);
