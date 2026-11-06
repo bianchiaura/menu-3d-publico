@@ -444,7 +444,7 @@
   function textoCobro() {
     var P = window.PRECIOS, p = P && P.planes.filter(function (x) { return x.id === M._plan; })[0], f = P && P.formas[M._pago];
     if (!p || !f) return 'Sin plan: no se registra cobro (por ejemplo, una demo o una prueba).';
-    return 'Cobro: ' + pesos(p.mes * f.cobra) + (M._pago === 'anual' ? ' (puesta en marcha sin cargo)' : ' + puesta en marcha ' + pesos(P.alta) + ' (una sola vez)');
+    return 'Cobro: ' + pesos(p.mes * f.cobra);
   }
   function cajaPlan() {
     var P = window.PRECIOS || { planes: [], formas: {} };

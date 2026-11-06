@@ -416,27 +416,55 @@
     return r;
   }
 
+  /* --- Grillas: tablas tipo planilla. Tocando el título de una columna se ordena por esa columna --- */
+  var ORDEN = {};
+  function celda(h, v) { return { h: h, v: v === undefined ? String(h).replace(/<[^>]+>/g, '') : v }; }
+  var VACIO = '<span class="suave">—</span>';
+  function tabla(id, columnas, filas, vacio) {
+    if (!filas.length) return '<p class="suave">' + vacio + '</p>';
+    var o = ORDEN[id];
+    if (o) filas = filas.slice().sort(function (a, b) {
+      var x = a[o.i].v, y = b[o.i].v, r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'es');
+      return o.dir * r;
+    });
+    return '<div class="tabla-marco"><table class="planilla"><thead><tr>' + columnas.map(function (c, i) {
+      var sin = !c, marca = o && o.i === i ? (o.dir > 0 ? ' ▲' : ' ▼') : '';
+      return sin ? '<th></th>' : '<th data-tabla="' + id + '" data-col="' + i + '">' + esc(c) + marca + '</th>';
+    }).join('') + '</tr></thead><tbody>' + filas.map(function (f) {
+      return '<tr>' + f.map(function (c) { return '<td>' + c.h + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</tbody></table></div>';
+  }
+  function linkLocal(l) { return celda('<a class="nombre-local" href="#local/' + encodeURIComponent(l.carpeta) + '">' + esc(nombreDe(l)) + '</a>', nombreDe(l)); }
+  function celdaVence(x) { return x ? celda(vence(x), x.dias) : celda(VACIO, 99999); }
+
   /* --- Inicio --- */
   function vistaInicio() {
-    var n = numeros(), prox = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }).slice(0, 4);
+    var n = numeros(), prox = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }).slice(0, 5);
     return kpis([[LOCS.length, 'locales'], [pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [Estadisticas.num(n.abiertos), 'menús abiertos (30 días)']]) +
       cajaTareas() +
-      '<div class="caja panel-caja"><h3>💳 Próximos vencimientos</h3>' + (prox.length ? '<div class="lista">' + prox.map(function (o) {
-        return '<a class="fila-link" href="#local/' + encodeURIComponent(o.l.carpeta) + '"><span><b>' + esc(nombreDe(o.l)) + '</b><small>' + esc(o.x.nombre) + ' · ' + esc(o.x.forma) + '</small></span>' + vence(o.x) + '</a>';
-      }).join('') + '</div>' : '<p class="suave">Todavía no cargaste planes. Se cargan en la ficha de cada local.</p>') + '</div>';
+      '<div class="caja panel-caja"><h3>💳 Próximos vencimientos</h3>' +
+      tabla('prox', ['Local', 'Plan', 'Forma de pago', 'Cobro', 'Vence'], prox.map(function (o) {
+        return [linkLocal(o.l), celda(esc(o.x.nombre)), celda(esc(o.x.forma)), celda(pesos(o.x.cobro), o.x.cobro), celdaVence(o.x)];
+      }), 'Todavía no cargaste planes. Se cargan en la sección Cobros.') + '</div>';
   }
 
-  /* --- Locales --- */
-  function filasLocales() {
-    var t = buscar.toLowerCase(), l = LOCS.filter(function (x) { return !t || nombreDe(x).toLowerCase().indexOf(t) >= 0; });
-    return l.map(function (x) {
-      var p = planDe(x), color = x.menu && x.menu.colores && x.menu.colores.claro && x.menu.colores.claro.acento;
-      return '<a class="fila-link local-fila" href="#local/' + encodeURIComponent(x.carpeta) + '"' + (color ? ' style="border-left-color:' + esc(color) + '"' : '') + '><span><b>' + esc(nombreDe(x)) + '</b><span class="chip ' + esc(x.estado) + '">' + esc(ESTADOS[x.estado] || x.estado) + '</span>' +
-        '<small>' + (p ? esc(p.nombre) + ' · ' + esc(p.forma) : 'Sin plan') + ' · ' + (usuariosDe(x).length ? 'con usuario' : 'sin usuario') + '</small></span>' + (p ? vence(p) : '') + '<i aria-hidden="true">›</i></a>';
-    }).join('') || '<p class="suave">' + (LOCS.length ? 'No hay locales con ese nombre.' : 'Todavía no hay locales. Tocá <b>+ Nuevo local</b>.') + '</p>';
+  /* --- Locales: todos los datos en una grilla --- */
+  function grillaLocales() {
+    var t = buscar.toLowerCase(), lista = LOCS.filter(function (x) { return !t || nombreDe(x).toLowerCase().indexOf(t) >= 0; });
+    return tabla('locales', ['Local', 'Estado', 'Plan', 'Pago', 'Cobro', 'Vence', 'Mail', 'WhatsApp', 'Dirección', 'Usuario', 'Aperturas 30 d', 'En 3D 30 d', ''], lista.map(function (l) {
+      var p = planDe(l), us = usuariosDe(l), i = (l.menu && l.menu.info) || {}, e = (EST && EST[l.carpeta]) || { menu: 0, d3: 0, ar: 0 };
+      var mail = (us[0] && us[0].email) || i.email || '', wa = (us[0] && us[0].whatsapp) || i.whatsapp || '', dir = [i.direccion, i.zona].filter(Boolean).join(', ');
+      return [linkLocal(l),
+        celda('<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span>', l.estado),
+        p ? celda(esc(p.nombre)) : celda(VACIO, ''), p ? celda(esc(p.forma)) : celda(VACIO, ''), p ? celda(pesos(p.cobro), p.cobro) : celda(VACIO, 0), celdaVence(p),
+        mail ? celda(esc(mail)) : celda(VACIO, ''), wa ? celda(esc(telTexto(wa))) : celda(VACIO, ''), dir ? celda(esc(dir)) : celda(VACIO, ''),
+        celda(us.length ? '✓ Sí' : '<span class="suave">No</span>', us.length),
+        celda(Estadisticas.num(e.menu), e.menu), celda(Estadisticas.num(e.d3 + e.ar), e.d3 + e.ar),
+        celda('<a class="b" href="#local/' + encodeURIComponent(l.carpeta) + '">Abrir</a>', '')];
+    }), LOCS.length ? 'No hay locales con ese nombre.' : 'Todavía no hay locales. Tocá <b>+ Nuevo local</b>.');
   }
   function vistaLocales() {
-    return '<div class="titulo-seccion"><h2>Locales</h2><input type="search" id="buscar" placeholder="Buscar local" aria-label="Buscar local" value="' + esc(buscar) + '"></div><div class="lista" id="lista-locales">' + filasLocales() + '</div>';
+    return '<div class="titulo-seccion"><h2>Locales</h2><input type="search" id="buscar" placeholder="Buscar local" aria-label="Buscar local" value="' + esc(buscar) + '"></div><div id="lista-locales">' + grillaLocales() + '</div>';
   }
 
   /* --- Ficha de un local --- */
@@ -473,30 +501,38 @@
   /* --- Cobros --- */
   function vistaCobros() {
     if (!PLANES) return '<p class="suave">No se pudieron leer los planes.</p>';
-    var n = numeros(), con = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }), sin = LOCS.filter(function (l) { return !planDe(l); });
+    var n = numeros();
     return '<div class="titulo-seccion"><h2>Cobros</h2></div>' + kpis([[pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [n.pronto, 'vencen esta semana']]) +
-      '<div class="caja panel-caja"><h3>Planes activos</h3>' + (con.length ? '<div class="lista">' + con.map(function (o) {
-        return '<div class="pendiente"><span><a href="#local/' + encodeURIComponent(o.l.carpeta) + '"><b>' + esc(nombreDe(o.l)) + '</b></a><small>' + esc(o.x.nombre) + ' · ' + esc(o.x.forma) + ' · ' + pesos(o.x.cobro) + '</small><small>' + vence(o.x) + '</small></span><span class="botones">' + boton('plan', o.l.carpeta, 'Registrar pago') + boton('aviso', o.l.carpeta, 'Aviso') + '</span></div>';
-      }).join('') + '</div>' : '<p class="suave">Todavía no hay planes cargados.</p>') + '</div>' +
-      (sin.length ? '<div class="caja panel-caja"><h3>Sin plan</h3><div class="lista">' + sin.map(function (l) { return '<div class="pendiente"><span><b>' + esc(nombreDe(l)) + '</b></span>' + boton('plan', l.carpeta, 'Cargar plan') + '</div>'; }).join('') + '</div></div>' : '');
+      tabla('cobros', ['Local', 'Plan', 'Forma de pago', 'Cobro', 'Último pago', 'Vence', 'Estado', ''], LOCS.map(function (l) {
+        var x = planDe(l), pl = PLANES[l.carpeta];
+        if (!x) return [linkLocal(l), celda(VACIO, ''), celda(VACIO, ''), celda(VACIO, 0), celda(VACIO, ''), celda(VACIO, 99999), celda('<span class="suave">Sin plan</span>', 'z'), celda(boton('plan', l.carpeta, 'Cargar plan'), '')];
+        var estado = x.dias < 0 ? '<span class="vence-mal">Vencido</span>' : x.dias <= 7 ? '<span class="vence-pronto">Por vencer</span>' : '<span class="al-dia">Al día</span>';
+        return [linkLocal(l), celda(esc(x.nombre)), celda(esc(x.forma)), celda(pesos(x.cobro), x.cobro), celda(esc(fechaISO(pl.desde)), pl.desde), celdaVence(x), celda(estado, x.dias),
+          celda('<span class="botones sin-salto">' + boton('plan', l.carpeta, 'Registrar pago') + boton('aviso', l.carpeta, 'Aviso') + '</span>', '')];
+      }), 'Todavía no hay locales.');
   }
 
   /* --- Mensajes --- */
   function vistaMensajes() {
     return '<div class="titulo-seccion"><h2>Mensajes</h2></div><p class="suave">Quedan listos para cada local: tocás, se abre su WhatsApp con el texto escrito y lo mandás.</p>' + cajaTareas() +
-      '<div class="caja panel-caja"><h3>Por local</h3><div class="lista">' + LOCS.map(function (l) {
-        return '<div class="pendiente"><span><a href="#local/' + encodeURIComponent(l.carpeta) + '"><b>' + esc(nombreDe(l)) + '</b></a><small>Resumen: ' + esc(fechaISO(leerEnviado(l.carpeta, 'resumen_enviado'))) + ' · Aviso: ' + esc(fechaISO(leerEnviado(l.carpeta, 'aviso_enviado'))) + '</small></span><span class="botones">' + boton('resumen', l.carpeta, 'Resumen') + boton('aviso', l.carpeta, 'Aviso') + '</span></div>';
-      }).join('') + '</div></div>';
+      tabla('mensajes', ['Local', 'WhatsApp', 'Último resumen', 'Último aviso de pago', ''], LOCS.map(function (l) {
+        var tel = telDe(l), r = leerEnviado(l.carpeta, 'resumen_enviado'), a = leerEnviado(l.carpeta, 'aviso_enviado');
+        return [linkLocal(l), tel ? celda(esc(telTexto(tel))) : celda(VACIO, ''), celda(esc(fechaISO(r)), r), celda(esc(fechaISO(a)), a),
+          celda('<span class="botones sin-salto">' + boton('resumen', l.carpeta, 'Resumen') + boton('aviso', l.carpeta, 'Aviso de pago') + '</span>', '')];
+      }), 'Todavía no hay locales.');
   }
 
   /* --- Estadísticas --- */
   function vistaEstadisticas() {
     if (!EST) return '<p class="suave">No se pudieron leer las estadísticas.</p>';
-    var n = numeros(), filas = LOCS.map(function (l) { return { l: l, e: EST[l.carpeta] || { menu: 0, menu7: 0, d3: 0, ar: 0 } }; }).sort(function (a, b) { return b.e.menu - a.e.menu; }), max = Math.max.apply(null, filas.map(function (f) { return f.e.menu; }).concat([1]));
+    var n = numeros();
     return '<div class="titulo-seccion"><h2>Estadísticas</h2></div>' + kpis([[Estadisticas.num(n.abiertos), 'menús abiertos (30 días)'], [Estadisticas.num(n.vistos), 'platos vistos en 3D o AR'], [n.con3d, 'platos con 3D'], [n.platos, 'platos cargados']]) +
-      '<div class="caja panel-caja"><h3>Por local (30 días)</h3>' + filas.map(function (f) {
-        return '<div class="est-plato"><a class="n" href="#local/' + encodeURIComponent(f.l.carpeta) + '">' + esc(nombreDe(f.l)) + '</a><span class="v">' + Estadisticas.num(f.e.menu) + ' aperturas · ' + Estadisticas.num(f.e.d3 + f.e.ar) + ' en 3D</span><span class="barra-h"><i style="width:' + (f.e.menu / max * 100) + '%"></i></span></div>';
-      }).join('') + '</div>';
+      tabla('estadisticas', ['Local', 'Esta semana', '30 días', 'En 3D', 'En AR', 'Plato más mirado'], LOCS.map(function (l) {
+        var e = EST[l.carpeta] || { menu: 0, menu7: 0, d3: 0, ar: 0, platos: {} }, top = '', max = 0;
+        Object.keys(e.platos || {}).forEach(function (id) { var v = e.platos[id].d3 + e.platos[id].ar; if (v > max) { max = v; top = id; } });
+        var pl = top && l.menu && l.menu.platos.filter(function (p) { return String(p.id) === top; })[0];
+        return [linkLocal(l), celda(Estadisticas.num(e.menu7), e.menu7), celda(Estadisticas.num(e.menu), e.menu), celda(Estadisticas.num(e.d3), e.d3), celda(Estadisticas.num(e.ar), e.ar), pl ? celda(esc(pl.nombre)) : celda(VACIO, '')];
+      }), 'Todavía no hay locales.');
   }
 
   function pintar() {
@@ -510,9 +546,16 @@
     if (fichaDe) { var l = locDe(fichaDe); C.innerHTML = l ? vistaFicha(l) : '<p class="suave">No se encontró ese local. <a href="#locales">Volver a Locales</a></p>'; return; }
     C.innerHTML = { inicio: vistaInicio, locales: vistaLocales, cobros: vistaCobros, mensajes: vistaMensajes, estadisticas: vistaEstadisticas }[seccion]();
     var b = document.getElementById('buscar');
-    if (b) b.oninput = function () { buscar = b.value; document.getElementById('lista-locales').innerHTML = filasLocales(); };
+    if (b) b.oninput = function () { buscar = b.value; document.getElementById('lista-locales').innerHTML = grillaLocales(); };
   }
   C.onclick = function (e) {
+    /* tocar el título de una columna ordena la grilla; otro toque invierte el orden */
+    var th = e.target.closest('th[data-col]');
+    if (th) {
+      var o = ORDEN[th.dataset.tabla], i = +th.dataset.col;
+      ORDEN[th.dataset.tabla] = { i: i, dir: o && o.i === i ? -o.dir : 1 };
+      pintar(); return;
+    }
     var b = e.target.closest('[data-accion]'); if (!b) return;
     var a = b.dataset.accion, l = locDe(b.dataset.c), u = b.dataset.u && USUARIOS.filter(function (z) { return z.id === b.dataset.u; })[0]; if (!l) return;
     if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/', nombreDe(l), 'qr-' + l.carpeta);

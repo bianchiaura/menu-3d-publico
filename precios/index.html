@@ -68,13 +68,13 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
 .plan li.no::before{content:'–';color:var(--suave)}
 .plan .b{width:100%}
 
-/* alta y promos */
+/* qué incluye y promos */
 .cajas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:20px}
 .caja{background:var(--tarjeta);border:1px solid var(--linea);border-radius:18px;padding:20px}
 .caja h3{font-size:1.15rem;margin-bottom:6px}
 .caja p{color:var(--suave);font-size:.94rem}
 .caja .monto{font:700 1.6rem Fraunces,Georgia,serif;color:var(--texto);margin:4px 0 8px}
-.caja.lanzamiento{border:2px dashed var(--acento)}
+.caja.destacada{border:2px solid var(--acento)}
 .etiqueta{display:inline-block;background:rgba(181,131,47,.14);color:var(--acento2);font-weight:700;font-size:.75rem;padding:3px 10px;border-radius:999px;margin-bottom:8px}
 
 /* preguntas */
@@ -106,7 +106,8 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
   </div>
   <div class="puntos">
     <div class="punto"><i>🧊</i><b>Platos en 3D y sobre la mesa</b><span>Se arman a partir de fotos de tus platos reales.</span></div>
-    <div class="punto"><i>✏️</i><b>Lo cambiás vos</b><span>Precios, platos, fotos y horarios desde tu propio panel, cuando quieras.</span></div>
+    <div class="punto"><i>🤝</i><b>Te lo armamos nosotros</b><span>El diseño y el armado de tu menú están incluidos. No tenés que hacer nada.</span></div>
+    <div class="punto"><i>✏️</i><b>Después lo cambiás vos</b><span>Precios, platos, categorías, fotos y horarios desde tu propio panel, cuando quieras.</span></div>
     <div class="punto"><i>📊</i><b>Sabés qué miran</b><span>Cuántos abren tu menú, a qué hora y qué platos llaman la atención.</span></div>
     <div class="punto"><i>🌎</i><b>Listo para turistas</b><span>El menú cambia solo a inglés en los celulares de afuera.</span></div>
   </div>
@@ -123,7 +124,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--acento);outline-off
 </section>
 
 <section class="seccion wrap">
-  <h2>Puesta en marcha y promociones</h2>
+  <h2>Qué incluye y promociones</h2>
   <div class="cajas" id="cajas"></div>
 </section>
 
@@ -164,15 +165,15 @@ var CONFIG = window.PRECIOS;
   if (CONFIG.whatsapp) [].forEach.call(document.querySelectorAll('[data-contacto]'), function (a) { a.href = contacto(); a.hidden = false; });
 
   function planes() {
-    $('#aviso-anual').textContent = periodo === 'anual' ? '🎁 Pagando el año: ' + CONFIG.mesesGratisAnual + ' meses gratis y la puesta en marcha sin cargo' : '';
+    $('#aviso-anual').textContent = periodo === 'anual' ? '🎁 Pagando el año: ' + CONFIG.mesesGratisAnual + ' meses gratis' : '';
     $('#planes-lista').innerHTML = CONFIG.planes.map(function (p) {
       var anual = p.mes * mesesAnual, precio, detalle;
       if (periodo === 'anual') {
         precio = '<b>' + pesos(anual) + '</b><span>por año</span>';
-        detalle = 'Equivale a ' + pesos(anual / 12) + ' por mes · <s>' + pesos(p.mes * 12 + CONFIG.alta) + '</s> pagando mes a mes';
+        detalle = 'Equivale a ' + pesos(anual / 12) + ' por mes · <s>' + pesos(p.mes * 12) + '</s> pagando mes a mes';
       } else {
         precio = '<b>' + pesos(p.mes) + '</b><span>por mes</span>';
-        detalle = 'Más la puesta en marcha (' + pesos(CONFIG.alta) + ', una sola vez)';
+        detalle = 'Diseño y armado del menú incluidos';
       }
       var boton = CONFIG.whatsapp
         ? '<a class="b' + (p.destacado ? ' p' : '') + '" href="' + esc(contacto(p.nombre)) + '" target="_blank" rel="noopener">Quiero el ' + esc(p.nombre) + '</a>'
@@ -186,14 +187,10 @@ var CONFIG = window.PRECIOS;
   }
 
   function cajas() {
-    var completo = CONFIG.planes.filter(function (p) { return p.destacado; })[0] || CONFIG.planes[0];
     $('#cajas').innerHTML =
-      '<div class="caja"><span class="etiqueta">Una sola vez</span><h3>Puesta en marcha</h3><div class="monto">' + pesos(CONFIG.alta) + '</div>' +
-        '<p>Armamos tu menú completo con tu logo y tus colores, hasta ' + CONFIG.platosEnAlta + ' platos en 3D, los QR listos para imprimir y tu usuario del panel. Cada plato en 3D extra: ' + pesos(CONFIG.platoExtra) + '.</p>' +
-        '<p style="margin-top:8px;color:var(--ok);font-weight:700">Sin cargo si pagás el año.</p></div>' +
-      '<div class="caja lanzamiento"><span class="etiqueta">Cupos limitados</span><h3>Lanzamiento: ' + CONFIG.descuentoLanzamiento + ' % menos el primer año</h3>' +
-        '<p>Para los primeros ' + CONFIG.cuposLanzamiento + ' locales, con la puesta en marcha sin cargo. A cambio, nos dejás mostrar tu menú como ejemplo y nos contás qué te pareció. Plan ' + esc(completo.nombre) + ' anual: <b style="color:var(--texto)">' +
-        pesos(completo.mes * mesesAnual * (1 - CONFIG.descuentoLanzamiento / 100)) + '</b> el primer año.</p></div>' +
+      '<div class="caja destacada"><span class="etiqueta">Incluido en todos los planes</span><h3>Te armamos todo</h3>' +
+        '<p>El diseño y el armado de tu menú están incluidos: lo hacemos nosotros, con tu logo, tus colores, tus platos y tus precios, sin costo extra.</p>' +
+        '<p style="margin-top:8px">Después, vos podés cambiar lo que quieras desde tu panel: precios, platos, categorías, fotos, horarios y datos del local.</p></div>' +
       '<div class="caja"><span class="etiqueta">Semestral</span><h3>Pagá 6 meses: 1 mes gratis</h3>' +
         '<p>' + CONFIG.planes.map(function (p) { return esc(p.nombre) + ': ' + pesos(p.mes * 5); }).join(' · ') + ' cada 6 meses.</p></div>' +
       '<div class="caja"><span class="etiqueta">Recomendá</span><h3>1 mes gratis por cada local</h3>' +
@@ -204,9 +201,11 @@ var CONFIG = window.PRECIOS;
     var p = [
       ['¿Necesito una app o algo especial?', 'No. Tus clientes escanean el QR con la cámara del celular y el menú se abre solo. El 3D sobre la mesa funciona en iPhone y en la mayoría de los Android.'],
       ['¿Quién saca las fotos para el 3D?', 'Vos o nosotros: alcanza con 1 a 5 fotos de cada plato, una desde arriba y otras de costado. Te decimos cómo sacarlas con el celular.'],
-      ['¿Puedo cambiar precios y platos yo mismo?', 'Sí. Tenés tu panel con usuario y contraseña: cambiás precios, stock, fotos, horarios y datos, y en 1 o 2 minutos se ve en el menú.'],
+      ['¿Quién arma el menú?', 'Nosotros. El diseño y el armado están incluidos en todos los planes: nos pasás tu carta y tu logo, y te lo entregamos listo.'],
+      ['¿Puedo cambiar precios y platos yo mismo?', 'Sí. Tenés tu panel con usuario y contraseña: cambiás precios, platos, categorías, stock, fotos, horarios y datos, y en 1 o 2 minutos se ve en el menú.'],
+      ['¿Las bebidas cuentan como platos en 3D?', 'No. El límite de cada plan es solo para la comida: las bebidas no cuentan.'],
       ['¿Los precios cambian?', 'El plan anual queda congelado todo el año. Los planes mensuales y semestrales se actualizan cada 3 meses.'],
-      ['¿Y si no me convence?', 'Si en el primer mes no te convence, te devolvemos el abono de ese mes. La puesta en marcha no se devuelve porque es el trabajo de armar tu menú.']
+      ['¿Y si no me convence?', 'Si en el primer mes no te convence, te devolvemos el abono de ese mes.']
     ];
     $('#preguntas').innerHTML = p.map(function (x) { return '<details><summary>' + esc(x[0]) + '</summary><p>' + esc(x[1]) + '</p></details>'; }).join('');
   }

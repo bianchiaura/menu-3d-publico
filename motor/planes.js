@@ -4,15 +4,13 @@ window.PRECIOS = {
   whatsapp: '5491123121409',    /* tu WhatsApp para el botón "Quiero el mío", ej. '5491122334455'. Vacío = no se muestra */
   actualizado: 'noviembre de 2026',
   impuestos: 'Precios en pesos argentinos.',
-  alta: 120000, platoExtra: 8000, platosEnAlta: 10,
   mesesGratisAnual: 2,          /* anual: se pagan 12 - 2 = 10 meses */
-  descuentoLanzamiento: 30, cuposLanzamiento: 5,
   planes: [
-    { id: 'esencial', nombre: 'Esencial', para: 'Para empezar con lo justo', mes: 35000,
-      incluye: ['Menú digital con fotos y QR', 'Hasta 5 platos en 3D', 'Ver el plato sobre la mesa (AR)', 'Panel para cambiar precios y platos', 'Estadísticas básicas'],
+    { id: 'esencial', nombre: 'Esencial', para: 'Para la mayoría de las cartas', mes: 60000,
+      incluye: ['Diseño y armado del menú incluidos', 'Hasta 20 platos en 3D (las bebidas no cuentan)', 'Ver el plato sobre la mesa (AR)', 'QR listos para imprimir', 'Panel para cambiar precios, platos y categorías', 'Estadísticas básicas'],
       no: ['Menú en inglés', 'Resumen mensual por WhatsApp'] },
-    { id: 'completo', nombre: 'Completo', para: 'El que eligen la mayoría', mes: 55000, destacado: true,
-      incluye: ['Todo lo del Esencial', 'Hasta 20 platos en 3D', 'Menú en inglés para turistas', 'Estadísticas completas: horas pico, turistas y platos más mirados', 'Resumen del mes por WhatsApp'] },
+    { id: 'completo', nombre: 'Completo', para: 'El que eligen la mayoría', mes: 75000, destacado: true,
+      incluye: ['Todo lo del Esencial', 'Hasta 40 platos en 3D (las bebidas no cuentan)', 'Menú en inglés para turistas', 'Estadísticas completas: horas pico, turistas y platos más mirados', 'Resumen del mes por WhatsApp'] },
     { id: 'premium', nombre: 'Premium', para: 'Para cartas grandes o varias sucursales', mes: 85000,
       incluye: ['Todo lo del Completo', 'Platos en 3D sin límite', 'Varias sucursales', 'Atención prioritaria'] }
   ]
