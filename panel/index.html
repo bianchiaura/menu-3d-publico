@@ -25,6 +25,7 @@
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-vista="platos">Platos</button>
     <button role="tab" aria-selected="false" data-vista="promos">Promociones</button>
+    <button role="tab" aria-selected="false" data-vista="atencion" id="tab-at">Reservas y pedidos</button>
     <button role="tab" aria-selected="false" data-vista="datos">Datos e identidad</button>
     <button role="tab" aria-selected="false" data-vista="estadisticas" id="tab-est" hidden>Estadísticas</button>
     <button role="tab" aria-selected="false" data-vista="plan" id="tab-plan" hidden>Mi plan</button>
@@ -230,6 +231,7 @@
     $('#cuenta').hidden = !sesion;
     $('#tab-est').hidden = !sesion || nuevo;
     $('#tab-plan').hidden = !(sesion || demo) || nuevo;
+    $('#tab-at').hidden = sinPedidos();
     if (demo) {
       $('#publicar').hidden = false; $('#bajar').hidden = true; $('#tab-est').hidden = false;
       var v = $('#volver'); v.hidden = false; v.href = '../precios/'; v.textContent = '← Planes y precios';
@@ -501,6 +503,7 @@
     if (f) M.incluye = f; else delete M.incluye;
     $('#cobro').textContent = textoCobro(); $('#incluye-plan').textContent = textoIncluye();
     $('#campo-mascota').hidden = !(f && f.mascota);
+    $('#tab-at').hidden = sinPedidos();
   }
   /* límite de platos en 3D del plan (las bebidas no cuentan); 0 = sin límite */
   function limite3d() { return (M.incluye && M.incluye.platos3d) || 0; }
@@ -517,6 +520,31 @@
       '<p id="cobro" style="font-weight:700;color:var(--ok)">' + esc(textoCobro()) + '</p>' +
       '<p id="incluye-plan" style="font-size:.85rem;color:var(--suave)">' + esc(textoIncluye()) + '</p></div>';
   }
+
+  /* ---------- vista: reservas y pedidos (van en M.atencion; el menú los muestra si el plan los incluye) ---------- */
+  function sinPedidos() { return !!(M.incluye && M.incluye.pedidos === false); }
+  function vistaAtencion() {
+    var a = M.atencion || {};
+    $('#vista').innerHTML = '<form class="form" id="fatencion" style="margin-top:20px" onsubmit="return false">' +
+      '<p style="color:var(--suave);font-size:.88rem">Tus clientes reservan o piden desde el menú y el mensaje te llega por WhatsApp. Lo confirmás vos.</p>' +
+      '<div><b style="font-size:.88rem">Qué ofrecés</b><div class="checks" style="margin-top:6px">' + [['reservas', 'Reservas de mesa'], ['pedidos', 'Pedidos']].map(casillaAt).join('') + '</div></div>' +
+      '<div><b style="font-size:.88rem">Cómo entregás los pedidos</b><div class="checks" style="margin-top:6px">' + [['retiro', 'Retiro en el local'], ['delivery', 'Delivery']].map(casillaAt).join('') + '</div></div>' +
+      '<label>WhatsApp que recibe los mensajes<small>Con código de país. Si lo dejás vacío, se usa el de Datos e identidad</small><input type="text" name="whatsapp" value="' + esc(a.whatsapp) + '" placeholder="+54 9 11 2233-4455"></label>' +
+      '<p class="suave nota-chica" id="aviso-at" style="color:var(--mal)"></p></form>';
+    function revisar() {
+      var x = M.atencion || {}, tel = x.whatsapp || (M.info && M.info.whatsapp), t = '';
+      if ((x.reservas || x.pedidos) && !tel) t = 'Falta el WhatsApp: sin él, esto no aparece en tu menú.';
+      else if (x.pedidos && !x.retiro && !x.delivery) t = 'Elegí retiro o delivery para recibir pedidos. Sin eso, solo aparecen en las mesas, como lista para el mozo.';
+      $('#aviso-at').textContent = t;
+    }
+    $('#fatencion').oninput = function (e) {
+      var t = e.target; M.atencion = M.atencion || {};
+      M.atencion[t.name] = t.type === 'checkbox' ? t.checked : t.value.trim();
+      guardar(); revisar();
+    };
+    revisar();
+  }
+  function casillaAt(x) { return '<label><input type="checkbox" name="' + x[0] + '"' + (M.atencion && M.atencion[x[0]] ? ' checked' : '') + '> ' + x[1] + '</label>'; }
 
   /* ---------- vista: datos e identidad ---------- */
   function vistaDatos() {
@@ -548,12 +576,6 @@
       '<label>Reservas<small>Cómo se reserva y condiciones</small><input type="text" name="reservas" value="' + esc(i.reservas) + '"></label>' +
       '<div><b style="font-size:.88rem">Medios de pago</b><div class="checks" style="margin-top:6px">' + casillas('pago', PAGOS, i.pagos) + '</div></div>' +
       '<div><b style="font-size:.88rem">Servicios</b><div class="checks" style="margin-top:6px">' + casillas('servicio', SERVICIOS, i.servicios) + '</div></div>' +
-      (M.incluye && M.incluye.pedidos === false ? '' : '<h3 style="font-size:1.05rem;margin-top:6px">Reservas y pedidos</h3>' +
-        '<p style="color:var(--suave);font-size:.85rem;margin-top:-8px">Tus clientes reservan o piden desde el menú y el mensaje te llega por WhatsApp. Lo confirmás vos.</p>' +
-        '<div class="checks">' + [['at_reservas', 'reservas', 'Reservas de mesa'], ['at_pedidos', 'pedidos', 'Pedidos'], ['at_retiro', 'retiro', 'Retiro en el local'], ['at_delivery', 'delivery', 'Delivery']].map(function (x) {
-          return '<label><input type="checkbox" name="' + x[0] + '"' + (M.atencion && M.atencion[x[1]] ? ' checked' : '') + '> ' + x[2] + '</label>';
-        }).join('') + '</div>' +
-        '<label>WhatsApp que recibe los mensajes<small>Con código de país. Si lo dejás vacío, se usa el WhatsApp de arriba</small><input type="text" name="at_whatsapp" value="' + esc(M.atencion && M.atencion.whatsapp) + '" placeholder="+54 9 11 2233-4455"></label>') +
       '<h3 style="font-size:1.05rem;margin-top:6px">Categorías</h3><div style="display:grid;gap:8px">' +
       M.categorias.map(function (k, n) {
         return '<div class="cat-fila"><input type="text" data-cat="' + n + '" value="' + esc(k.nombre) + '" aria-label="Nombre de categoría">' +
@@ -576,7 +598,6 @@
       if (n === '_plan' || n === '_pago' || n === '_desde' || n === '_mascota') { M[n] = t.value; elegirPlan(); guardar(); return; }
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
-      else if (/^at_/.test(n)) { M.atencion = M.atencion || {}; M.atencion[n.slice(3)] = t.type === 'checkbox' ? t.checked : t.value.trim(); }
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
       else if (n === 'prototipo' || n === 'muestra') M[n] = t.checked;
       else if (n === 'pago' || n === 'servicio') {
@@ -610,6 +631,7 @@
   function mostrar() {
     if (vista === 'platos') vistaPlatos();
     else if (vista === 'promos') vistaPromos();
+    else if (vista === 'atencion') vistaAtencion();
     else if (vista === 'plan') vistaPlan();
     else if (vista === 'estadisticas') Estadisticas.local($('#vista'), carpeta, M, demo);
     else vistaDatos();
