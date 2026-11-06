@@ -1,5 +1,5 @@
 /* Menú 3D · leer y publicar los archivos del repositorio.
-   - Leer (menú publicado, historial de versiones, archivos de un local): directo de GitHub, sin token (el repo es público).
+   - Leer (menú publicado y archivos de un local): directo de GitHub, sin token (el repo es público).
    - Publicar: a través de la función "panel" de Supabase, con la sesión del usuario (sesion.js).
      El token de GitHub queda guardado en Supabase y nunca llega al navegador.
    Todos los archivos de una publicación van en un solo commit; GitHub Pages los pone online en 1-2 minutos. */
@@ -24,13 +24,6 @@ window.GitHub = (function () {
   /* lee un archivo de texto del repo (null si no existe); "version" es un commit anterior (opcional) */
   function leer(ruta, version) { return pedir('/contents/' + ruta + '?ref=' + (version || RAMA), { accept: 'application/vnd.github.raw', permitir404: true }); }
 
-  /* versiones publicadas de un archivo, de la más nueva a la más vieja: [{ version, fecha, mensaje }] */
-  function historial(ruta) {
-    return pedir('/commits?path=' + encodeURIComponent(ruta) + '&sha=' + RAMA + '&per_page=30').then(function (l) {
-      return l.map(function (c) { return { version: c.sha, fecha: c.commit.author.date, mensaje: c.commit.message.split('\n')[0] }; });
-    });
-  }
-
   /* lista los archivos del repo que están dentro de una carpeta */
   function listar(carpeta) {
     return pedir('/git/trees/' + RAMA + '?recursive=1').then(function (t) {
@@ -44,5 +37,5 @@ window.GitHub = (function () {
     return Sesion.funcion('publicar', { carpeta: carpeta, archivos: archivos, mensaje: mensaje });
   }
 
-  return { REPO: REPO, leer: leer, historial: historial, listar: listar, publicar: publicar };
+  return { REPO: REPO, leer: leer, listar: listar, publicar: publicar };
 })();

@@ -46,7 +46,6 @@
   <span class="estado" id="estado">Sin cambios</span>
   <a class="b" id="previa" href="#" target="_blank" rel="noopener">Vista previa</a>
   <button class="b p" id="publicar" hidden>Publicar</button>
-  <button class="b" id="versiones" hidden>🕘 Versiones</button>
   <button class="b" id="bajar">Descargar menu.json</button>
   <button class="b mal" id="descartar">Descartar cambios</button>
 </div></div>
@@ -120,10 +119,6 @@
   <div class="cuerpo" id="gen3d"></div>
 </dialog>
 
-<dialog id="dlg-versiones" style="max-width:520px">
-  <div class="cab"><h2 style="font-size:1.15rem">Versiones publicadas</h2><button type="button" class="b" data-cerrar-v aria-label="Cerrar">✕</button></div>
-  <div class="cuerpo"><p style="color:var(--suave);font-size:.88rem;margin-bottom:10px">Elegí una versión para cargarla en el panel. No se publica sola: la revisás y, si está bien, tocás "Publicar cambios".</p><div id="lista-versiones">Cargando…</div></div>
-</dialog>
 
 <dialog id="dlg-aviso" style="max-width:460px">
   <div class="cuerpo"><h2 style="font-size:1.15rem;margin-bottom:10px"></h2><p style="color:var(--suave)"></p></div>
@@ -227,7 +222,6 @@
     $('#publicar').hidden = !sesion;
     $('#publicar').textContent = nuevo ? 'Crear y publicar local' : 'Publicar cambios';
     $('#bajar').hidden = !!sesion;
-    $('#versiones').hidden = !admin || nuevo; /* volver a versiones viejas: solo el administrador */
     $('#cuenta').hidden = !sesion;
     $('#tab-est').hidden = !sesion || nuevo;
     $('#tab-plan').hidden = !(sesion || demo) || nuevo;
@@ -1075,29 +1069,6 @@
       if (e === 'cancelado') { guardar(); return; }
       console.error(e); falta('No se pudo publicar: ' + e.message);
     }).then(function () { bot.disabled = false; });
-  };
-  /* versiones anteriores (historial de GitHub): se carga una como borrador, para revisarla y volver a publicarla */
-  $('#versiones').onclick = function () {
-    var d = $('#dlg-versiones'), l = $('#lista-versiones'), ruta = carpeta + '/menu.json';
-    l.textContent = 'Cargando…'; d.showModal();
-    d.querySelector('[data-cerrar-v]').onclick = function () { d.close(); };
-    GitHub.historial(ruta).then(function (vs) {
-      if (!vs.length) { l.textContent = 'Todavía no hay versiones anteriores.'; return; }
-      l.innerHTML = vs.map(function (x, n) {
-        var f = new Date(x.fecha).toLocaleString('es-AR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        return '<div class="fila" style="grid-template-columns:1fr auto"><div><div class="n">' + esc(f) + (n === 0 ? ' <span class="chip activo">Publicada ahora</span>' : '') + '</div>' +
-          '<div class="s"><span>' + esc(x.mensaje) + '</span></div></div>' + (n === 0 ? '' : '<button class="b" data-version="' + esc(x.version) + '" data-fecha="' + esc(f) + '">Usar esta</button>') + '</div>';
-      }).join('');
-    }).catch(function (e) { l.textContent = '⚠ ' + e.message; });
-    l.onclick = function (ev) {
-      var b = ev.target.closest('[data-version]'); if (!b) return;
-      b.disabled = true; b.textContent = 'Cargando…';
-      GitHub.leer(ruta, b.dataset.version).then(function (txt) {
-        var m = JSON.parse(txt); if (M._estado) m._estado = M._estado;
-        M = m; guardar(); cabecera(); mostrar(); d.close();
-        toast('Cargaste la versión del ' + b.dataset.fecha + '. Revisala y tocá "Publicar cambios" para dejarla.');
-      }).catch(function (e) { b.disabled = false; b.textContent = 'Usar esta'; toast('No se pudo cargar: ' + e.message); });
-    };
   };
   $('#bajar').onclick = function () {
     var a = document.createElement('a'), m = JSON.parse(JSON.stringify(M));
