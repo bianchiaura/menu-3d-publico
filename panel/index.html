@@ -1096,6 +1096,8 @@
       M = d ? d.menu : m;
       /* lo que incluye el plan siempre es lo publicado, aunque haya un borrador viejo */
       if (d && !nuevo) { if (m.incluye) M.incluye = m.incluye; else delete M.incluye; }
+      /* un borrador de antes de que existieran las promociones no las borra al publicar */
+      if (d && !nuevo && !M.promociones && m.promociones) { M.promociones = m.promociones; if (m.en && m.en.promociones) { M.en = M.en || {}; M.en.promociones = m.en.promociones; } }
       if (d && d.desde) desde = d.desde;
       marcarTab(); cabecera(); guardar(); mostrar();
       if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');
