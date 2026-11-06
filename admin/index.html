@@ -358,13 +358,40 @@
       e.preventDefault();
       var nuevoPlan = { plan: f.plan.value, pago: f.pago.value, desde: f.desde.value || hoyISO() };
       msg.style.color = 'var(--suave)'; msg.textContent = 'Guardando…';
+      var cambio = nuevoPlan.plan !== (pl.plan || '');
       (nuevoPlan.plan ? Sesion.guardarPlan(l.carpeta, nuevoPlan) : Sesion.borrarPlan(l.carpeta)).then(function () {
         if (nuevoPlan.plan) PLANES[l.carpeta] = nuevoPlan; else delete PLANES[l.carpeta];
+        if (!cambio) return;
+        msg.textContent = 'Actualizando su menú según el plan…';
+        return aplicarPlanAlMenu(l, nuevoPlan.plan);
+      }).then(function () {
         d.close(); pintar();
       }).catch(function (err) { msg.style.color = 'var(--mal)'; msg.textContent = '⚠ ' + err.message; });
     };
     document.body.appendChild(d); d.showModal();
   }
+  /* el menú guarda qué incluye su plan: así el menú público y el panel del local muestran solo eso */
+  function aplicarPlanAlMenu(l, plan) {
+    var ruta = l.carpeta + '/menu.json', f = plan ? window.PRECIOS.funcionesDe(plan) : null;
+    return GitHub.leer(ruta).then(function (t) {
+      if (t == null) throw new Error('No se encontró el menú de este local.');
+      var m = JSON.parse(t);
+      if (f) m.incluye = f; else delete m.incluye;
+      if (f && f.mascota && !m.mascota) m.mascota = window.PRECIOS.mascotaBase('');
+      return GitHub.publicar([{ ruta: ruta, texto: JSON.stringify(m, null, 2) + '\n' }], 'Actualiza el menú de ' + nombreDe(l), null, l.carpeta).then(function () {
+        if (l.menu) { if (f) l.menu.incluye = f; else delete l.menu.incluye; l.menu.mascota = m.mascota; }
+      });
+    });
+  }
+  /* si el plan del local incluye el resumen mensual (sin plan cargado, se puede mandar igual) */
+  function incluyeResumen(l) { var i = l.menu && l.menu.incluye; return !i || i.resumen !== false; }
+  function usados3d(l) {
+    var m = l.menu; if (!m) return 0;
+    return m.platos.filter(function (p) {
+      return p.modelo && !window.PRECIOS.esBebida(m.categorias.filter(function (c) { return c.id === p.categoria; })[0]);
+    }).length;
+  }
+  function textoPlatos3d(l) { var lim = l.menu && l.menu.incluye && l.menu.incluye.platos3d; return usados3d(l) + (lim ? ' de ' + lim : ''); }
 
   /* ---------- secciones del administrador ----------
      Barra de arriba: #inicio, #locales, #cobros, #mensajes, #estadisticas, #ajustes. La ficha de un local es #local/carpeta. */
@@ -398,7 +425,7 @@
       var pl = PLANES && PLANES[l.carpeta], x = pl && infoPlan(pl); if (!x) return;
       if (x.dias <= 7 && diasDesde(leerEnviado(l.carpeta, 'aviso_enviado')) >= 7) filas.push('<div class="pendiente"><span>💳 <b>' + esc(nombreDe(l)) + '</b> · ' + (x.dias < 0 ? 'venció hace ' + (-x.dias) + (x.dias === -1 ? ' día' : ' días') : x.dias === 0 ? 'vence hoy' : 'vence en ' + x.dias + (x.dias === 1 ? ' día' : ' días')) + '</span>' + boton('aviso', l.carpeta, 'Aviso de pago', 'p') + '</div>');
       var base = leerEnviado(l.carpeta, 'resumen_enviado') || pl.desde;
-      if (EST && EST[l.carpeta] && diasDesde(base) >= 28) filas.push('<div class="pendiente"><span>📊 <b>' + esc(nombreDe(l)) + '</b> · resumen del mes</span>' + boton('resumen', l.carpeta, 'Resumen', 'p') + '</div>');
+      if (incluyeResumen(l) && EST && EST[l.carpeta] && diasDesde(base) >= 28) filas.push('<div class="pendiente"><span>📊 <b>' + esc(nombreDe(l)) + '</b> · resumen del mes</span>' + boton('resumen', l.carpeta, 'Resumen', 'p') + '</div>');
     });
     return filas;
   }
@@ -451,14 +478,14 @@
   /* --- Locales: todos los datos en una grilla --- */
   function grillaLocales() {
     var t = buscar.toLowerCase(), lista = LOCS.filter(function (x) { return !t || nombreDe(x).toLowerCase().indexOf(t) >= 0; });
-    return tabla('locales', ['Local', 'Estado', 'Plan', 'Pago', 'Cobro', 'Vence', 'Mail', 'WhatsApp', 'Dirección', 'Usuario', 'Aperturas 30 d', 'En 3D 30 d', ''], lista.map(function (l) {
+    return tabla('locales', ['Local', 'Estado', 'Plan', 'Pago', 'Cobro', 'Vence', 'Mail', 'WhatsApp', 'Dirección', 'Usuario', 'Platos 3D', 'Aperturas 30 d', 'En 3D 30 d', ''], lista.map(function (l) {
       var p = planDe(l), us = usuariosDe(l), i = (l.menu && l.menu.info) || {}, e = (EST && EST[l.carpeta]) || { menu: 0, d3: 0, ar: 0 };
       var mail = (us[0] && us[0].email) || i.email || '', wa = (us[0] && us[0].whatsapp) || i.whatsapp || '', dir = [i.direccion, i.zona].filter(Boolean).join(', ');
       return [linkLocal(l),
         celda('<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span>', l.estado),
         p ? celda(esc(p.nombre)) : celda(VACIO, ''), p ? celda(esc(p.forma)) : celda(VACIO, ''), p ? celda(pesos(p.cobro), p.cobro) : celda(VACIO, 0), celdaVence(p),
         mail ? celda(esc(mail)) : celda(VACIO, ''), wa ? celda(esc(telTexto(wa))) : celda(VACIO, ''), dir ? celda(esc(dir)) : celda(VACIO, ''),
-        celda(us.length ? '✓ Sí' : '<span class="suave">No</span>', us.length),
+        celda(us.length ? '✓ Sí' : '<span class="suave">No</span>', us.length), celda(esc(textoPlatos3d(l)), usados3d(l)),
         celda(Estadisticas.num(e.menu), e.menu), celda(Estadisticas.num(e.d3 + e.ar), e.d3 + e.ar),
         celda('<a class="b" href="#local/' + encodeURIComponent(l.carpeta) + '">Abrir</a>', '')];
     }), LOCS.length ? 'No hay locales con ese nombre.' : 'Todavía no hay locales. Tocá <b>+ Nuevo local</b>.');
@@ -481,10 +508,10 @@
       '<section class="caja panel-caja"><h3>📇 Datos del local</h3><dl class="datos-local">' +
         dato('Mail', mail ? esc(mail) : nada) + dato('WhatsApp', wa ? esc(telTexto(wa)) : nada) + dato('Dirección', dir ? esc(dir) : nada) + dato('Menú', '<a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a>') +
         (m && m.muestra ? '<div><dt></dt><dd class="suave">Datos de muestra, inventados.</dd></div>' : '') + '</dl></section>' +
-      '<section class="caja panel-caja"><h3>💳 Plan y pagos</h3>' + (PLANES ? (x ? '<dl class="datos-local">' + dato('Plan', esc(x.nombre)) + dato('Forma de pago', esc(x.forma)) + dato('Cobro', pesos(x.cobro)) + dato('Próximo pago', vence(x)) + '</dl>' : '<p class="suave">Sin plan cargado.</p>') +
+      '<section class="caja panel-caja"><h3>💳 Plan y pagos</h3>' + (PLANES ? (x ? '<dl class="datos-local">' + dato('Plan', esc(x.nombre)) + dato('Forma de pago', esc(x.forma)) + dato('Cobro', pesos(x.cobro)) + dato('Próximo pago', vence(x)) + dato('Platos en 3D', esc(textoPlatos3d(l))) + '</dl>' : '<p class="suave">Sin plan cargado.</p>') +
         '<div class="botones">' + boton('plan', c, x ? 'Cambiar plan o registrar pago' : 'Cargar plan') + '</div>' : '<p class="suave">No se pudo leer el plan.</p>') + '</section>' +
       '<section class="caja panel-caja"><h3>📨 Mensajes</h3><p class="suave nota-chica">Se abre su WhatsApp con el mensaje escrito y vos tocás enviar.</p><div class="lista">' +
-        '<div class="pendiente"><span><b>Resumen del mes</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'resumen_enviado'))) + '</small></span>' + boton('resumen', c, 'Preparar') + '</div>' +
+        '<div class="pendiente"><span><b>Resumen del mes</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'resumen_enviado'))) + '</small></span>' + (incluyeResumen(l) ? boton('resumen', c, 'Preparar') : '<span class="suave nota-chica">No incluido en su plan</span>') + '</div>' +
         '<div class="pendiente"><span><b>Aviso de pago</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'aviso_enviado'))) + '</small></span>' + boton('aviso', c, 'Preparar') + '</div>' +
       '</div></section>' +
       '<section class="caja panel-caja"><h3>👤 Acceso a su panel</h3>' + (USUARIOS ? (us.length ? '<div class="lista">' + us.map(function (u) {
@@ -518,7 +545,7 @@
       tabla('mensajes', ['Local', 'WhatsApp', 'Último resumen', 'Último aviso de pago', ''], LOCS.map(function (l) {
         var tel = telDe(l), r = leerEnviado(l.carpeta, 'resumen_enviado'), a = leerEnviado(l.carpeta, 'aviso_enviado');
         return [linkLocal(l), tel ? celda(esc(telTexto(tel))) : celda(VACIO, ''), celda(esc(fechaISO(r)), r), celda(esc(fechaISO(a)), a),
-          celda('<span class="botones sin-salto">' + boton('resumen', l.carpeta, 'Resumen') + boton('aviso', l.carpeta, 'Aviso de pago') + '</span>', '')];
+          celda('<span class="botones sin-salto">' + (incluyeResumen(l) ? boton('resumen', l.carpeta, 'Resumen') : '') + boton('aviso', l.carpeta, 'Aviso de pago') + '</span>', '')];
       }), 'Todavía no hay locales.');
   }
 

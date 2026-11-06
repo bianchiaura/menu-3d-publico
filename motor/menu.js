@@ -208,6 +208,8 @@
   }
 
   function mostrar(m, esBorrador) {
+    /* lo que el plan del local no incluye no se muestra (los datos quedan guardados por si cambia de plan) */
+    if (m.incluye) { if (m.incluye.ingles === false) delete m.en; if (m.incluye.mascota === false) delete m.mascota; }
     M = window.MENU = m; m.base = base; borrador = esBorrador;
     /* idioma: el que eligió antes en este celular; si no, inglés cuando el celular no está en español */
     var guardado = null; try { guardado = localStorage.getItem('menu3d-idioma'); } catch (e) {}

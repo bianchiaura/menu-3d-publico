@@ -7,11 +7,14 @@ window.PRECIOS = {
   mesesGratisAnual: 2,          /* anual: se pagan 12 - 2 = 10 meses */
   planes: [
     { id: 'esencial', nombre: 'Esencial', para: 'Para sumar el 3D a tu carta', mes: 60000,
+      funciones: { platos3d: 20, ingles: false, mascota: false, estadisticas: 'basicas', resumen: false },
       incluye: ['Diseño y carga del menú incluidos', 'Hasta 20 platos en 3D (sin contar bebidas)', 'Platos sobre la mesa con realidad aumentada', 'Códigos QR listos para imprimir', 'Panel propio para gestionar precios, platos y categorías', 'Estadísticas básicas: visitas y platos vistos'],
       no: ['Menú en inglés', 'Mascota del local', 'Estadísticas completas y resumen mensual'] },
     { id: 'completo', nombre: 'Completo', para: 'Para destacarte y entender qué buscan tus clientes', mes: 75000, destacado: true,
+      funciones: { platos3d: 40, ingles: true, mascota: true, estadisticas: 'completas', resumen: true },
       incluye: ['Todo lo del plan Esencial', 'Hasta 40 platos en 3D (sin contar bebidas)', 'Menú en inglés para turistas', 'Mascota que recomienda platos de tu carta', 'Estadísticas completas: horas pico, turistas y platos más vistos', 'Resumen mensual por WhatsApp'] },
     { id: 'premium', nombre: 'Premium', para: 'Para cartas extensas, cadenas y varias sucursales', mes: 85000,
+      funciones: { platos3d: 0, ingles: true, mascota: true, estadisticas: 'completas', resumen: true }, /* platos3d: 0 = sin límite */
       incluye: ['Todo lo del plan Completo', 'Platos en 3D sin límite', 'Un menú por sucursal, cada uno con su QR', 'Mascota a medida, con la personalidad de tu marca', 'Atención prioritaria por WhatsApp'] }
   ]
 };
@@ -27,3 +30,19 @@ window.PRECIOS.cobro = {
   titular: 'Bautista Bianchimani', /* a nombre de quién está la cuenta */
   link: ''                         /* link de pago, si tenés uno (opcional) */
 };
+/* qué habilita cada plan. Se guarda en el menu.json como "incluye" y lo usan el menú, el panel y el administrador */
+window.PRECIOS.funcionesDe = function (id) {
+  var p = window.PRECIOS.planes.filter(function (x) { return x.id === id; })[0];
+  return p ? JSON.parse(JSON.stringify(p.funciones)) : null;
+};
+/* mascota con la que arranca un local cuyo plan la incluye */
+window.PRECIOS.mascotaBase = function (nombre) {
+  var n = String(nombre || '').trim();
+  return {
+    nombre: n,
+    frases: [(n ? '¡Hola! Soy ' + n + '.' : '¡Hola!') + ' Estoy acá para ayudarte a elegir.', 'Tocá "Ver en 3D" y mirá el plato sobre tu mesa.'],
+    recomienda: ['Hoy te recomiendo {plato}.', '¿No sabés qué pedir? Probá {plato}.']
+  };
+};
+/* el límite de platos en 3D no cuenta las categorías de bebidas */
+window.PRECIOS.esBebida = function (c) { return !!c && /bebida|trago|c[oó]ctel|vino|cerveza/i.test((c.nombre || '') + ' ' + (c.id || '')); };

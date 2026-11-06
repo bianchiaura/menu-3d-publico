@@ -166,7 +166,7 @@
   }
   /* compara dos versiones del menú sin los datos internos del panel */
   function igual(a, b) {
-    function limpio(t) { var o = JSON.parse(t); ['_estado', '_carpeta', '_carpetaTocada', 'base', '_plan', '_pago', '_desde'].forEach(function (k) { delete o[k]; }); return JSON.stringify(o); }
+    function limpio(t) { var o = JSON.parse(t); ['_estado', '_carpeta', '_carpetaTocada', 'base', '_plan', '_pago', '_desde', '_mascota'].forEach(function (k) { delete o[k]; }); return JSON.stringify(o); }
     try { return limpio(a) === limpio(b); } catch (e) { return false; }
   }
   /* ventana de aviso con opciones; devuelve una promesa con la opción elegida */
@@ -456,6 +456,23 @@
     if (!p || !f) return 'Sin plan: no se registra cobro (por ejemplo, una demo o una prueba).';
     return 'Cobro: ' + pesos(p.mes * f.cobra);
   }
+  /* lo que va a tener el menú con el plan elegido */
+  function textoIncluye() {
+    var i = M.incluye;
+    if (!i) return 'Sin límites: el menú se crea con todas las funciones.';
+    return 'Se crea con: ' + [i.platos3d ? 'hasta ' + i.platos3d + ' platos en 3D' : 'platos en 3D sin límite', i.ingles ? 'menú en inglés' : 'sin inglés', i.mascota ? 'mascota' : 'sin mascota',
+      'estadísticas ' + (i.estadisticas === 'basicas' ? 'básicas' : 'completas')].join(' · ') + '.';
+  }
+  function elegirPlan() {
+    var f = M._plan && window.PRECIOS.funcionesDe(M._plan);
+    if (f) M.incluye = f; else delete M.incluye;
+    $('#cobro').textContent = textoCobro(); $('#incluye-plan').textContent = textoIncluye();
+    $('#campo-mascota').hidden = !(f && f.mascota);
+  }
+  /* límite de platos en 3D del plan (las bebidas no cuentan); 0 = sin límite */
+  function limite3d() { return (M.incluye && M.incluye.platos3d) || 0; }
+  function esBebida(idCat) { return window.PRECIOS.esBebida(M.categorias.filter(function (c) { return c.id === idCat; })[0]); }
+  function usados3d() { return M.platos.filter(function (p) { return p.modelo && !esBebida(p.categoria); }).length; }
   function cajaPlan() {
     var P = window.PRECIOS || { planes: [], formas: {} };
     return '<div class="caja" style="display:grid;gap:12px"><div><b>Plan que contrató</b><small style="display:block;color:var(--suave);font-weight:400">Solo lo ves vos: no aparece en su menú ni en su panel.</small></div>' +
@@ -463,7 +480,9 @@
       P.planes.map(function (p) { return '<option value="' + p.id + '"' + (M._plan === p.id ? ' selected' : '') + '>' + esc(p.nombre) + ' (' + pesos(p.mes) + ' por mes)</option>'; }).join('') + '</select></label>' +
       '<label>Forma de pago<select name="_pago">' + Object.keys(P.formas).map(function (k) { return '<option value="' + k + '"' + ((M._pago || 'anual') === k ? ' selected' : '') + '>' + esc(P.formas[k].nombre) + '</option>'; }).join('') + '</select></label>' +
       '<label>Fecha del pago<small>Desde ahí se cuenta cuándo vence</small><input type="date" name="_desde" value="' + esc(M._desde || hoyISO()) + '"></label>' +
-      '<p id="cobro" style="font-weight:700;color:var(--ok)">' + esc(textoCobro()) + '</p></div>';
+      '<label id="campo-mascota"' + (M.incluye && M.incluye.mascota ? '' : ' hidden') + '>Nombre de la mascota<small>Opcional. Después se pueden ajustar sus frases</small><input type="text" name="_mascota" maxlength="30" value="' + esc(M._mascota) + '"></label>' +
+      '<p id="cobro" style="font-weight:700;color:var(--ok)">' + esc(textoCobro()) + '</p>' +
+      '<p id="incluye-plan" style="font-size:.85rem;color:var(--suave)">' + esc(textoIncluye()) + '</p></div>';
   }
 
   /* ---------- vista: datos e identidad ---------- */
@@ -515,7 +534,7 @@
       var t = e.target, n = t.name;
       if (t.type === 'file' || t.hasAttribute('data-cat-nueva')) return;
       if (t.closest('#semana') || n === 'horarioNota') { leerSemana(); guardar(); return; }
-      if (n === '_plan' || n === '_pago' || n === '_desde') { M[n] = t.value; $('#cobro').textContent = textoCobro(); guardar(); return; }
+      if (n === '_plan' || n === '_pago' || n === '_desde' || n === '_mascota') { M[n] = t.value; elegirPlan(); guardar(); return; }
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
@@ -565,6 +584,7 @@
     F.categoria.value = p ? p.categoria : catNueva; F.descripcion.value = p ? p.descripcion : '';
     var tr = p && M.en && M.en.platos && M.en.platos[p.id] || {}; F.nombre_en.value = tr.nombre || ''; F.descripcion_en.value = tr.descripcion || '';
     F.querySelector('details.ingles').open = !!(tr.nombre || tr.descripcion);
+    F.querySelector('details.ingles').hidden = !!(M.incluye && M.incluye.ingles === false); /* el plan no incluye inglés */
     F.emoji.value = p ? p.emoji || '' : '🍽';
     [].forEach.call(F.querySelectorAll('[name=et]'), function (x) { x.checked = !!p && (p.etiquetas || []).indexOf(x.value) >= 0; });
     F.foto.value = ''; F.fotos3d.value = ''; estadoArchivo(F.foto); estadoArchivo(F.fotos3d); previaFoto(p && p.foto); previa3d(); estado3d();
@@ -582,7 +602,7 @@
     var m = modeloActual();
     $('#estado3d').innerHTML = m
       ? '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:var(--ok);font-weight:700">✓ Este plato tiene 3D</span><button type="button" class="b" id="ver3d">Ver</button><button type="button" class="b mal" id="quitar3d">Quitar 3D</button></div>'
-      : '<span style="color:var(--suave)">Todavía no tiene 3D. Subí fotos y tocá <b>Crear 3D</b>.</span>';
+      : '<span style="color:var(--suave)">Todavía no tiene 3D. Subí fotos y tocá <b>Crear 3D</b>.' + (limite3d() && !esBebida(F.categoria.value) ? ' Usaste ' + usados3d() + ' de ' + limite3d() + ' platos en 3D de tu plan.' : '') + '</span>';
     var v = $('#ver3d'); if (v) v.onclick = function () { abrir3d('Así se ve en 3D', function (cont) { cont.innerHTML = '<div class="gen-previa"></div><p style="color:var(--suave);font-size:.85rem;margin-top:8px">Arrastrá para girarlo.</p>'; return Generador3D.vistaPrevia(cont.firstChild, m, link()); }); };
     var qq = $('#quitar3d'); if (qq) qq.onclick = function () { modeloNuevo = null; estado3d(); };
   }
@@ -608,6 +628,11 @@
   function cerrar3d() { if (cerrarGen) cerrarGen(); cerrarGen = null; $('#gen3d').innerHTML = ''; $('#dlg3d').close(); }
   $('#cerrar3d').onclick = cerrar3d;
   $('#crear3d').onclick = function () {
+    var lim = limite3d();
+    if (lim && !modeloActual() && !esBebida(F.categoria.value) && usados3d() >= lim) {
+      preguntar('Llegaste al límite de tu plan', 'Tu plan incluye hasta ' + lim + ' platos en 3D, sin contar bebidas. Para sumar más, podés quitarle el 3D a otro plato o escribirnos para cambiar de plan.', [{ texto: 'Entendido', valor: 'ok', p: true }]);
+      return;
+    }
     var fotos = fotos3d.length ? fotos3d : (fotoActual() ? [img(fotoActual())] : []);
     if (!fotos.length) { toast('Subí al menos una foto del plato'); return; }
     abrir3d('Crear 3D', function (cont) {
@@ -705,8 +730,10 @@
   /* menú listo para publicar: sin campos internos y con las fotos nuevas pasadas a archivos */
   function empaquetar() {
     var m = JSON.parse(JSON.stringify(M)), archivos = [], t = Date.now().toString(36);
-    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m.base; delete m._plan; delete m._pago; delete m._desde;
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m.base; delete m._plan; delete m._pago; delete m._desde; delete m._mascota;
     function archivo(d, ruta) { archivos.push({ ruta: ruta, dataUrl: d }); return ruta.split('/').slice(1).join('/'); }
+    /* el plan incluye mascota: el local nuevo arranca con una lista para usar */
+    if (nuevo && m.incluye && m.incluye.mascota && !m.mascota) m.mascota = window.PRECIOS.mascotaBase(M._mascota);
     var dir = (M._carpeta || carpeta) + '/';
     if (/^data:/.test(m.logo || '')) m.logo = archivo(m.logo, dir + 'img/logo-' + t + '.jpg');
     m.platos.forEach(function (p) {
@@ -829,7 +856,7 @@
   };
   $('#bajar').onclick = function () {
     var a = document.createElement('a'), m = JSON.parse(JSON.stringify(M));
-    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m._plan; delete m._pago; delete m._desde;
+    delete m._carpeta; delete m._estado; delete m._carpetaTocada; delete m._plan; delete m._pago; delete m._desde; delete m._mascota;
     a.href = URL.createObjectURL(new Blob([JSON.stringify(m, null, 2)], { type: 'application/json' }));
     a.download = 'menu.json'; a.click();
   };
@@ -851,6 +878,8 @@
       var d = null; try { d = b && JSON.parse(b); } catch (e) {}
       if (d && !d.menu) d = { desde: '', menu: d }; /* borrador del formato anterior */
       M = d ? d.menu : m;
+      /* lo que incluye el plan siempre es lo publicado, aunque haya un borrador viejo */
+      if (d && !nuevo) { if (m.incluye) M.incluye = m.incluye; else delete M.incluye; }
       if (d && d.desde) desde = d.desde;
       marcarTab(); cabecera(); guardar(); mostrar();
       if (q.has('publicado')) toast('¡Local creado! En 1 o 2 minutos su link ya funciona.');

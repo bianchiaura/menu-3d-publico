@@ -69,6 +69,7 @@ Si es una demo con la marca de un local real, dejar activada la franja "Prototip
 - **Usuarios de cada local** (en su tarjeta del administrador): se ve el mail del usuario y cuándo entró por última vez. **🔑 Nueva contraseña** le pone otra y arma el mensaje de WhatsApp; **Borrar** le quita el acceso (dos toques). **Eliminar** un local borra también su usuario.
 - **Precios en grupo**: en Platos, "💲 Cambiar precios en grupo": se eligen platos (o todos) y suben en pesos, en % o las dos cosas (primero el %, redondeado a $10). Queda como borrador hasta publicar.
 - **Mensajes a cada local** (administrador): "📨 Para enviar hoy" junta los avisos de pago (7 días antes o vencidos) y el resumen cada 4 semanas. Abren el WhatsApp del local con el texto escrito. Los datos de cobro van en `PRECIOS.cobro`, en `motor/planes.js`.
+- **Lo que incluye cada plan**: al crear un local o cambiar su plan, el `menu.json` guarda `incluye` (platos en 3D, inglés, mascota, estadísticas, resumen). El menú, el panel y el administrador se ajustan solos. Los planes se definen en `motor/planes.js`; un local sin `incluye` (como la demo) tiene todo.
 - **Bienvenida**: la primera vez que un local entra a su panel ve un mensaje corto de qué puede hacer. Sale una sola vez por usuario (queda anotado en su cuenta).
 - **Versiones** (volver a un menú publicado antes) y la **lista de locales** son solo del administrador.
 - **Editor de plato**: "+ Agregar plato" y "Editar" abren una pantalla completa con **← Volver**; el botón "atrás" del celular vuelve a la lista.

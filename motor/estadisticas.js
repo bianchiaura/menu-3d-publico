@@ -80,7 +80,7 @@ window.Estadisticas = (function () {
   function local(cont, carpeta, M, deEjemplo) {
     cont.innerHTML = '<p style="margin-top:20px;color:var(--suave)">Cargando estadísticas…</p>';
     (deEjemplo ? Promise.resolve(ejemplo(M)) : datos(carpeta)).then(function (x) {
-      var filas = x[0], r = sumar(filas), a = sumarAperturas(x[1]);
+      var filas = x[0], r = sumar(filas), a = sumarAperturas(x[1]), basicas = !!(M && M.incluye && M.incluye.estadisticas === 'basicas');
       var dias = Object.keys(r.porDia), max = Math.max.apply(null, dias.map(function (d) { return r.porDia[d]; }).concat([1]));
       var platos = platosVistos(r, M).slice(0, 10), maxP = platos.length ? platos[0].d3 + platos[0].ar : 1;
       var h = '<div class="kpis">' + [[r.menu7, 'veces que abrieron el menú (7 días)'], [r.menu, 'veces que abrieron el menú (30 días)'], [r.d3, 'platos vistos en 3D (30 días)'], [r.ar, 'platos vistos sobre la mesa con AR (30 días)']]
@@ -92,7 +92,7 @@ window.Estadisticas = (function () {
           '</div><div class="est-eje"><span>' + corta(dias[0]) + '</span><span>Máximo: ' + num(max) + ' en un día</span><span>Hoy</span></div></div>';
 
         /* horas pico: de 6 de la mañana a 5 de la madrugada, para que la noche quede junta */
-        if (a.total) {
+        if (a.total && !basicas) {
           var orden = [], maxH = Math.max.apply(null, a.porHora.concat([1]));
           for (var i = 6; i < 30; i++) orden.push(i % 24);
           h += '<div class="caja est-caja"><h3>Horas pico</h3><p class="est-dato">La hora con más visitas: <b>' + horaPico(a) + '</b></p>' +
@@ -113,10 +113,11 @@ window.Estadisticas = (function () {
 
         /* platos con 3D que nadie miró: puede que la foto no llame la atención o que estén muy abajo */
         var nadie = sinMirar(r, M);
-        if (nadie.length && r.d3 + r.ar > 0) h += '<div class="caja est-caja"><h3>Platos con 3D que nadie miró</h3>' +
+        if (!basicas && nadie.length && r.d3 + r.ar > 0) h += '<div class="caja est-caja"><h3>Platos con 3D que nadie miró</h3>' +
           '<p class="est-dato">' + nadie.map(function (p) { return esc(p.nombre); }).join(' · ') + '</p>' +
           '<p style="color:var(--suave);font-size:.82rem;margin-top:6px">Puede que su foto no llame la atención o que estén muy abajo en el menú.</p></div>';
       }
+      if (basicas && filas.length) h += '<p class="caja" style="margin-top:16px;color:var(--suave);font-size:.9rem">Con el plan Completo también ves las horas pico, los turistas y los platos que nadie miró.</p>';
       h += '<p style="color:var(--suave);font-size:.8rem;margin-top:12px">' + (deEjemplo ? 'Datos de ejemplo. En tu panel vas a ver los de tu local.' : 'Últimos 30 días. No se guarda ningún dato de quién mira el menú.') + '</p>';
       cont.innerHTML = h;
     }).catch(function (e) {
