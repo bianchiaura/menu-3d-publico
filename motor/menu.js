@@ -20,6 +20,7 @@
       info: 'Información del local: horarios, dirección y contacto', sobre: 'Sobre nosotros', donde: 'Dónde estamos', llegar: 'Cómo llegar',
       horarios: 'Horarios', hoy: 'hoy', hoyPie: 'Hoy', contacto: 'Contacto', telefono: 'Teléfono', mail: 'Mail', reservas: 'Reservas',
       pagos: 'Medios de pago', servicios: 'Servicios', cerrar: 'Cerrar', muestra: 'Restaurante y datos de muestra, inventados para la demostración.',
+      promos: 'Promos', promociones: 'Promociones', promoUna: 'Hoy hay 1 promoción', promoVarias: 'Hoy hay {x} promociones', verPromos: 'Ver', sinPromos: 'En este momento no hay promociones.',
       verFicha: 'Horarios, contacto y más', creditos: 'Créditos de las fotos', horario: 'Horario', otroIdioma: 'EN', otroIdiomaNombre: 'English',
       error: 'No se pudo cargar el menú. Revisá tu conexión y volvé a abrir la página.'
     },
@@ -31,6 +32,7 @@
       info: 'Restaurant info: hours, address and contact', sobre: 'About us', donde: 'Where we are', llegar: 'Directions',
       horarios: 'Opening hours', hoy: 'today', hoyPie: 'Today', contacto: 'Contact', telefono: 'Phone', mail: 'Email', reservas: 'Reservations',
       pagos: 'Payment methods', servicios: 'Amenities', cerrar: 'Close', muestra: 'Sample restaurant and data, made up for this demo.',
+      promos: 'Offers', promociones: 'Special offers', promoUna: '1 special offer today', promoVarias: '{x} special offers today', verPromos: 'View', sinPromos: 'No special offers right now.',
       verFicha: 'Hours, contact and more', creditos: 'Photo credits', horario: 'Hours', otroIdioma: 'ES', otroIdiomaNombre: 'Español',
       error: "We couldn't load the menu. Check your connection and open the page again."
     }
@@ -165,7 +167,10 @@
       [].forEach.call(document.querySelectorAll('.fil'), function (x) { x.setAttribute('aria-pressed', x.dataset.fil === filtro); });
       list();
     };
-    $('#list').onclick = function (ev) { var b = ev.target.closest('[data-3d]'); if (b && window.open3D) window.open3D(b.dataset['3d']); };
+    $('#list').onclick = function (ev) {
+      if (ev.target.closest('[data-ver-promos]')) { setCat(PROMOS); return; }
+      var b = ev.target.closest('[data-3d]'); if (b && window.open3D) window.open3D(b.dataset['3d']);
+    };
   }
   /* dibuja (o vuelve a dibujar, al cambiar de idioma) todo el menú */
   function pintar() {
@@ -177,9 +182,60 @@
     return M.categorias.filter(function (c) { return visibles().some(function (d) { return d.categoria === c.id; }); });
   }
   function tabs() {
-    $('#tabs').innerHTML = categorias().map(function (c) {
+    $('#tabs').innerHTML = (promos().length ? '<button class="tab promo" role="tab" aria-selected="' + (cat === PROMOS) + '" data-cat="' + PROMOS + '">🏷 ' + t('promos') + '</button>' : '') + categorias().map(function (c) {
       return '<button class="tab" role="tab" aria-selected="' + (c.id === cat) + '" data-cat="' + esc(c.id) + '">' + esc(nombreCat(c)) + '</button>';
     }).join('');
+  }
+
+  /* ---------- promociones ----------
+     "promociones": [{ id, titulo, descripcion, precio, precioAntes, etiqueta, dias: [0..6], horaDesde, horaHasta, desde, hasta, platos: [ids], foto, oculta, vigencia }].
+     Se muestran solo el día que valen. Las que tienen horario aparecen desde temprano, con su horario a la vista, y se van cuando termina.
+     Un horario que cruza la medianoche (20 a 1 h) sigue siendo del día en que empezó. */
+  var PROMOS = '__promos';
+  function minutos(h) { var p = /^(\d{1,2}):(\d{2})$/.exec(h || ''); return p ? +p[1] * 60 + +p[2] : null; }
+  function isoDe(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function promoVale(p, ahora) {
+    if (p.oculta) return false;
+    var a = minutos(p.horaDesde), b = minutos(p.horaHasta), min = ahora.getHours() * 60 + ahora.getMinutes(), dia = ahora;
+    var cruza = a != null && b != null && b <= a;
+    if (cruza && min < b) dia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 1); /* madrugada: sigue el turno de ayer */
+    else if (!cruza && b != null && min >= b) return false; /* ya terminó por hoy */
+    var f = isoDe(dia), dias = p.dias || [];
+    if ((p.desde && f < p.desde) || (p.hasta && f > p.hasta)) return false;
+    return !dias.length || dias.indexOf(dia.getDay()) >= 0;
+  }
+  function promos() { var ahora = new Date(); return (M.promociones || []).filter(function (p) { return promoVale(p, ahora); }); }
+  function textoPromo(p) {
+    var e = en(), x = (e && e.promociones && e.promociones[p.id]) || {};
+    return { titulo: x.titulo || p.titulo, descripcion: x.descripcion || p.descripcion, vigencia: x.vigencia || p.vigencia };
+  }
+  function platosDe(p) {
+    return (p.platos || []).map(function (id) { return visibles().filter(function (d) { return d.id === id; })[0]; }).filter(Boolean);
+  }
+  function tarjetaPromo(p) {
+    var x = textoPromo(p), ps = platosDe(p), sinStock = ps.some(function (d) { return d.agotado; });
+    var conFoto = ps.filter(function (d) { return d.foto; })[0], foto = p.foto || (conFoto && conFoto.foto);
+    var con3d = ps.filter(function (d) { return d.modelo; });
+    return '<article class="card' + (sinStock ? ' agotado' : '') + '"><div class="ph">' +
+      (foto ? '<img src="' + esc(url(foto)) + '" alt="' + esc(x.titulo) + '" loading="lazy">' : '<span aria-hidden="true">🏷</span>') +
+      (p.etiqueta ? '<span class="promo-sello">' + esc(p.etiqueta) + '</span>' : '') +
+      (sinStock ? '<span class="sin">' + t('sinStock') + '</span>' : '') +
+      '</div><div class="bd"><h3>' + esc(x.titulo) + '</h3>' + (x.descripcion ? '<p>' + esc(x.descripcion) + '</p>' : '') +
+      (x.vigencia ? '<p class="promo-vig">🕒 ' + esc(x.vigencia) + '</p>' : '') +
+      (p.precio ? '<div class="ft"><span><b>' + precio(p.precio) + '</b>' + (p.precioAntes ? '<s class="antes">' + precio(p.precioAntes) + '</s>' : '') + '</span></div>' : '') +
+      (con3d.length ? '<div class="promo-3d">' + con3d.map(function (d) {
+        var n = textoPlato(d).nombre;
+        return '<button class="btn-sec" data-3d="' + esc(d.id) + '">' + esc(t('ver3dDe', n)) + '</button>';
+      }).join('') + '</div>' : '') + '</div></article>';
+  }
+  function listaPromos() {
+    var l = promos();
+    $('#list').innerHTML = '<h2>' + t('promociones') + '</h2>' + (l.length ? l.map(tarjetaPromo).join('') : '<p class="aviso">' + t('sinPromos') + '</p>');
+  }
+  function avisoPromos() {
+    var n = promos().length, primera = categorias()[0];
+    if (!n || !primera || primera.id !== cat) return '';
+    return '<button class="promo-aviso" data-ver-promos><span>🏷 ' + esc(n === 1 ? t('promoUna') : t('promoVarias', n)) + '</span><span aria-hidden="true">' + t('verPromos') + ' →</span></button>';
   }
   function setCat(c) { cat = c; tabs(); list(); scrollTo({ top: 0, behavior: 'smooth' }); }
 
@@ -188,10 +244,12 @@
     return '<span class="tag ' + clase + '">' + esc(nombre) + '</span>';
   }
   function list() {
+    var fl = $('#filtros'); if (fl) fl.style.display = cat === PROMOS ? 'none' : ''; /* los filtros son de los platos */
+    if (cat === PROMOS) { listaPromos(); return; }
     var C = M.categorias.filter(function (c) { return c.id === cat; })[0];
     if (!C) { $('#list').innerHTML = '<p class="aviso">' + t('sinPlatos') + '</p>'; return; }
     var ps = visibles().filter(function (d) { return d.categoria === cat && (!filtro || (d.etiquetas || []).indexOf(filtro) >= 0); });
-    $('#list').innerHTML = '<h2>' + esc(nombreCat(C)) + '</h2>' + (ps.length ? '' : '<p class="aviso">' + esc(t('ningunoFiltro', t('etiquetas')[filtro])) + '</p>') + ps.map(function (d) {
+    $('#list').innerHTML = avisoPromos() + '<h2>' + esc(nombreCat(C)) + '</h2>' + (ps.length ? '' : '<p class="aviso">' + esc(t('ningunoFiltro', t('etiquetas')[filtro])) + '</p>') + ps.map(function (d) {
       var x = textoPlato(d);
       return '<article class="card' + (d.agotado ? ' agotado' : '') + '" id="plato-' + esc(d.id) + '"><div class="ph"' + (C.fondo ? ' style="background:' + esc(C.fondo) + '"' : '') + '>' +
         (d.foto ? '<img src="' + esc(url(d.foto)) + '" alt="' + esc(x.nombre) + '" loading="lazy">' : '<span aria-hidden="true">' + esc(d.emoji || '🍽') + '</span>') +
@@ -216,7 +274,7 @@
     idioma = m.en ? (guardado || (/^es\b/i.test(navigator.language || 'es') ? 'es' : 'en')) : 'es';
     window.idiomaMenu = idioma;
     colores(m.colores); tipografia(m.tipografia);
-    cat = categorias()[0] && categorias()[0].id;
+    cat = categorias()[0] ? categorias()[0].id : (promos().length ? PROMOS : undefined);
     pintar();
     document.addEventListener('click', function (ev) {
       var f = $('#ficha');

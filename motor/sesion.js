@@ -6,6 +6,7 @@
    - Sesion.estadisticas(carpeta, dias) → resumen de vistas por día, tipo y plato
    - Sesion.cuenta()            → ventana con el mail, cambiar contraseña y cerrar sesión
    - Sesion.bienvenidaVista()   → anota que el local ya vio la bienvenida del panel
+   - Sesion.pagos()             → pagos registrados de todos los locales (solo el administrador)
    La URL y la clave publicable son públicas: se pueden ver sin riesgo. */
 window.Sesion = (function () {
   'use strict';
@@ -157,6 +158,13 @@ window.Sesion = (function () {
       var o = {}; (r.data || []).forEach(function (p) { o[p.carpeta] = p; }); return o;
     });
   }
+  /* pagos registrados, del más nuevo al más viejo (tabla "pagos": solo el administrador la ve) */
+  function pagos() {
+    return sb.from('pagos').select('*').order('id', { ascending: false }).limit(1000).then(function (r) {
+      if (r.error) throw new Error(r.error.message);
+      return r.data || [];
+    });
+  }
   function guardarPlan(carpeta, p) {
     return sb.from('planes').upsert({ carpeta: carpeta, plan: p.plan, pago: p.pago, desde: p.desde, actualizado: new Date().toISOString() })
       .then(function (r) { if (r.error) throw new Error(r.error.message); });
@@ -183,5 +191,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, guardarPlan: guardarPlan, borrarPlan: borrarPlan, marcarEnviado: marcarEnviado };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, pagos: pagos, guardarPlan: guardarPlan, borrarPlan: borrarPlan, marcarEnviado: marcarEnviado };
 })();

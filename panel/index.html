@@ -24,8 +24,10 @@
   <p class="aviso-demo" id="aviso"></p>
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-vista="platos">Platos</button>
+    <button role="tab" aria-selected="false" data-vista="promos">Promociones</button>
     <button role="tab" aria-selected="false" data-vista="datos">Datos e identidad</button>
     <button role="tab" aria-selected="false" data-vista="estadisticas" id="tab-est" hidden>Estadísticas</button>
+    <button role="tab" aria-selected="false" data-vista="plan" id="tab-plan" hidden>Mi plan</button>
   </div>
   <div id="vista"></div>
 </div>
@@ -80,6 +82,36 @@
     </div>
   </div>
   <div class="pie"><button type="button" class="b mal" id="borrar">Borrar plato</button><button class="b p" value="ok">Guardar plato</button></div>
+</form></dialog>
+
+<dialog id="dlg-promo" class="pantalla"><form method="dialog" id="fpromo">
+  <div class="cab"><button type="button" class="b" data-cerrar-promo>← Volver</button><h2 id="promo-t" style="font-size:1.15rem">Editar promoción</h2></div>
+  <div class="cuerpo form">
+    <label>Título<small>Ej. Menú del mediodía o 2x1 en cerveza</small><input type="text" name="titulo" required maxlength="60"></label>
+    <label>Descripción<small>Qué incluye y sus condiciones</small><textarea name="descripcion" maxlength="300"></textarea></label>
+    <div class="fila2">
+      <label>Precio de la promo<small>Vacío si no tiene precio fijo</small><input type="number" name="precio" min="0" step="50" inputmode="numeric"></label>
+      <label>Precio normal<small>Opcional. Se ve tachado</small><input type="number" name="precioAntes" min="0" step="50" inputmode="numeric"></label>
+    </div>
+    <label>Etiqueta<small>Opcional y corta, ej. 2x1 o 20% OFF</small><input type="text" name="etiqueta" maxlength="16"></label>
+    <div><b style="font-size:.88rem">Días</b><small style="display:block;color:var(--suave);font-size:.8rem">Sin marcar ninguno, vale todos los días</small><div class="checks" id="promo-dias" style="margin-top:6px"></div></div>
+    <div class="fila2">
+      <label>Desde la hora<small>Opcional</small><input type="time" name="horaDesde" step="900"></label>
+      <label>Hasta la hora<small>Opcional</small><input type="time" name="horaHasta" step="900"></label>
+    </div>
+    <div class="fila2">
+      <label>Empieza el<small>Opcional</small><input type="date" name="desde"></label>
+      <label>Termina el<small>Opcional</small><input type="date" name="hasta"></label>
+    </div>
+    <div><b style="font-size:.88rem">Platos de la promo</b><small style="display:block;color:var(--suave);font-size:.8rem">Opcional. Desde la promo se pueden ver en 3D</small><div class="checks" id="promo-platos" style="margin-top:6px"></div></div>
+    <label>Foto<small>Si no subís una, se usa la del primer plato elegido</small><input type="file" name="foto" accept="image/*"></label>
+    <div id="promo-foto"></div>
+    <details class="ingles"><summary>Inglés (opcional, para turistas)</summary>
+      <label>Título en inglés<input type="text" name="titulo_en" maxlength="60"></label>
+      <label>Descripción en inglés<textarea name="descripcion_en" maxlength="300"></textarea></label>
+    </details>
+  </div>
+  <div class="pie"><button type="button" class="b mal" id="borrar-promo">Borrar promoción</button><button class="b p" value="ok">Guardar promoción</button></div>
 </form></dialog>
 
 <dialog id="dlg3d">
@@ -197,6 +229,7 @@
     $('#versiones').hidden = !admin || nuevo; /* volver a versiones viejas: solo el administrador */
     $('#cuenta').hidden = !sesion;
     $('#tab-est').hidden = !sesion || nuevo;
+    $('#tab-plan').hidden = !(sesion || demo) || nuevo;
     if (demo) {
       $('#publicar').hidden = false; $('#bajar').hidden = true; $('#tab-est').hidden = false;
       var v = $('#volver'); v.hidden = false; v.href = '../precios/'; v.textContent = '← Planes y precios';
@@ -569,6 +602,8 @@
 
   function mostrar() {
     if (vista === 'platos') vistaPlatos();
+    else if (vista === 'promos') vistaPromos();
+    else if (vista === 'plan') vistaPlan();
     else if (vista === 'estadisticas') Estadisticas.local($('#vista'), carpeta, M, demo);
     else vistaDatos();
   }
@@ -595,7 +630,7 @@
   /* al cerrar el editor (Volver, Guardar o Borrar) se saca esa entrada del historial; con "atrás" se cierra el editor */
   if (history.state && history.state.plato) history.replaceState(null, ''); /* se recargó la página con el editor abierto */
   $('#dlg').addEventListener('close', function () { if (history.state && history.state.plato) history.back(); });
-  addEventListener('popstate', function () { if ($('#dlg').open) $('#dlg').close(); });
+  addEventListener('popstate', function () { if ($('#dlg').open) $('#dlg').close(); if ($('#dlg-promo').open) $('#dlg-promo').close(); });
   function modeloActual() { return modeloNuevo !== undefined ? modeloNuevo : editando && editando.modelo; }
   function fotoActual() { return fotoNueva !== undefined ? fotoNueva : editando && editando.foto; }
   function estado3d() {
@@ -658,10 +693,184 @@
     confirmar(this, '¿Seguro? Tocá de nuevo', function () {
       M.platos = M.platos.filter(function (p) { return p !== editando; });
       if (M.en && M.en.platos) delete M.en.platos[editando.id];
+      quitarDePromos([editando.id]);
       $('#dlg').close(); guardar(); mostrar(); toast('Plato borrado');
     });
   };
   [].forEach.call(document.querySelectorAll('[data-cerrar]'), function (b) { b.onclick = function () { $('#dlg').close(); }; });
+
+  /* ---------- promociones ----------
+     Van en M.promociones: { id, titulo, descripcion, precio, precioAntes, etiqueta, dias: [0..6], horaDesde, horaHasta, desde, hasta, platos: [ids], foto, oculta, vigencia }.
+     "vigencia" es el texto que muestra el menú ("Lunes a viernes de 12 a 15 h"), y se arma acá al guardar, igual que los horarios del local.
+     El inglés va en M.en.promociones[id]: { titulo, descripcion, vigencia }. El menú solo muestra las que valen en ese momento. */
+  var P = $('#fpromo'), promoEd = null, fotoPromo;
+  function promos() { return M.promociones || []; }
+  function promoDe(el) { var f = el.closest('[data-promo-id]'); return f && promos().filter(function (p) { return String(p.id) === f.dataset.promoId; })[0]; }
+  function quitarDePromos(ids) {
+    promos().forEach(function (p) { if (p.platos) p.platos = p.platos.filter(function (x) { return ids.indexOf(x) < 0; }); });
+  }
+  function fechaPromo(iso, en) { var d = String(iso).split('-'); return new Date(+d[0], +d[1] - 1, +d[2]).toLocaleDateString(en ? 'en-US' : 'es-AR', { day: 'numeric', month: 'long' }); }
+  function textoDias(l, en) {
+    var N = en ? DAYS : DIAS, d = ORDEN.filter(function (n) { return l.indexOf(n) >= 0; });
+    if (!d.length || d.length === 7) return en ? 'Every day' : 'Todos los días';
+    var seguidos = d.every(function (n, i) { return !i || ORDEN.indexOf(n) === ORDEN.indexOf(d[i - 1]) + 1; });
+    if (seguidos || d.length < 3) return nombreGrupo(d, en);
+    var bajos = d.map(function (n, i) { return !i || en ? N[n] : N[n].toLowerCase(); }), ult = bajos.pop();
+    return bajos.join(', ') + (en ? ' and ' : ' y ') + ult;
+  }
+  function textoHoras(p, en) {
+    var a = p.horaDesde, b = p.horaHasta;
+    if (a && b) return en ? a + '–' + b : 'de ' + horaTexto(a) + ' a ' + horaTexto(b) + ' h';
+    if (a) return en ? 'from ' + a : 'desde las ' + horaTexto(a) + ' h';
+    return b ? (en ? 'until ' + b : 'hasta las ' + horaTexto(b) + ' h') : '';
+  }
+  function armarVigencia(p, en) {
+    var hasta = p.hasta ? (en ? 'Until ' : 'Hasta el ') + fechaPromo(p.hasta, en) : '';
+    return [(textoDias(p.dias || [], en) + ' ' + textoHoras(p, en)).trim(), hasta].filter(Boolean).join(' · ');
+  }
+  function estadoPromo(p) {
+    var h = hoyISO();
+    if (p.oculta) return ['', 'Oculta'];
+    if (p.hasta && h > p.hasta) return ['fin', 'Terminó'];
+    if (p.desde && h < p.desde) return ['demo', 'Empieza el ' + fechaPromo(p.desde)];
+    return ['activo', 'Activa'];
+  }
+  function miniPromo(p) {
+    var pl = M.platos.filter(function (x) { return (p.platos || []).indexOf(x.id) >= 0 && x.foto; })[0], f = p.foto || (pl && pl.foto);
+    return f ? '<img src="' + esc(img(f)) + '" alt="">' : '🏷';
+  }
+  function vistaPromos() {
+    var l = promos();
+    $('#vista').innerHTML = '<div class="promo-intro"><p>Se ven en tu menú, en la pestaña Promos, solo los días y horarios que elijas.</p><button class="b p" data-promo-nueva>+ Nueva promoción</button></div>' +
+      (l.length ? '' : '<p style="margin-top:16px;color:var(--suave)">Todavía no tenés promociones.</p>') +
+      '<div class="lista-promos">' + l.map(function (p, n) {
+        var e = estadoPromo(p);
+        return '<div class="fila' + (p.oculta ? ' off' : '') + '" data-promo-id="' + esc(p.id) + '"><div class="mini">' + miniPromo(p) + '</div>' +
+          '<div><div class="n">' + esc(p.titulo) + '</div><div class="s"><span class="chip ' + e[0] + '">' + esc(e[1]) + '</span>' +
+          (p.precio ? '<span>' + pesos(p.precio) + '</span>' : '') + '<span>' + esc(p.vigencia) + '</span></div></div>' +
+          '<div class="ctrl"><label class="sw"><input type="checkbox" data-promo-vis' + (p.oculta ? '' : ' checked') + '> Visible</label>' +
+          '<span class="orden"><button class="b" data-promo-mover="-1" aria-label="Subir ' + esc(p.titulo) + '"' + (n ? '' : ' disabled') + '>↑</button><button class="b" data-promo-mover="1" aria-label="Bajar ' + esc(p.titulo) + '"' + (n < l.length - 1 ? '' : ' disabled') + '>↓</button></span>' +
+          '<button class="b" data-promo-editar>Editar</button></div></div>';
+      }).join('') + '</div>';
+  }
+  function moverPromo(p, dir) {
+    var l = promos(), i = l.indexOf(p), j = i + dir; if (j < 0 || j >= l.length) return;
+    l[i] = l[j]; l[j] = p; guardar(); vistaPromos();
+  }
+  function fechasPromo() { P.hasta.setCustomValidity(P.desde.value && P.hasta.value && P.hasta.value < P.desde.value ? 'Tiene que terminar después de empezar.' : ''); }
+  function previaPromo() {
+    var f = fotoPromo !== undefined ? fotoPromo : promoEd && promoEd.foto;
+    $('#promo-foto').innerHTML = f ? '<div style="display:flex;gap:10px;align-items:center"><img src="' + esc(img(f)) + '" alt="" style="width:90px;height:64px;object-fit:cover;border-radius:10px"><button type="button" class="b" id="quitar-foto-promo">Quitar foto</button></div>' : '';
+    var b = $('#quitar-foto-promo'); if (b) b.onclick = function () { fotoPromo = ''; P.foto.value = ''; estadoArchivo(P.foto); previaPromo(); };
+  }
+  function abrirPromo(p) {
+    promoEd = p; fotoPromo = undefined;
+    $('#promo-t').textContent = p ? 'Editar promoción' : 'Nueva promoción';
+    ['titulo', 'descripcion', 'precio', 'precioAntes', 'etiqueta', 'horaDesde', 'horaHasta', 'desde', 'hasta'].forEach(function (k) { P[k].value = p && p[k] != null ? p[k] : ''; });
+    $('#promo-dias').innerHTML = ORDEN.map(function (n) { return '<label><input type="checkbox" name="pdia" value="' + n + '"' + (p && (p.dias || []).indexOf(n) >= 0 ? ' checked' : '') + '> ' + DIAS[n] + '</label>'; }).join('');
+    $('#promo-platos').innerHTML = M.platos.length ? M.platos.map(function (x) { return '<label><input type="checkbox" name="pplato" value="' + esc(x.id) + '"' + (p && (p.platos || []).indexOf(x.id) >= 0 ? ' checked' : '') + '> ' + esc(x.nombre) + '</label>'; }).join('') : '<span style="color:var(--suave);font-size:.85rem">Todavía no hay platos.</span>';
+    var tr = p && M.en && M.en.promociones && M.en.promociones[p.id] || {}; P.titulo_en.value = tr.titulo || ''; P.descripcion_en.value = tr.descripcion || '';
+    var det = P.querySelector('details.ingles'); det.open = !!(tr.titulo || tr.descripcion); det.hidden = !!(M.incluye && M.incluye.ingles === false);
+    P.foto.value = ''; estadoArchivo(P.foto); previaPromo(); fechasPromo();
+    $('#borrar-promo').hidden = !p;
+    $('#dlg-promo').showModal(); $('#dlg-promo').scrollTop = 0;
+    history.pushState({ plato: 1 }, '');
+  }
+  botonArchivo(P.foto, 'Elegir foto');
+  P.foto.onchange = function () { var f = P.foto.files[0]; if (f) achicar(f, 900).then(function (d) { fotoPromo = d; previaPromo(); }); };
+  P.desde.oninput = P.hasta.oninput = fechasPromo;
+  $('#dlg-promo').addEventListener('close', function () { if (history.state && history.state.plato) history.back(); });
+  document.querySelector('[data-cerrar-promo]').onclick = function () { $('#dlg-promo').close(); };
+  P.onsubmit = function () {
+    var p = promoEd, l = M.promociones || (M.promociones = []);
+    if (!p) { p = { id: l.reduce(function (a, x) { return Math.max(a, Number(x.id) || 0); }, 0) + 1 }; l.push(p); }
+    ['titulo', 'descripcion', 'etiqueta', 'horaDesde', 'horaHasta', 'desde', 'hasta'].forEach(function (k) { var v = P[k].value.trim(); if (v) p[k] = v; else delete p[k]; });
+    ['precio', 'precioAntes'].forEach(function (k) { var v = Number(P[k].value) || 0; if (v) p[k] = v; else delete p[k]; });
+    var marcados = function (n) { return [].filter.call(P.querySelectorAll('[name=' + n + ']'), function (x) { return x.checked; }); };
+    p.dias = marcados('pdia').map(function (x) { return Number(x.value); });
+    p.platos = marcados('pplato').map(function (x) { return M.platos.filter(function (y) { return String(y.id) === x.value; })[0].id; });
+    if (fotoPromo !== undefined) { if (fotoPromo) p.foto = fotoPromo; else delete p.foto; }
+    p.vigencia = armarVigencia(p);
+    /* el inglés va aparte; si el menú ya tiene inglés, la vigencia también se traduce */
+    var te = P.titulo_en.value.trim(), de = P.descripcion_en.value.trim();
+    if (te || de || M.en) { M.en = M.en || {}; M.en.promociones = M.en.promociones || {}; M.en.promociones[p.id] = { titulo: te, descripcion: de, vigencia: armarVigencia(p, true) }; }
+    guardar(); mostrar(); toast('Promoción guardada');
+  };
+  $('#borrar-promo').onclick = function () {
+    if (!promoEd) return;
+    confirmar(this, '¿Seguro? Tocá de nuevo', function () {
+      M.promociones = promos().filter(function (p) { return p !== promoEd; });
+      if (M.en && M.en.promociones) delete M.en.promociones[promoEd.id];
+      $('#dlg-promo').close(); guardar(); mostrar(); toast('Promoción borrada');
+    });
+  };
+
+  /* ---------- mi plan: vencimiento, cómo pagar y comprobante ----------
+     El comprobante va a la función "panel", que renueva el plan en el momento. El administrador lo revisa después. */
+  function fechaLarga(iso) { var d = String(iso).split('-'); return new Date(+d[0], +d[1] - 1, +d[2]).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  function diasHasta(iso) { var d = String(iso).split('-'); return Math.round((new Date(+d[0], +d[1] - 1, +d[2]) - new Date(new Date().toDateString())) / 864e5); }
+  function sumarDias(iso, n) { var d = String(iso).split('-'), x = new Date(+d[0], +d[1] - 1, +d[2] + n); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+  function vistaPlan() {
+    if (demo) { /* ejemplo: en el panel de prueba no hay plan real */
+      var v = sumarDias(hoyISO(), 10);
+      pintarPlan({ plan: { plan: 'completo', pago: 'mensual', vence: v, abre: sumarDias(v, -15) }, pagos: [{ fecha: sumarDias(hoyISO(), -20), monto: 75000, estado: 'ok' }] });
+      return;
+    }
+    $('#vista').innerHTML = '<p style="margin-top:20px;color:var(--suave)">Cargando tu plan…</p>';
+    Sesion.funcion('mi-plan', { carpeta: carpeta }).then(function (j) { if (vista === 'plan') pintarPlan(j); })
+      .catch(function (e) { if (vista === 'plan') $('#vista').innerHTML = '<p style="margin-top:20px">⚠ No se pudo leer tu plan: ' + esc(e.message) + '</p>'; });
+  }
+  function ayudaWhatsApp(texto) {
+    var w = window.PRECIOS.whatsapp;
+    return w ? '<a class="b" target="_blank" rel="noopener" href="https://wa.me/' + esc(w) + '?text=' + encodeURIComponent('Hola, soy de ' + (M.nombre || 'un local') + '. ' + texto) + '">Escribinos por WhatsApp</a>' : '';
+  }
+  function pintarPlan(j) {
+    var pl = j.plan, Pr = window.PRECIOS, plan = pl && Pr.planes.filter(function (x) { return x.id === pl.plan; })[0], forma = pl && Pr.formas[pl.pago];
+    if (!plan || !forma) { $('#vista').innerHTML = '<div class="mi-plan"><div class="caja"><p>Todavía no hay un plan cargado para tu local.</p><div>' + ayudaWhatsApp('Quería consultar por mi plan.') + '</div></div></div>'; return; }
+    var dias = diasHasta(pl.vence), monto = plan.mes * forma.cobra, c = Pr.cobro || {};
+    var estado = dias < 0 ? '<span class="vence-mal">⚠ Venció el ' + esc(fechaLarga(pl.vence)) + '</span>' : dias <= 7 ? '<span class="vence-pronto">Vence el ' + esc(fechaLarga(pl.vence)) + '</span>' : '<span class="al-dia">Al día hasta el ' + esc(fechaLarga(pl.vence)) + '</span>';
+    var fila = function (k, x) { return '<div><dt>' + k + '</dt><dd>' + x + '</dd></div>'; };
+    var pagar = [c.alias ? '<p>Alias: <span class="alias">' + esc(c.alias) + '</span>' + (c.titular ? '<br><small class="suave">A nombre de ' + esc(c.titular) + '</small>' : '') + '</p>' : '', c.link ? '<div><a class="b p" target="_blank" rel="noopener" href="' + esc(c.link) + '">Pagar con link</a></div>' : ''].join('');
+    var abierto = hoyISO() >= pl.abre;
+    var h = '<div class="mi-plan"><section class="caja"><h3>💳 Tu plan</h3><dl class="datos-local">' + fila('Plan', esc(plan.nombre)) + fila('Forma de pago', esc(forma.nombre)) + fila('Vencimiento', estado) + fila('Próximo pago', pesos(monto)) + '</dl></section>';
+    if (admin) h += '<section class="caja"><p class="suave">Los pagos de este local se registran desde el administrador, en Cobros.</p></section>';
+    else if (!abierto) h += '<section class="caja"><h3>🧾 Renovar</h3><p class="suave">Vas a poder subir tu comprobante desde el ' + esc(fechaLarga(pl.abre)) + '.</p></section>';
+    else h += '<section class="caja"><h3>🧾 Renovar</h3>' + (pagar || '<p class="suave">Pedinos los datos para pagar.</p><div>' + ayudaWhatsApp('Quería pagar mi plan.') + '</div>') +
+      '<p>Cuando pagues, subí el comprobante y tu plan se renueva en el momento.</p>' +
+      '<div><input type="file" id="comprobante" accept="image/*,application/pdf"></div>' +
+      '<div><button type="button" class="b p" id="enviar-comprobante" disabled>Enviar comprobante</button></div><p class="msg" role="status"></p>' +
+      '<small class="suave">Si el pago no se acredita, la renovación se anula.</small></section>';
+    if (j.pagos && j.pagos.length) h += '<section class="caja"><h3>Últimos pagos</h3><div class="lista">' + j.pagos.map(function (p) {
+      var e = p.estado === 'anulado' ? ['vence-mal', 'Anulado'] : p.estado === 'revisar' ? ['vence-pronto', 'En revisión'] : ['al-dia', 'Recibido'];
+      return '<div class="pendiente"><span>' + esc(fechaLarga(p.fecha)) + (p.monto ? ' · ' + pesos(p.monto) : '') + '</span><span class="' + e[0] + '">' + e[1] + '</span></div>';
+    }).join('') + '</div></section>';
+    $('#vista').innerHTML = h + '</div>';
+    var inp = $('#comprobante'), bot = $('#enviar-comprobante'); if (!inp) return;
+    botonArchivo(inp, 'Elegir comprobante');
+    inp.onchange = function () { bot.disabled = !inp.files[0]; };
+    bot.onclick = function () {
+      var msg = document.querySelector('.mi-plan .msg'), f = inp.files[0]; if (!f) return;
+      if (demo) { preguntar('Así se renueva', 'En tu panel, al enviar el comprobante el plan se renueva en el momento. En esta prueba no se envía nada.', [{ texto: 'Entendido', valor: 'ok', p: true }]); return; }
+      bot.disabled = true; msg.style.color = 'var(--suave)'; msg.textContent = 'Enviando…';
+      leerComprobante(f).then(function (d) {
+        return Sesion.funcion('registrar-pago', { carpeta: carpeta, monto: monto, comprobante: d });
+      }).then(function (r) {
+        toast('¡Listo! Tu plan quedó renovado hasta el ' + fechaLarga(r.vence));
+        if (vista === 'plan') vistaPlan();
+      }).catch(function (e) { bot.disabled = false; msg.style.color = 'var(--mal)'; msg.textContent = '⚠ ' + e.message; });
+    };
+  }
+  /* las fotos se achican para que pesen poco; los PDF van como están */
+  function leerComprobante(f) {
+    if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) return achicar(f, 1800, .85).catch(function () { throw new Error('No se pudo leer ese archivo. Mandá una foto o un PDF.'); });
+    if (f.size > 5 * 1024 * 1024) return Promise.reject(new Error('El PDF pesa demasiado: el máximo es 5 MB.'));
+    return new Promise(function (ok, mal) {
+      var r = new FileReader();
+      r.onload = function () { ok('data:application/pdf;base64,' + String(r.result).split(',')[1]); };
+      r.onerror = function () { mal(new Error('No se pudo leer ese archivo.')); };
+      r.readAsDataURL(f);
+    });
+  }
 
   /* ---------- eventos de la lista ---------- */
   $('#vista').addEventListener('click', function (e) {
@@ -671,6 +880,9 @@
       if (fg) { e.preventDefault(); elegidos[fg.dataset.id] = !elegidos[fg.dataset.id]; vistaPlatos(); }
       return;
     }
+    if (t.closest('[data-promo-nueva]')) { abrirPromo(null); return; }
+    if (t.closest('[data-promo-editar]')) { abrirPromo(promoDe(t)); return; }
+    if (t.closest('[data-promo-mover]')) { moverPromo(promoDe(t), +t.closest('[data-promo-mover]').dataset.promoMover); return; }
     if (t.closest('[data-grupo]')) modoGrupo(true);
     else if (t.closest('[data-nueva-cat]')) pedirCategoria(t.closest('[data-nueva-cat]'));
     else if (t.closest('[data-ok-cat]')) nuevaCategoria(t.closest('span').querySelector('[data-cat-nueva]').value);
@@ -699,6 +911,7 @@
     var c = M.categorias[n], suyos = M.platos.filter(function (p) { return p.categoria === c.id; });
     var hacer = function () {
       M.categorias.splice(n, 1);
+      quitarDePromos(suyos.map(function (p) { return p.id; }));
       M.platos = M.platos.filter(function (p) { return p.categoria !== c.id; });
       guardar(); mostrar(); toast('Categoría "' + c.nombre + '" borrada');
     };
@@ -713,7 +926,9 @@
     if (e.key === 'Escape') { e.preventDefault(); mostrar(); }
   });
   $('#vista').addEventListener('change', function (e) {
-    var t = e.target, p = plato(t); if (!p) return;
+    var t = e.target;
+    if (t.hasAttribute('data-promo-vis')) { var pr = promoDe(t); if (t.checked) delete pr.oculta; else pr.oculta = true; guardar(); vistaPromos(); return; }
+    var p = plato(t); if (!p) return;
     if (t.hasAttribute('data-precio')) p.precio = Number(t.value) || 0;
     if (t.hasAttribute('data-hay')) { if (t.checked) delete p.agotado; else p.agotado = true; }
     if (t.hasAttribute('data-vis')) { if (t.checked) delete p.oculto; else p.oculto = true; }
@@ -741,6 +956,7 @@
       if (p.modelo && /^data:/.test(p.modelo.textura)) p.modelo.textura = archivo(p.modelo.textura, dir + 'modelos/' + p.id + '-' + t + '-textura.jpg');
       if (p.modelo && /^data:/.test(p.modelo.relieve)) p.modelo.relieve = archivo(p.modelo.relieve, dir + 'modelos/' + p.id + '-' + t + '-relieve.png');
     });
+    (m.promociones || []).forEach(function (p) { if (/^data:/.test(p.foto || '')) p.foto = archivo(p.foto, dir + 'img/promo-' + p.id + '-' + t + '.jpg'); });
     archivos.push({ ruta: dir + 'menu.json', texto: JSON.stringify(m, null, 2) + '\n' });
     return { menu: m, archivos: archivos };
   }

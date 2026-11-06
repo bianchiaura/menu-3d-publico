@@ -245,7 +245,7 @@
     if (c.alias) pago.push('Alias: ' + c.alias + (c.titular ? ' (a nombre de ' + c.titular + ')' : ''));
     return l1 + ' ' + estado + '\n\n💳 Para renovar (' + x.forma.toLowerCase() + '): ' + pesos(x.cobro) + '\n' +
       (pago.length ? pago.join('\n') : 'En breve te enviamos los datos para el pago.') +
-      '\n\nUna vez realizado el pago, envianos el comprobante por este medio. ¡Muchas gracias!';
+      '\n\nUna vez realizado el pago, subí el comprobante en tu panel, en "Mi plan", y se renueva en el momento:\n' + raiz + 'panel/?local=' + encodeURIComponent(l.carpeta) + '\n\n¡Muchas gracias!';
   }
   function enviarAvisoPago(l) {
     var x = PLANES && PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]);
@@ -305,18 +305,19 @@
   }
 
   /* ---------- locales ---------- */
-  var LOCS = [], EST = null, USUARIOS = null, PLANES = null; /* null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
+  var LOCS = [], EST = null, USUARIOS = null, PLANES = null, PAGOS = null; /* null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
   function cargarLocales() {
     /* estadísticas, usuarios y planes se piden en paralelo; si fallan, el panel igual funciona */
     var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
     var usu = Sesion.funcion('usuarios').then(function (j) { return j.usuarios || []; }, function (e) { console.error(e); return null; });
     var pla = Sesion.planes().catch(function (e) { console.error(e); return null; });
+    var pag = Sesion.pagos().catch(function (e) { console.error(e); return null; });
     json(raiz + 'locales.json').then(function (locs) {
       return Promise.all(locs.map(function (l) {
         return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
-      }).concat([est, usu, pla]));
+      }).concat([est, usu, pla, pag]));
     }).then(function (r) {
-      PLANES = r.pop(); USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
+      PAGOS = r.pop(); PLANES = r.pop(); USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
       pintar();
     }).catch(function (e) {
       console.error(e);
@@ -336,14 +337,14 @@
     var dias = Math.ceil((vence - new Date(new Date().toDateString())) / 864e5);
     return { nombre: p.nombre, forma: f.nombre, cobro: p.mes * f.cobra, porMes: p.mes * f.cobra / f.dura, vence: vence, dias: dias };
   }
-  /* ventana para cargar o cambiar el plan (también para registrar una renovación: se cambia la fecha del pago) */
+  /* ventana para cargar o cambiar el plan (las renovaciones van por "Registrar pago") */
   function editarPlan(l) {
     var P = window.PRECIOS, pl = (PLANES && PLANES[l.carpeta]) || { plan: '', pago: 'anual', desde: hoyISO() };
     var d = document.createElement('dialog'); d.style.maxWidth = '440px';
     d.innerHTML = '<form class="cuerpo form" novalidate><h2 style="font-size:1.15rem">Plan de ' + esc((l.menu && l.menu.nombre) || l.carpeta) + '</h2>' +
       '<label>Plan<select name="plan"><option value="">Sin plan (demo o prueba)</option>' + P.planes.map(function (p) { return '<option value="' + p.id + '"' + (pl.plan === p.id ? ' selected' : '') + '>' + esc(p.nombre) + ' (' + pesos(p.mes) + ' por mes)</option>'; }).join('') + '</select></label>' +
       '<label>Forma de pago<select name="pago">' + Object.keys(P.formas).map(function (k) { return '<option value="' + k + '"' + (pl.pago === k ? ' selected' : '') + '>' + esc(P.formas[k].nombre) + '</option>'; }).join('') + '</select></label>' +
-      '<label>Fecha del pago<small>Si renovó, poné la fecha del pago nuevo</small><input type="date" name="desde" value="' + esc(pl.desde || hoyISO()) + '"></label>' +
+      '<label>Inicio del período<small>Desde ahí se cuenta cuándo vence. Para renovar, usá "Registrar pago"</small><input type="date" name="desde" value="' + esc(pl.desde || hoyISO()) + '"></label>' +
       '<p class="cobro" style="font-weight:700;color:var(--ok)"></p><p class="msg" style="font-size:.88rem;color:var(--mal)"></p>' +
       '<p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p">Guardar</button></p></form>';
     var f = d.querySelector('form'), cobro = d.querySelector('.cobro'), msg = d.querySelector('.msg');
@@ -370,6 +371,85 @@
     };
     document.body.appendChild(d); d.showModal();
   }
+  /* ---------- pagos: cada pago registrado renueva solo el plan ----------
+     Los locales suben su comprobante desde "Mi plan" en su panel: el plan se renueva en el momento y acá queda para revisar.
+     Si el comprobante no sirve, "Anular pago" devuelve el plan al vencimiento de antes. */
+  var ESTADOS_PAGO = { ok: ['al-dia', 'Confirmado'], revisar: ['vence-pronto', 'Para revisar'], anulado: ['vence-mal', 'Anulado'] };
+  function isoDe(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function pagosDe(c) { return (PAGOS || []).filter(function (p) { return p.carpeta === c; }); }
+  function porRevisar() { return (PAGOS || []).filter(function (p) { return p.estado === 'revisar' && locDe(p.carpeta); }); }
+  function ultimoPago(c) { var p = pagosDe(c).filter(function (x) { return x.estado !== 'anulado'; })[0]; return p ? p.fecha : ''; }
+  function detallePago(p) { return esc(fechaISO(p.fecha)) + (p.monto ? ' · ' + pesos(p.monto) : ''); }
+  function recargarPagos() { return Sesion.pagos().then(function (r) { PAGOS = r; }); }
+  function cajaRevisar() {
+    var r = porRevisar(); if (!r.length) return '';
+    return '<div class="caja panel-caja"><h3>🧾 Comprobantes para revisar</h3><p class="suave nota-chica">El plan ya se renovó. Revisá que el pago haya llegado.</p><div class="lista">' + r.map(function (p) {
+      return '<div class="pendiente"><span><b>' + esc(nombreDe(locDe(p.carpeta))) + '</b><small>' + detallePago(p) + '</small></span>' + boton('ver-pago', p.carpeta, 'Revisar', 'p', ' data-p="' + p.id + '"') + '</div>';
+    }).join('') + '</div></div>';
+  }
+  function listaPagos(c) {
+    var l = pagosDe(c).slice(0, 5); if (!l.length) return '';
+    return '<div class="lista lista-pagos"><b>Últimos pagos</b>' + l.map(function (p) {
+      var e = ESTADOS_PAGO[p.estado];
+      return '<div class="pendiente"><span>' + detallePago(p) + '<small class="' + e[0] + '">' + e[1] + (p.origen === 'admin' ? ' · lo registraste vos' : '') + '</small></span>' + boton('ver-pago', c, 'Ver', '', ' data-p="' + p.id + '"') + '</div>';
+    }).join('') + '</div>';
+  }
+  /* un toque: renueva un período. Si no venció, se suma a lo que le queda; si venció, arranca hoy */
+  function registrarPago(l) {
+    var pl = PLANES && PLANES[l.carpeta], x = pl && infoPlan(pl);
+    if (!x) { alertar('Primero cargale el plan.'); return; }
+    var y = infoPlan({ plan: pl.plan, pago: pl.pago, desde: x.dias > 0 ? isoDe(x.vence) : hoyISO() });
+    var d = document.createElement('dialog'); d.style.maxWidth = '420px';
+    d.innerHTML = '<div class="cuerpo" style="display:grid;gap:12px"><h2 style="font-size:1.15rem">Registrar pago de ' + esc(nombreDe(l)) + '</h2><dl class="datos-local">' +
+      dato('Cobro', pesos(x.cobro)) + dato('Vence ahora', esc(fechaCorta(x.vence))) + dato('Nuevo vencimiento', '<b>' + esc(fechaCorta(y.vence)) + '</b>') + '</dl>' +
+      '<p class="msg" style="font-size:.88rem;color:var(--mal)"></p>' +
+      '<p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button type="button" class="b p" data-si>Registrar pago</button></p></div>';
+    var si = d.querySelector('[data-si]'), msg = d.querySelector('.msg');
+    d.querySelector('[data-no]').onclick = function () { d.close(); };
+    d.addEventListener('close', function () { d.remove(); });
+    si.onclick = function () {
+      si.disabled = true; msg.textContent = '';
+      Sesion.funcion('registrar-pago', { carpeta: l.carpeta, monto: x.cobro }).then(function (j) {
+        pl.desde = j.desde; return recargarPagos();
+      }).then(function () { d.close(); pintar(); alertar('Listo: ' + nombreDe(l) + ' quedó renovado.'); })
+        .catch(function (e) { si.disabled = false; msg.textContent = '⚠ ' + e.message; });
+    };
+    document.body.appendChild(d); d.showModal();
+  }
+  /* mirar un pago: el comprobante, y confirmarlo o anularlo */
+  function verPago(p, l) {
+    if (!p) return;
+    var e = ESTADOS_PAGO[p.estado], d = document.createElement('dialog'); d.style.maxWidth = '520px';
+    d.innerHTML = '<div class="cuerpo" style="display:grid;gap:12px"><h2 style="font-size:1.15rem">Pago de ' + esc(nombreDe(l)) + '</h2><dl class="datos-local">' +
+      dato('Fecha', esc(fechaISO(p.fecha))) + dato('Monto', p.monto ? pesos(p.monto) : VACIO) + dato('Estado', '<span class="' + e[0] + '">' + e[1] + '</span>') + '</dl>' +
+      '<div data-comprobante class="comprobante">' + (p.comprobante ? 'Cargando comprobante…' : '<span class="suave">Sin comprobante: lo registraste vos.</span>') + '</div>' +
+      '<p class="msg" style="font-size:.88rem;color:var(--mal)"></p>' +
+      '<p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cerrar</button>' +
+      (p.estado !== 'anulado' ? '<button type="button" class="b mal" data-anular>Anular pago</button>' : '') +
+      (p.estado === 'revisar' ? '<button type="button" class="b p" data-ok>Pago recibido</button>' : '') + '</p></div>';
+    var msg = d.querySelector('.msg'), caja = d.querySelector('[data-comprobante]'), anular = d.querySelector('[data-anular]'), ok = d.querySelector('[data-ok]');
+    function cambiar(estado) {
+      msg.textContent = '';
+      return Sesion.funcion('revisar-pago', { id: p.id, estado: estado }).then(function (j) {
+        if (j.desde && PLANES && PLANES[p.carpeta]) PLANES[p.carpeta].desde = j.desde;
+        return recargarPagos();
+      }).then(function () { d.close(); pintar(); alertar(estado === 'ok' ? 'Pago confirmado.' : 'Pago anulado: el plan volvió a su vencimiento anterior.'); })
+        .catch(function (err) { msg.textContent = '⚠ ' + err.message; });
+    }
+    d.querySelector('[data-no]').onclick = function () { d.close(); };
+    d.addEventListener('close', function () { d.remove(); });
+    if (ok) ok.onclick = function () { ok.disabled = true; cambiar('ok').then(function () { ok.disabled = false; }); };
+    if (anular) anular.onclick = function () { /* el primer toque pregunta, el segundo anula */
+      if (!anular.dataset.seguro) { anular.dataset.seguro = '1'; anular.textContent = '¿Seguro? Vuelve al vencimiento anterior'; return; }
+      anular.disabled = true; cambiar('anulado').then(function () { anular.disabled = false; });
+    };
+    document.body.appendChild(d); d.showModal();
+    if (p.comprobante) Sesion.funcion('ver-comprobante', { id: p.id }).then(function (j) {
+      caja.innerHTML = '<a class="b" target="_blank" rel="noopener">' + (j.pdf ? '📄 Abrir el PDF' : '🔍 Abrir en grande') + '</a>' + (j.pdf ? '' : '<img alt="Comprobante de pago">');
+      caja.querySelector('a').href = j.url; if (!j.pdf) caja.querySelector('img').src = j.url;
+    }).catch(function (err) { caja.textContent = '⚠ No se pudo abrir el comprobante: ' + err.message; });
+  }
+
   /* el menú guarda qué incluye su plan: así el menú público y el panel del local muestran solo eso */
   function aplicarPlanAlMenu(l, plan) {
     var ruta = l.carpeta + '/menu.json', f = plan ? window.PRECIOS.funcionesDe(plan) : null;
@@ -468,7 +548,7 @@
   function vistaInicio() {
     var n = numeros(), prox = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }).slice(0, 5);
     return kpis([[LOCS.length, 'locales'], [pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [Estadisticas.num(n.abiertos), 'menús abiertos (30 días)']]) +
-      cajaTareas() +
+      cajaRevisar() + cajaTareas() +
       '<div class="caja panel-caja"><h3>💳 Próximos vencimientos</h3>' +
       tabla('prox', ['Local', 'Plan', 'Forma de pago', 'Cobro', 'Vence'], prox.map(function (o) {
         return [linkLocal(o.l), celda(esc(o.x.nombre)), celda(esc(o.x.forma)), celda(pesos(o.x.cobro), o.x.cobro), celdaVence(o.x)];
@@ -509,7 +589,7 @@
         dato('Mail', mail ? esc(mail) : nada) + dato('WhatsApp', wa ? esc(telTexto(wa)) : nada) + dato('Dirección', dir ? esc(dir) : nada) + dato('Menú', '<a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a>') +
         (m && m.muestra ? '<div><dt></dt><dd class="suave">Datos de muestra, inventados.</dd></div>' : '') + '</dl></section>' +
       '<section class="caja panel-caja"><h3>💳 Plan y pagos</h3>' + (PLANES ? (x ? '<dl class="datos-local">' + dato('Plan', esc(x.nombre)) + dato('Forma de pago', esc(x.forma)) + dato('Cobro', pesos(x.cobro)) + dato('Próximo pago', vence(x)) + dato('Platos en 3D', esc(textoPlatos3d(l))) + '</dl>' : '<p class="suave">Sin plan cargado.</p>') +
-        '<div class="botones">' + boton('plan', c, x ? 'Cambiar plan o registrar pago' : 'Cargar plan') + '</div>' : '<p class="suave">No se pudo leer el plan.</p>') + '</section>' +
+        listaPagos(c) + '<div class="botones">' + (x ? boton('pago', c, 'Registrar pago', 'p') : '') + boton('plan', c, x ? 'Cambiar plan' : 'Cargar plan') + '</div>' : '<p class="suave">No se pudo leer el plan.</p>') + '</section>' +
       '<section class="caja panel-caja"><h3>📨 Mensajes</h3><p class="suave nota-chica">Se abre su WhatsApp con el mensaje escrito y vos tocás enviar.</p><div class="lista">' +
         '<div class="pendiente"><span><b>Resumen del mes</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'resumen_enviado'))) + '</small></span>' + (incluyeResumen(l) ? boton('resumen', c, 'Preparar') : '<span class="suave nota-chica">No incluido en su plan</span>') + '</div>' +
         '<div class="pendiente"><span><b>Aviso de pago</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'aviso_enviado'))) + '</small></span>' + boton('aviso', c, 'Preparar') + '</div>' +
@@ -530,12 +610,13 @@
     if (!PLANES) return '<p class="suave">No se pudieron leer los planes.</p>';
     var n = numeros();
     return '<div class="titulo-seccion"><h2>Cobros</h2></div>' + kpis([[pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [n.pronto, 'vencen esta semana']]) +
+      cajaRevisar() +
       tabla('cobros', ['Local', 'Plan', 'Forma de pago', 'Cobro', 'Último pago', 'Vence', 'Estado', ''], LOCS.map(function (l) {
         var x = planDe(l), pl = PLANES[l.carpeta];
         if (!x) return [linkLocal(l), celda(VACIO, ''), celda(VACIO, ''), celda(VACIO, 0), celda(VACIO, ''), celda(VACIO, 99999), celda('<span class="suave">Sin plan</span>', 'z'), celda(boton('plan', l.carpeta, 'Cargar plan'), '')];
         var estado = x.dias < 0 ? '<span class="vence-mal">Vencido</span>' : x.dias <= 7 ? '<span class="vence-pronto">Por vencer</span>' : '<span class="al-dia">Al día</span>';
-        return [linkLocal(l), celda(esc(x.nombre)), celda(esc(x.forma)), celda(pesos(x.cobro), x.cobro), celda(esc(fechaISO(pl.desde)), pl.desde), celdaVence(x), celda(estado, x.dias),
-          celda('<span class="botones sin-salto">' + boton('plan', l.carpeta, 'Registrar pago') + boton('aviso', l.carpeta, 'Aviso') + '</span>', '')];
+        return [linkLocal(l), celda(esc(x.nombre)), celda(esc(x.forma)), celda(pesos(x.cobro), x.cobro), celda(esc(fechaISO(ultimoPago(l.carpeta) || pl.desde)), ultimoPago(l.carpeta) || pl.desde), celdaVence(x), celda(estado, x.dias),
+          celda('<span class="botones sin-salto">' + boton('pago', l.carpeta, 'Registrar pago', 'p') + boton('plan', l.carpeta, 'Plan') + boton('aviso', l.carpeta, 'Aviso') + '</span>', '')];
       }), 'Todavía no hay locales.');
   }
 
@@ -565,7 +646,7 @@
   function pintar() {
     var n = LOCS.length ? numeros() : { vencidos: 0 }, t = LOCS.length ? tareas().length : 0;
     document.getElementById('nav-botones').innerHTML = SECCIONES.map(function (s) {
-      var marca = s[0] === 'mensajes' && t ? t : s[0] === 'cobros' && n.vencidos ? n.vencidos : 0;
+      var marca = s[0] === 'mensajes' && t ? t : s[0] === 'cobros' ? n.vencidos + porRevisar().length : 0;
       return '<a href="#' + s[0] + '"' + (seccion === s[0] ? ' aria-current="page"' : '') + '>' + s[1] + (marca ? '<em>' + marca + '</em>' : '') + '</a>';
     }).join('');
     var ajustes = document.getElementById('ajustes'); ajustes.hidden = seccion !== 'ajustes'; C.hidden = seccion === 'ajustes';
@@ -588,6 +669,8 @@
     if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/', nombreDe(l), 'qr-' + l.carpeta);
     if (a === 'copiar') navigator.clipboard.writeText(raiz + l.carpeta + '/').then(function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar link'; }, 1500); });
     if (a === 'plan') editarPlan(l);
+    if (a === 'pago') registrarPago(l);
+    if (a === 'ver-pago') verPago(PAGOS.filter(function (p) { return String(p.id) === b.dataset.p; })[0], l);
     if (a === 'aviso') enviarAvisoPago(l);
     if (a === 'resumen') enviarResumen(l, b);
     if (a === 'usuario') crearUsuario(l);

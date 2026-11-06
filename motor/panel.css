@@ -297,3 +297,19 @@ html.modo-celu .ficha-grilla{grid-template-columns:1fr}
 body:has(.barra-admin) .wrap{max-width:1440px}
 .contenido{grid-template-columns:minmax(0,1fr)}
 .contenido > *{min-width:0}
+/* pagos: lista en la ficha del local, comprobante y sección "Mi plan" del panel */
+.lista-pagos{margin:14px 0 4px;padding-top:12px;border-top:1px solid var(--linea)}
+.comprobante{display:grid;gap:10px;justify-items:start}
+.comprobante img{display:block;width:100%;max-height:50vh;object-fit:contain;border-radius:10px;border:1px solid var(--linea);background:rgba(127,127,127,.08)}
+.mi-plan{display:grid;gap:14px;margin-top:20px;max-width:640px}
+.mi-plan .caja{display:grid;gap:10px}
+.mi-plan h3{font-size:1.05rem}
+.mi-plan .msg{font-size:.88rem;min-height:1.2em}
+.mi-plan .alias{font-weight:700;overflow-wrap:anywhere}
+/* promociones */
+.tabs{flex-wrap:wrap}
+.promo-intro{margin-top:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.promo-intro p{color:var(--suave);font-size:.88rem;flex:1;min-width:220px}
+.lista-promos{margin-top:14px}
+.chip.fin{background:rgba(180,35,24,.12);color:var(--mal)}
+.fila .s .chip{margin-left:0}

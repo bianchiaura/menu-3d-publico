@@ -8,7 +8,7 @@ window.PRECIOS = {
   planes: [
     { id: 'esencial', nombre: 'Esencial', para: 'Para sumar el 3D a tu carta', mes: 60000,
       funciones: { platos3d: 20, ingles: false, mascota: false, estadisticas: 'basicas', resumen: false },
-      incluye: ['Diseño y carga del menú incluidos', 'Hasta 20 platos en 3D (sin contar bebidas)', 'Platos sobre la mesa con realidad aumentada', 'Códigos QR listos para imprimir', 'Panel propio para gestionar precios, platos y categorías', 'Estadísticas básicas: visitas y platos vistos'],
+      incluye: ['Diseño y carga del menú incluidos', 'Hasta 20 platos en 3D (sin contar bebidas)', 'Platos sobre la mesa con realidad aumentada', 'Códigos QR listos para imprimir', 'Panel propio para gestionar precios, platos, categorías y promociones', 'Estadísticas básicas: visitas y platos vistos'],
       no: ['Menú en inglés', 'Mascota del local', 'Estadísticas completas', 'Resumen mensual por WhatsApp'] },
     { id: 'completo', nombre: 'Completo', para: 'Para destacarte y entender qué buscan tus clientes', mes: 75000, destacado: true,
       funciones: { platos3d: 40, ingles: true, mascota: true, estadisticas: 'completas', resumen: false },

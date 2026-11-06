@@ -81,3 +81,33 @@ create policy "solo el administrador" on public.planes
 -- 6) Cuándo se le mandó a cada local el último resumen del mes y el último aviso de pago
 alter table public.planes add column if not exists resumen_enviado date;
 alter table public.planes add column if not exists aviso_enviado date;
+
+-- 7) Pagos de cada local: cada renovación queda anotada y se puede deshacer (desde_antes guarda cómo estaba el plan).
+--    Los escribe solo la función "panel"; el administrador los lee. Un local ve los suyos a través de la función.
+create table if not exists public.pagos (
+  id          bigint generated always as identity primary key,
+  carpeta     text not null check (carpeta ~ '^[a-z0-9][a-z0-9-]{0,59}$'),
+  fecha       date not null,                          -- cuándo se registró (hora de Argentina)
+  plan        text not null,
+  pago        text not null,
+  monto       integer,
+  desde_antes date not null,                          -- inicio del período anterior
+  desde_nuevo date not null,                          -- inicio del período que se pagó
+  origen      text not null check (origen in ('local', 'admin')),
+  estado      text not null default 'ok' check (estado in ('revisar', 'ok', 'anulado')),
+  comprobante text,                                   -- ruta del archivo en el depósito "comprobantes"
+  huella      text,                                   -- identifica el archivo: el mismo comprobante no se usa dos veces
+  creado      timestamptz not null default now()
+);
+create unique index if not exists pagos_comprobante_unico on public.pagos (carpeta, huella) where huella is not null;
+create index if not exists pagos_carpeta on public.pagos (carpeta, id desc);
+alter table public.pagos enable row level security;
+drop policy if exists "el administrador ve los pagos" on public.pagos;
+create policy "el administrador ve los pagos" on public.pagos
+  for select to authenticated
+  using (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'));
+
+-- 8) Comprobantes: depósito privado (sin reglas de acceso: solo entra la función "panel")
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('comprobantes', 'comprobantes', false, 5242880, array['image/jpeg', 'image/png', 'application/pdf'])
+on conflict (id) do nothing;

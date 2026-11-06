@@ -113,3 +113,11 @@ body.con-mascota .info{padding-bottom:96px}
 /* botón de idioma (EN / ES), al lado de "Info" */
 .btn-idioma{flex:none;align-self:center;min-width:44px;min-height:40px;padding:8px 10px;border-radius:999px;border:1px solid var(--linea);background:var(--tarjeta);font-weight:700;font-size:.8rem;letter-spacing:.04em;color:var(--acento2)}
 .top{flex-wrap:nowrap}
+/* promociones: pestaña, aviso en la primera categoría y tarjetas */
+.tab.promo{border-color:var(--acento);color:var(--acento2);font-weight:700}
+.promo-aviso{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 14px;border-radius:14px;border:1px solid var(--acento);background:var(--tarjeta);color:var(--acento2);font-weight:700;font-size:.92rem;text-align:left}
+.promo-sello{position:absolute;top:12px;right:12px;z-index:1;background:var(--acento);color:var(--sobre-acento);font-size:.8rem;font-weight:700;padding:4px 11px;border-radius:999px}
+.promo-vig{color:var(--acento2)!important;font-weight:700;font-size:.85rem!important}
+.ft .antes{color:var(--suave);font-size:.95rem;margin-left:8px}
+.promo-3d{display:flex;flex-wrap:wrap;gap:8px}
+.promo-3d .btn-sec{margin-top:0;padding:9px 14px;font-size:.88rem;min-height:40px}

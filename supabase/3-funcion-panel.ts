@@ -9,6 +9,10 @@
 //   { accion: "usuarios" }                                       → (solo admin) lista los usuarios de los locales
 //   { accion: "nueva-clave", id, password, whatsapp }             → (solo admin) le pone otra contraseña a un local
 //   { accion: "borrar-usuario", id }                             → (solo admin) borra el usuario de un local
+//   { accion: "mi-plan", carpeta }                               → plan, vencimiento y últimos pagos de un local
+//   { accion: "registrar-pago", carpeta, monto, comprobante }    → renueva el plan (el local tiene que mandar comprobante)
+//   { accion: "ver-comprobante", id }                            → (solo admin) link temporal al comprobante
+//   { accion: "revisar-pago", id, estado }                       → (solo admin) confirma un pago o lo anula
 //
 // Secreto que hay que cargar en Supabase (Edge Functions → Secrets):
 //   GITHUB_TOKEN   token de GitHub con "Contents: Read and write" sobre menu-3d-publico
@@ -93,6 +97,21 @@ async function publicar(archivos: Archivo[], mensaje: string) {
   await github('/git/refs/heads/' + RAMA, { method: 'PATCH', body: { sha: nuevo.sha } });
 }
 
+/* ---------- pagos: cada período se cuenta desde "desde" y dura según la forma de pago ---------- */
+const MESES: Record<string, number> = { mensual: 1, semestral: 6, anual: 12 };
+const DIAS_ANTES = 15;                     /* un local puede renovar desde 15 días antes del vencimiento */
+const MAX_COMPROBANTE = 5 * 1024 * 1024;
+const DEPOSITO = 'comprobantes';
+function hoyAR() { return new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10); } /* Argentina: UTC-3 todo el año */
+function sumarMeses(iso: string, n: number) { const [a, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(a, m - 1 + n, d)).toISOString().slice(0, 10); }
+function sumarDias(iso: string, n: number) { const [a, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(a, m - 1, d + n)).toISOString().slice(0, 10); }
+function venceDe(p: { desde: string; pago: string }) { return sumarMeses(p.desde, MESES[p.pago]); }
+function fechaTexto(iso: string) { const [a, m, d] = iso.split('-'); return d + '/' + m + '/' + a; }
+async function huellaDe(b: Uint8Array) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', b));
+  return Array.from(h).map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors(req) });
   try {
@@ -132,6 +151,93 @@ Deno.serve(async (req) => {
       if (!esAdmin && menu) archivos.push({ ruta: carpeta + '/index.html', texto: paginaLocal(JSON.parse(menu.texto ?? '{}'), carpeta) });
       await publicar(archivos, String(cuerpo.mensaje ?? 'Actualiza el menú de ' + carpeta).slice(0, 120));
       return responder(req, { ok: true });
+    }
+
+    /* ---------- plan y pagos ---------- */
+    const esDelLocal = (c: string) => /^[a-z0-9][a-z0-9-]*$/.test(c) && (esAdmin || (permisos ?? []).some((p) => p.carpeta === c));
+
+    /* lo que el local ve de su plan: { plan: { plan, pago, desde, vence, abre }, pagos: [{ fecha, monto, estado }] } */
+    if (cuerpo.accion === 'mi-plan') {
+      const carpeta = String(cuerpo.carpeta ?? '');
+      if (!esDelLocal(carpeta)) return responder(req, { error: 'No tenés permiso para este local.' }, 403);
+      const { data: pl, error } = await servidor.from('planes').select('plan, pago, desde').eq('carpeta', carpeta).maybeSingle();
+      if (error) throw error;
+      if (!pl) return responder(req, { plan: null, pagos: [] });
+      const { data: pagos } = await servidor.from('pagos').select('fecha, monto, estado').eq('carpeta', carpeta).order('id', { ascending: false }).limit(6);
+      const vence = venceDe(pl);
+      return responder(req, { plan: { ...pl, vence, abre: sumarDias(vence, -DIAS_ANTES) }, pagos: pagos ?? [] });
+    }
+
+    /* renueva el plan un período. Si todavía no venció, el período nuevo arranca cuando termina el actual (no se pierden días);
+       si ya venció, arranca hoy. El local tiene que mandar el comprobante y su pago queda "para revisar". */
+    if (cuerpo.accion === 'registrar-pago') {
+      const carpeta = String(cuerpo.carpeta ?? '');
+      if (!esDelLocal(carpeta)) return responder(req, { error: 'No tenés permiso para este local.' }, 403);
+      const { data: pl, error } = await servidor.from('planes').select('plan, pago, desde').eq('carpeta', carpeta).maybeSingle();
+      if (error) throw error;
+      if (!pl) return responder(req, { error: 'Este local todavía no tiene un plan cargado.' }, 400);
+      const hoy = hoyAR(), vence = venceDe(pl);
+      if (!esAdmin && hoy < sumarDias(vence, -DIAS_ANTES)) return responder(req, { error: 'Tu plan está al día hasta el ' + fechaTexto(vence) + '. Vas a poder renovarlo desde el ' + fechaTexto(sumarDias(vence, -DIAS_ANTES)) + '.' }, 400);
+
+      let ruta: string | null = null, huella: string | null = null;
+      const archivo = String(cuerpo.comprobante ?? '');
+      if (!esAdmin || archivo) {
+        const m = /^data:(image\/jpeg|image\/png|application\/pdf);base64,(.+)$/.exec(archivo);
+        if (!m) return responder(req, { error: 'Mandá el comprobante como foto o PDF.' }, 400);
+        const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+        if (bytes.length > MAX_COMPROBANTE) return responder(req, { error: 'El comprobante pesa demasiado: el máximo es 5 MB.' }, 400);
+        huella = await huellaDe(bytes);
+        const { data: repetido } = await servidor.from('pagos').select('id').eq('carpeta', carpeta).eq('huella', huella).maybeSingle();
+        if (repetido) return responder(req, { error: 'Ese comprobante ya fue enviado.' }, 400);
+        ruta = carpeta + '/' + huella + (m[1] === 'application/pdf' ? '.pdf' : m[1] === 'image/png' ? '.png' : '.jpg');
+        const { error: sinSubir } = await servidor.storage.from(DEPOSITO).upload(ruta, bytes, { contentType: m[1], upsert: false });
+        if (sinSubir) return responder(req, { error: 'No se pudo guardar el comprobante. Probá de nuevo.' }, 500);
+      }
+      const borrarArchivo = async () => { if (ruta) await servidor.storage.from(DEPOSITO).remove([ruta]); };
+
+      const nuevo = vence > hoy ? vence : hoy;
+      const { data: fila, error: sinPago } = await servidor.from('pagos').insert({
+        carpeta, fecha: hoy, plan: pl.plan, pago: pl.pago, monto: Math.max(0, Math.round(Number(cuerpo.monto) || 0)) || null,
+        desde_antes: pl.desde, desde_nuevo: nuevo, origen: esAdmin ? 'admin' : 'local', estado: esAdmin ? 'ok' : 'revisar', comprobante: ruta, huella,
+      }).select('id').single();
+      if (sinPago) { await borrarArchivo(); throw sinPago; }
+      /* solo si el plan sigue como se leyó: dos pagos al mismo tiempo no pueden sumarse */
+      const { data: cambiado, error: sinPlan } = await servidor.from('planes').update({ desde: nuevo, actualizado: new Date().toISOString() }).eq('carpeta', carpeta).eq('desde', pl.desde).select('carpeta');
+      if (sinPlan || !cambiado?.length) {
+        await servidor.from('pagos').delete().eq('id', fila.id); await borrarArchivo();
+        return responder(req, { error: 'No se pudo renovar el plan. Recargá la página y probá de nuevo.' }, 409);
+      }
+      return responder(req, { ok: true, id: fila.id, desde: nuevo, vence: sumarMeses(nuevo, MESES[pl.pago]) });
+    }
+
+    /* link temporal para mirar un comprobante (el depósito es privado) */
+    if (cuerpo.accion === 'ver-comprobante') {
+      if (!esAdmin) return responder(req, { error: 'Solo el administrador puede ver los comprobantes.' }, 403);
+      const { data: p } = await servidor.from('pagos').select('comprobante').eq('id', Number(cuerpo.id)).maybeSingle();
+      if (!p?.comprobante) return responder(req, { error: 'Este pago no tiene comprobante.' }, 404);
+      const { data, error } = await servidor.storage.from(DEPOSITO).createSignedUrl(p.comprobante, 600);
+      if (error) throw error;
+      return responder(req, { url: data.signedUrl, pdf: p.comprobante.endsWith('.pdf') });
+    }
+
+    /* confirmar un pago o anularlo. Anular devuelve el plan al vencimiento de antes */
+    if (cuerpo.accion === 'revisar-pago') {
+      if (!esAdmin) return responder(req, { error: 'Solo el administrador puede revisar pagos.' }, 403);
+      const estado = String(cuerpo.estado ?? '');
+      if (estado !== 'ok' && estado !== 'anulado') return responder(req, { error: 'Estado inválido.' }, 400);
+      const { data: p } = await servidor.from('pagos').select('id, carpeta, estado, desde_antes, desde_nuevo').eq('id', Number(cuerpo.id)).maybeSingle();
+      if (!p) return responder(req, { error: 'Ese pago ya no existe.' }, 404);
+      if (p.estado === 'anulado') return responder(req, { error: 'Ese pago ya está anulado.' }, 400);
+      let desde: string | null = null;
+      if (estado === 'anulado') {
+        const { data: cambiado, error } = await servidor.from('planes').update({ desde: p.desde_antes, actualizado: new Date().toISOString() }).eq('carpeta', p.carpeta).eq('desde', p.desde_nuevo).select('carpeta');
+        if (error) throw error;
+        if (!cambiado?.length) return responder(req, { error: 'El plan cambió después de este pago. Anulá primero el pago más nuevo, o corregí la fecha con "Cambiar plan".' }, 409);
+        desde = p.desde_antes;
+      }
+      const { error } = await servidor.from('pagos').update({ estado }).eq('id', p.id);
+      if (error) throw error;
+      return responder(req, { ok: true, desde });
     }
 
     /* ---------- usuarios de los locales: todo esto es solo para el administrador ---------- */
