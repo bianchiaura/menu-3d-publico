@@ -267,6 +267,7 @@ html.modo-celu .ficha-grilla{grid-template-columns:1fr}
 #caja-instalar:has(#instalar[hidden]){display:none}
 /* barra de secciones como botones */
 .admin-nav .wrap{gap:8px;padding-top:10px;padding-bottom:10px}
+@media (hover:hover){.admin-nav .wrap{flex-wrap:wrap;overflow:visible}} /* con mouse no se puede deslizar: los botones bajan de renglón */
 .admin-nav a{padding:9px 16px;border:1px solid var(--linea);border-radius:10px;background:var(--fondo);color:var(--texto);font-weight:700;font-size:.9rem}
 .admin-nav a[aria-current=page]{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
 /* grillas tipo planilla */
@@ -290,6 +291,7 @@ html.modo-celu .ficha-grilla{grid-template-columns:1fr}
 .planilla .b{min-height:0;padding:7px 12px;font-size:.84rem}
 .nombre-local{font-weight:700;color:var(--texto);text-decoration:none}
 .nombre-local:hover{text-decoration:underline}
+button.nombre-local{text-align:left;padding:0}
 .al-dia{color:var(--ok);font-weight:700;font-size:.85rem}
 .botones.sin-salto{flex-wrap:nowrap}
 .titulo-seccion{margin-bottom:-6px}
@@ -315,9 +317,9 @@ body:has(.barra-admin) .wrap{max-width:1440px}
 .fila .s .chip{margin-left:0}
 /* difusión: filtros, mensaje y estado en la grilla */
 .filtros-dif{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
-.filtros-dif input,.filtros-dif select,.mensaje-dif textarea,.estado-dif{background:var(--tarjeta);border:1px solid var(--linea);border-radius:10px;padding:9px 12px}
+.filtros-dif input,.filtros-dif select{background:var(--tarjeta);border:1px solid var(--linea);border-radius:10px;padding:9px 12px}
 .filtros-dif input{flex:1;min-width:200px}
-.mensaje-dif{margin-top:14px;display:grid;gap:10px}
-.mensaje-dif summary{cursor:pointer;font-weight:700}
-.mensaje-dif textarea{display:block;width:100%;margin:10px 0;resize:vertical}
-.estado-dif{padding:6px 8px;font-size:.84rem}
+/* el botón de enviar queda siempre a la vista, aunque la grilla se corra de costado */
+#grilla-dif th:last-child,#grilla-dif td:last-child{position:sticky;right:0;z-index:1;background:var(--tarjeta);border-left:1px solid var(--linea)}
+#grilla-dif th:last-child{background:var(--fondo)}
+@media (max-width:640px){#grilla-dif th:first-child,#grilla-dif td:first-child{position:static}}
