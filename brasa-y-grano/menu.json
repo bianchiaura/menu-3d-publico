@@ -7,12 +7,6 @@
   "prototipo": false,
   "moneda": "$",
   "muestra": true,
-  "atencion": {
-    "reservas": true,
-    "pedidos": true,
-    "retiro": true,
-    "delivery": true
-  },
   "mascota": {
     "nombre": "Brasita",
     "frases": [
@@ -94,28 +88,6 @@
       "13": {
         "nombre": "Brownie with ice cream",
         "descripcion": "Warm dark chocolate brownie with two scoops of vanilla ice cream and chocolate sauce."
-      }
-    },
-    "promociones": {
-      "1": {
-        "titulo": "Grill for two",
-        "descripcion": "Sirloin steak and grilled skirt steak to share, served on a wooden board with chimichurri.",
-        "vigencia": "Every day"
-      },
-      "2": {
-        "titulo": "Lunch special",
-        "descripcion": "Mequinesse Burger with a mint and ginger lemonade.",
-        "vigencia": "Wednesday to Friday 12:00–15:00"
-      },
-      "3": {
-        "titulo": "IPA happy hour",
-        "descripcion": "Two craft IPA beers for the price of one, at the bar or at your table.",
-        "vigencia": "Thursday and Friday 20:00–22:00"
-      },
-      "4": {
-        "titulo": "Sunday dessert",
-        "descripcion": "Homemade flan and a cappuccino to end the meal.",
-        "vigencia": "Sunday"
       }
     },
     "info": {
@@ -387,62 +359,13 @@
       "fondo": "linear-gradient(135deg,#f0d0d6,#d99aa8)"
     }
   ],
-  "promociones": [
-    {
-      "id": 1,
-      "titulo": "Parrilla para dos",
-      "descripcion": "Bife de chorizo y entraña para compartir, a la tabla y con chimichurri.",
-      "precio": 25900,
-      "precioAntes": 28300,
-      "etiqueta": "Para compartir",
-      "dias": [],
-      "platos": [1, 3],
-      "vigencia": "Todos los días"
-    },
-    {
-      "id": 2,
-      "titulo": "Menú del mediodía",
-      "descripcion": "Mequinesse Burger con limonada de menta y jengibre.",
-      "precio": 12900,
-      "precioAntes": 14000,
-      "etiqueta": "Mediodía",
-      "dias": [3, 4, 5],
-      "horaDesde": "12:00",
-      "horaHasta": "15:00",
-      "platos": [6, 10],
-      "vigencia": "Miércoles a viernes de 12 a 15 h"
-    },
-    {
-      "id": 3,
-      "titulo": "Happy hour de IPA",
-      "descripcion": "Dos cervezas artesanales IPA al precio de una, en la barra o en la mesa.",
-      "precio": 5200,
-      "precioAntes": 10400,
-      "etiqueta": "2x1",
-      "dias": [4, 5],
-      "horaDesde": "20:00",
-      "horaHasta": "22:00",
-      "platos": [11],
-      "vigencia": "Jueves y viernes de 20 a 22 h"
-    },
-    {
-      "id": 4,
-      "titulo": "Postre del domingo",
-      "descripcion": "Flan casero y cappuccino para cerrar la comida.",
-      "precio": 7900,
-      "precioAntes": 9000,
-      "dias": [0],
-      "platos": [12, 8],
-      "vigencia": "Domingo"
-    }
-  ],
   "platos": [
     {
       "id": 1,
       "categoria": "carnes",
       "nombre": "Bife de chorizo",
       "emoji": "🥩",
-      "precio": 14500,
+      "precio": 16010,
       "etiquetas": [
         "sin-tacc",
         "chef"
@@ -462,7 +385,7 @@
       "categoria": "carnes",
       "nombre": "Ojo de bife",
       "emoji": "🥩",
-      "precio": 16900,
+      "precio": 18590,
       "etiquetas": [
         "sin-tacc"
       ],
@@ -480,7 +403,7 @@
       "categoria": "carnes",
       "nombre": "Entraña a la parrilla",
       "emoji": "🍖",
-      "precio": 13800,
+      "precio": 15180,
       "etiquetas": [
         "sin-tacc"
       ],
@@ -498,7 +421,7 @@
       "categoria": "pastas",
       "nombre": "Sorrentinos de ricota",
       "emoji": "🍝",
-      "precio": 11200,
+      "precio": 12320,
       "etiquetas": [
         "chef"
       ],
@@ -516,7 +439,7 @@
       "categoria": "pastas",
       "nombre": "Sorrentinos con boloñesa",
       "emoji": "🍝",
-      "precio": 11900,
+      "precio": 13090,
       "etiquetas": [],
       "foto": "img/5.jpg",
       "modelo": {
@@ -532,7 +455,7 @@
       "categoria": "burgers",
       "nombre": "Mequinesse Burger",
       "emoji": "🍔",
-      "precio": 9800,
+      "precio": 10780,
       "etiquetas": [
         "chef"
       ],
@@ -551,7 +474,7 @@
       "categoria": "burgers",
       "nombre": "Veggie Garden",
       "emoji": "🥬",
-      "precio": 9200,
+      "precio": 10120,
       "etiquetas": [
         "vegano"
       ],
@@ -570,7 +493,7 @@
       "categoria": "cafe",
       "nombre": "Cappuccino",
       "emoji": "☕",
-      "precio": 3600,
+      "precio": 3960,
       "etiquetas": [
         "chef"
       ],
@@ -589,7 +512,7 @@
       "categoria": "cafe",
       "nombre": "Medialunas de manteca",
       "emoji": "🥐",
-      "precio": 3200,
+      "precio": 3520,
       "etiquetas": [],
       "foto": "img/9.jpg",
       "modelo": {
@@ -606,7 +529,7 @@
       "categoria": "bebidas",
       "nombre": "Limonada con menta y jengibre",
       "emoji": "🍋",
-      "precio": 4200,
+      "precio": 4620,
       "etiquetas": [
         "vegano",
         "sin-tacc"
@@ -620,7 +543,7 @@
       "categoria": "bebidas",
       "nombre": "Cerveza artesanal IPA",
       "emoji": "🍺",
-      "precio": 5200,
+      "precio": 5720,
       "etiquetas": [],
       "foto": "img/11.jpg",
       "modelo": null,
@@ -631,7 +554,7 @@
       "categoria": "postres",
       "nombre": "Flan casero",
       "emoji": "🍮",
-      "precio": 5400,
+      "precio": 5940,
       "etiquetas": [
         "sin-tacc",
         "chef"
@@ -651,7 +574,7 @@
       "categoria": "postres",
       "nombre": "Brownie con helado",
       "emoji": "🍫",
-      "precio": 6100,
+      "precio": 6710,
       "etiquetas": [
         "chef"
       ],
@@ -672,5 +595,12 @@
     "mascota": true,
     "estadisticas": "completas",
     "resumen": true
+  },
+  "atencion": {
+    "reservas": true,
+    "pedidos": true,
+    "retiro": true,
+    "delivery": true,
+    "whatsapp": "11 0000 0000"
   }
 }
