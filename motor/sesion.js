@@ -178,6 +178,25 @@ window.Sesion = (function () {
     return sb.from('planes').delete().eq('carpeta', carpeta).then(function (r) { if (r.error) throw new Error(r.error.message); });
   }
 
+  /* lista de difusión (tabla "prospectos": solo el administrador la ve) */
+  function prospectos() {
+    var TANDA = 1000, todo = [];
+    function tanda(n) {
+      return sb.from('prospectos').select('*').order('barrio').order('nombre').range(n * TANDA, n * TANDA + TANDA - 1).then(function (r) {
+        if (r.error) throw new Error(r.error.message);
+        todo = todo.concat(r.data || []);
+        return (r.data || []).length === TANDA ? tanda(n + 1) : todo;
+      });
+    }
+    return tanda(0);
+  }
+  function guardarProspecto(id, cambios) {
+    return sb.from('prospectos').update(cambios).eq('id', id).then(function (r) { if (r.error) throw new Error(r.error.message); });
+  }
+  function agregarProspecto(p) {
+    return sb.from('prospectos').insert(p).select().single().then(function (r) { if (r.error) throw new Error(r.error.message); return r.data; });
+  }
+
   /* la bienvenida del panel se muestra una sola vez por usuario (queda anotado en su cuenta, sirve en cualquier celular) */
   function bienvenidaVista() {
     if (datos) datos.bienvenida = true;
@@ -191,5 +210,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, pagos: pagos, guardarPlan: guardarPlan, borrarPlan: borrarPlan, marcarEnviado: marcarEnviado };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, pagos: pagos, prospectos: prospectos, guardarProspecto: guardarProspecto, agregarProspecto: agregarProspecto, guardarPlan: guardarPlan, borrarPlan: borrarPlan, marcarEnviado: marcarEnviado };
 })();

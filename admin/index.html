@@ -305,19 +305,20 @@
   }
 
   /* ---------- locales ---------- */
-  var LOCS = [], EST = null, USUARIOS = null, PLANES = null, PAGOS = null; /* null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
+  var LOCS = [], EST = null, USUARIOS = null, PLANES = null, PAGOS = null, PROSPECTOS = null; /* null: todavía no se pudieron leer (la tarjeta no muestra esa parte) */
   function cargarLocales() {
     /* estadísticas, usuarios y planes se piden en paralelo; si fallan, el panel igual funciona */
     var est = Estadisticas.porLocal().catch(function (e) { console.error(e); return null; });
     var usu = Sesion.funcion('usuarios').then(function (j) { return j.usuarios || []; }, function (e) { console.error(e); return null; });
     var pla = Sesion.planes().catch(function (e) { console.error(e); return null; });
     var pag = Sesion.pagos().catch(function (e) { console.error(e); return null; });
+    var pro = Sesion.prospectos().catch(function (e) { console.error(e); return null; });
     json(raiz + 'locales.json').then(function (locs) {
       return Promise.all(locs.map(function (l) {
         return json(raiz + l.carpeta + '/menu.json').then(function (m) { l.menu = m; return l; }, function () { l.menu = null; return l; });
-      }).concat([est, usu, pla, pag]));
+      }).concat([est, usu, pla, pag, pro]));
     }).then(function (r) {
-      PAGOS = r.pop(); PLANES = r.pop(); USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
+      PROSPECTOS = r.pop(); PAGOS = r.pop(); PLANES = r.pop(); USUARIOS = r.pop(); EST = r.pop(); LOCS = r;
       pintar();
     }).catch(function (e) {
       console.error(e);
@@ -474,8 +475,8 @@
   function textoPlatos3d(l) { var lim = l.menu && l.menu.incluye && l.menu.incluye.platos3d; return usados3d(l) + (lim ? ' de ' + lim : ''); }
 
   /* ---------- secciones del administrador ----------
-     Barra de arriba: #inicio, #locales, #cobros, #mensajes, #estadisticas, #ajustes. La ficha de un local es #local/carpeta. */
-  var SECCIONES = [['inicio', '🏠 Inicio'], ['locales', '🍽 Locales'], ['cobros', '💳 Cobros'], ['mensajes', '📨 Mensajes'], ['estadisticas', '📊 Estadísticas'], ['ajustes', '⚙ Ajustes']];
+     Barra de arriba: #inicio, #locales, #cobros, #mensajes, #estadisticas, #difusion, #ajustes. La ficha de un local es #local/carpeta. */
+  var SECCIONES = [['inicio', '🏠 Inicio'], ['locales', '🍽 Locales'], ['cobros', '💳 Cobros'], ['mensajes', '📨 Mensajes'], ['estadisticas', '📊 Estadísticas'], ['difusion', '📣 Difusión'], ['ajustes', '⚙ Ajustes']];
   var seccion = 'inicio', fichaDe = null, buscar = '';
   var C = document.getElementById('contenido');
   function leerRuta() {
@@ -643,6 +644,120 @@
       }), 'Todavía no hay locales.');
   }
 
+  /* --- Difusión: restaurantes a los que escribirles, con su contacto y en qué quedó cada uno ---
+     La lista vive en Supabase (tabla "prospectos"), nunca en el repositorio público. WhatsApp y el mail no dejan mandar
+     mensajes solos desde acá: cada botón abre el chat o el mail con el texto escrito, y queda anotado. */
+  var EST_DIF = { nuevo: 'Por enviar', enviado: 'Enviado', respondio: 'Respondió', interesado: 'Interesado', 'sin-whatsapp': 'Número sin WhatsApp', 'no-escribir': 'No escribir más' };
+  var MENSAJE_BASE = 'Hola, ¿cómo están? Soy Bautista, de Menú 3D. Hacemos menús digitales con QR en los que cada plato de {nombre} se puede ver en 3D y sobre la mesa, desde el celular del cliente, antes de pedirlo. Nos ocupamos del diseño y la carga del menú, y después ustedes actualizan precios y platos desde un panel simple.\n\nPueden ver un ejemplo acá: {link}\n\nSi les interesa, les preparamos una prueba con uno de sus platos. Si prefieren que no les escribamos, avísennos y no lo volvemos a hacer.';
+  var filtroDif = { texto: '', barrio: '', estado: '' };
+  function mensajeDif() { try { return localStorage.getItem('menu3d-difusion-mensaje') || MENSAJE_BASE; } catch (e) { return MENSAJE_BASE; } }
+  function textoDif(p) { return mensajeDif().replace(/\{nombre\}/g, p.nombre).replace(/\{link\}/g, raiz + 'brasa-y-grano/'); }
+  function linkMail(p) {
+    var asunto = 'Menú con platos en 3D para ' + p.nombre, cuerpo = textoDif(p);
+    /* en la compu se abre Gmail en el navegador; en el celular, la app de mail */
+    if (matchMedia('(pointer:coarse)').matches) return 'mailto:' + p.mail + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(p.mail) + '&su=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+  }
+  function proDe(id) { return (PROSPECTOS || []).filter(function (p) { return String(p.id) === String(id); })[0]; }
+  function barriosDif() {
+    var o = {}; (PROSPECTOS || []).forEach(function (p) { if (p.barrio) o[p.barrio] = 1; });
+    return Object.keys(o).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+  }
+  function grillaDif() {
+    var t = filtroDif.texto.toLowerCase();
+    var lista = (PROSPECTOS || []).filter(function (p) {
+      return (!filtroDif.barrio || p.barrio === filtroDif.barrio) && (!filtroDif.estado || p.estado === filtroDif.estado) &&
+        (!t || (p.nombre + ' ' + (p.direccion || '')).toLowerCase().indexOf(t) >= 0);
+    });
+    return '<p class="suave nota-chica">' + lista.length + (lista.length === 1 ? ' restaurante' : ' restaurantes') + '</p>' +
+      tabla('difusion', ['Nombre', 'Barrio', 'Dirección', 'Mail', 'Número', 'Estado', 'Enviado', 'Enviar', ''], lista.map(function (p) {
+        var cerrado = p.estado === 'no-escribir', wa = p.whatsapp && p.estado !== 'sin-whatsapp' && !cerrado;
+        var botones = (wa ? '<a class="b p" target="_blank" rel="noopener" data-dif-enviar="' + p.id + '" data-via="whatsapp" href="https://wa.me/' + esc(p.whatsapp) + '?text=' + encodeURIComponent(textoDif(p)) + '">WhatsApp</a>' : '') +
+          (p.mail && !cerrado ? '<a class="b' + (wa ? '' : ' p') + '" target="_blank" rel="noopener" data-dif-enviar="' + p.id + '" data-via="mail" href="' + esc(linkMail(p)) + '">Mail</a>' : '');
+        return [celda(esc(p.nombre)), p.barrio ? celda(esc(p.barrio)) : celda(VACIO, ''), p.direccion ? celda(esc(p.direccion)) : celda(VACIO, ''),
+          p.mail ? celda(esc(p.mail)) : celda(VACIO, ''), p.telefono ? celda(esc(p.telefono)) : celda(VACIO, ''),
+          celda('<select class="estado-dif" data-dif-estado="' + p.id + '" aria-label="Estado de ' + esc(p.nombre) + '">' + Object.keys(EST_DIF).map(function (k) { return '<option value="' + k + '"' + (p.estado === k ? ' selected' : '') + '>' + EST_DIF[k] + '</option>'; }).join('') + '</select>', EST_DIF[p.estado] || ''),
+          celda(p.enviado ? esc(fechaISO(p.enviado)) + (p.via ? ' <span class="suave">por ' + (p.via === 'mail' ? 'mail' : 'WhatsApp') + '</span>' : '') : VACIO, p.enviado || ''),
+          celda('<span class="botones sin-salto">' + (botones || '<span class="suave">—</span>') + '</span>', ''),
+          celda('<button type="button" class="b" data-dif-editar="' + p.id + '">Editar</button>', '')];
+      }), PROSPECTOS && PROSPECTOS.length ? 'No hay restaurantes con esos filtros.' : 'Todavía no hay restaurantes cargados.');
+  }
+  function vistaDifusion() {
+    if (!PROSPECTOS) return '<p class="suave">No se pudo leer la lista de difusión.</p>';
+    var cuenta = function (e) { return PROSPECTOS.filter(function (p) { return p.estado === e; }).length; };
+    var opciones = function (o, sel) { return o.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (sel === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join(''); };
+    return '<div class="titulo-seccion"><h2>Difusión</h2><button type="button" class="b p" data-dif-nuevo>+ Agregar restaurante</button></div>' +
+      '<p class="suave">Tocá WhatsApp o Mail: se abre con el mensaje escrito, lo mandás y queda anotado.</p>' +
+      kpis([[PROSPECTOS.length, 'restaurantes'], [cuenta('nuevo'), 'por enviar'], [cuenta('enviado'), 'enviados'], [cuenta('respondio') + cuenta('interesado'), 'respondieron']]) +
+      '<details class="caja mensaje-dif"><summary>Mensaje que se envía</summary><p class="suave nota-chica">{nombre} se cambia por el nombre del restaurante y {link} por el ejemplo.</p>' +
+      '<textarea id="dif-mensaje" rows="9" aria-label="Mensaje de difusión">' + esc(mensajeDif()) + '</textarea>' +
+      '<div class="botones"><button type="button" class="b" data-dif-original>Volver al original</button></div></details>' +
+      '<div class="filtros-dif"><input type="search" id="dif-buscar" placeholder="Buscar por nombre o dirección" aria-label="Buscar restaurante" value="' + esc(filtroDif.texto) + '">' +
+      '<select id="dif-barrio" aria-label="Filtrar por barrio">' + opciones([['', 'Todos los barrios']].concat(barriosDif().map(function (b) { return [b, b]; })), filtroDif.barrio) + '</select>' +
+      '<select id="dif-filtro-estado" aria-label="Filtrar por estado">' + opciones([['', 'Todos los estados']].concat(Object.keys(EST_DIF).map(function (k) { return [k, EST_DIF[k]]; })), filtroDif.estado) + '</select></div>' +
+      '<div id="grilla-dif">' + grillaDif() + '</div>';
+  }
+  function repintarDif() { var g = document.getElementById('grilla-dif'); if (g) g.innerHTML = grillaDif(); }
+  function cambiarPro(p, cambios) {
+    var antes = {}; Object.keys(cambios).forEach(function (k) { antes[k] = p[k]; p[k] = cambios[k]; });
+    return Sesion.guardarProspecto(p.id, cambios).catch(function (e) {
+      Object.keys(antes).forEach(function (k) { p[k] = antes[k]; });
+      alertar('No se pudo guardar: ' + e.message); pintar();
+    });
+  }
+  /* agregar o corregir un restaurante */
+  function editarPro(p) {
+    var d = document.createElement('dialog'); d.style.maxWidth = '460px';
+    d.innerHTML = '<form class="cuerpo form" novalidate><h2 style="font-size:1.15rem">' + (p ? 'Editar restaurante' : 'Agregar restaurante') + '</h2>' +
+      '<label>Nombre<input type="text" name="nombre" required maxlength="100"></label><label>Barrio<input type="text" name="barrio" maxlength="60"></label>' +
+      '<label>Dirección<input type="text" name="direccion" maxlength="160"></label><label>Mail<input type="email" name="mail" maxlength="120"></label>' +
+      '<label>Número<small>El que se muestra en la grilla</small><input type="text" name="telefono" maxlength="40"></label>' +
+      '<label>WhatsApp<small>Solo números, con código de país, ej. 5491122334455. Vacío = sin botón de WhatsApp</small><input type="text" name="whatsapp" inputmode="numeric" maxlength="15"></label>' +
+      '<p class="msg" style="font-size:.88rem;color:var(--mal)"></p><p style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="b" data-no>Cancelar</button><button class="b p">Guardar</button></p></form>';
+    var f = d.querySelector('form'), msg = d.querySelector('.msg'), campos = ['nombre', 'barrio', 'direccion', 'mail', 'telefono', 'whatsapp'];
+    campos.forEach(function (k) { f[k].value = (p && p[k]) || ''; });
+    d.querySelector('[data-no]').onclick = function () { d.close(); };
+    d.addEventListener('close', function () { d.remove(); });
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var x = {}; campos.forEach(function (k) { x[k] = f[k].value.trim() || null; });
+      x.whatsapp = x.whatsapp ? x.whatsapp.replace(/\D/g, '') : null;
+      if (!x.nombre) { msg.textContent = 'Falta el nombre.'; return; }
+      (p ? Sesion.guardarProspecto(p.id, x) : Sesion.agregarProspecto(x)).then(function (nuevo) {
+        if (p) Object.keys(x).forEach(function (k) { p[k] = x[k]; }); else PROSPECTOS.unshift(nuevo);
+        d.close(); pintar();
+      }).catch(function (err) { msg.textContent = '⚠ ' + err.message; });
+    };
+    document.body.appendChild(d); d.showModal();
+  }
+  /* devuelve true si el toque era de esta sección */
+  function clicDifusion(e) {
+    var env = e.target.closest('[data-dif-enviar]');
+    if (env) {
+      var p = proDe(env.dataset.difEnviar), via = env.dataset.via, estado = p.estado === 'nuevo' || p.estado === 'sin-whatsapp' ? 'enviado' : p.estado;
+      cambiarPro(p, { estado: estado, enviado: hoyISO(), via: via }).then(function () { setTimeout(pintar, 300); });
+      return true; /* el link sigue su camino y abre WhatsApp o el mail */
+    }
+    if (e.target.closest('[data-dif-nuevo]')) { editarPro(null); return true; }
+    var ed = e.target.closest('[data-dif-editar]'); if (ed) { editarPro(proDe(ed.dataset.difEditar)); return true; }
+    if (e.target.closest('[data-dif-original]')) {
+      try { localStorage.removeItem('menu3d-difusion-mensaje'); } catch (err) {}
+      document.getElementById('dif-mensaje').value = MENSAJE_BASE; repintarDif(); return true;
+    }
+    return false;
+  }
+  C.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset.difEstado) { cambiarPro(proDe(t.dataset.difEstado), { estado: t.value }).then(pintar); return; }
+    if (t.id === 'dif-barrio') { filtroDif.barrio = t.value; repintarDif(); }
+    if (t.id === 'dif-filtro-estado') { filtroDif.estado = t.value; repintarDif(); }
+  });
+  C.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.id === 'dif-buscar') { filtroDif.texto = t.value; repintarDif(); }
+    if (t.id === 'dif-mensaje') { try { localStorage.setItem('menu3d-difusion-mensaje', t.value); } catch (err) {} repintarDif(); }
+  });
+
   function pintar() {
     var n = LOCS.length ? numeros() : { vencidos: 0 }, t = LOCS.length ? tareas().length : 0;
     document.getElementById('nav-botones').innerHTML = SECCIONES.map(function (s) {
@@ -652,7 +767,7 @@
     var ajustes = document.getElementById('ajustes'); ajustes.hidden = seccion !== 'ajustes'; C.hidden = seccion === 'ajustes';
     if (seccion === 'ajustes') return;
     if (fichaDe) { var l = locDe(fichaDe); C.innerHTML = l ? vistaFicha(l) : '<p class="suave">No se encontró ese local. <a href="#locales">Volver a Locales</a></p>'; return; }
-    C.innerHTML = { inicio: vistaInicio, locales: vistaLocales, cobros: vistaCobros, mensajes: vistaMensajes, estadisticas: vistaEstadisticas }[seccion]();
+    C.innerHTML = { inicio: vistaInicio, locales: vistaLocales, cobros: vistaCobros, mensajes: vistaMensajes, estadisticas: vistaEstadisticas, difusion: vistaDifusion }[seccion]();
     var b = document.getElementById('buscar');
     if (b) b.oninput = function () { buscar = b.value; document.getElementById('lista-locales').innerHTML = grillaLocales(); };
   }
@@ -664,6 +779,7 @@
       ORDEN[th.dataset.tabla] = { i: i, dir: o && o.i === i ? -o.dir : 1 };
       pintar(); return;
     }
+    if (clicDifusion(e)) return;
     var b = e.target.closest('[data-accion]'); if (!b) return;
     var a = b.dataset.accion, l = locDe(b.dataset.c), u = b.dataset.u && USUARIOS.filter(function (z) { return z.id === b.dataset.u; })[0]; if (!l) return;
     if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/', nombreDe(l), 'qr-' + l.carpeta);

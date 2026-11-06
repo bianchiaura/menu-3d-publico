@@ -313,3 +313,11 @@ body:has(.barra-admin) .wrap{max-width:1440px}
 .lista-promos{margin-top:14px}
 .chip.fin{background:rgba(180,35,24,.12);color:var(--mal)}
 .fila .s .chip{margin-left:0}
+/* difusión: filtros, mensaje y estado en la grilla */
+.filtros-dif{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
+.filtros-dif input,.filtros-dif select,.mensaje-dif textarea,.estado-dif{background:var(--tarjeta);border:1px solid var(--linea);border-radius:10px;padding:9px 12px}
+.filtros-dif input{flex:1;min-width:200px}
+.mensaje-dif{margin-top:14px;display:grid;gap:10px}
+.mensaje-dif summary{cursor:pointer;font-weight:700}
+.mensaje-dif textarea{display:block;width:100%;margin:10px 0;resize:vertical}
+.estado-dif{padding:6px 8px;font-size:.84rem}

@@ -111,3 +111,27 @@ create policy "el administrador ve los pagos" on public.pagos
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('comprobantes', 'comprobantes', false, 5242880, array['image/jpeg', 'image/png', 'application/pdf'])
 on conflict (id) do nothing;
+
+-- 9) Difusión: restaurantes a los que escribirles. Solo el administrador la ve: no va al repo público.
+create table if not exists public.prospectos (
+  id        bigint generated always as identity primary key,
+  nombre    text not null,
+  barrio    text,
+  direccion text,
+  mail      text,
+  telefono  text,                                     -- como se muestra
+  whatsapp  text check (whatsapp is null or whatsapp ~ '^[0-9]{10,15}$'),
+  web       text,
+  fuente    text,                                     -- de dónde salió el dato
+  estado    text not null default 'nuevo' check (estado in ('nuevo', 'enviado', 'respondio', 'interesado', 'sin-whatsapp', 'no-escribir')),
+  enviado   date,
+  via       text check (via is null or via in ('whatsapp', 'mail')),
+  creado    timestamptz not null default now()
+);
+create unique index if not exists prospectos_unico on public.prospectos (lower(nombre), coalesce(lower(direccion), ''));
+alter table public.prospectos enable row level security;
+drop policy if exists "solo el administrador" on public.prospectos;
+create policy "solo el administrador" on public.prospectos
+  for all to authenticated
+  using (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'))
+  with check (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'));
