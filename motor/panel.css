@@ -323,3 +323,5 @@ body:has(.barra-admin) .wrap{max-width:1440px}
 #grilla-dif th:last-child,#grilla-dif td:last-child{position:sticky;right:0;z-index:1;background:var(--tarjeta);border-left:1px solid var(--linea)}
 #grilla-dif th:last-child{background:var(--fondo)}
 @media (max-width:640px){#grilla-dif th:first-child,#grilla-dif td:first-child{position:static}}
+/* los nombres largos bajan de renglón para que la columna no ocupe toda la pantalla */
+#grilla-dif td:first-child{white-space:normal;min-width:160px;max-width:230px}
