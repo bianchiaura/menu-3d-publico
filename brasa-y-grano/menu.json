@@ -588,5 +588,12 @@
       },
       "descripcion": "Brownie de chocolate semiamargo tibio con dos bochas de helado de crema americana y salsa de chocolate."
     }
-  ]
+  ],
+  "incluye": {
+    "platos3d": 0,
+    "ingles": true,
+    "mascota": true,
+    "estadisticas": "completas",
+    "resumen": true
+  }
 }
