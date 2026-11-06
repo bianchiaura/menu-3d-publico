@@ -23,7 +23,7 @@ motor/              código común a todos los locales
   cargar-three.js     carga la librería 3D (three.js)
   github.js           publica cambios en este repositorio desde el administrador
   panel.css, qr.js    estilos de los paneles y generador de QR
-admin/              panel del administrador: locales, links, QR, "Nuevo local", usuarios y estadísticas
+admin/              panel del administrador por secciones: Inicio, Locales (con la ficha de cada uno), Cobros, Mensajes, Estadísticas y Ajustes
 panel/              panel de cada local (y de "Nuevo local"): platos, fotos, 3D, identidad y datos
 brasa-y-grano/      local de muestra: menu.json, fotos (img/), modelos 3D (modelos/) y créditos
 plantilla/          base vacía; también se usa para la vista previa de un local nuevo

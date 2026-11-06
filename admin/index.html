@@ -17,14 +17,12 @@
 <script src="../motor/vista.js"></script>
 </head>
 <body>
-<div class="barra"><div class="wrap">
-  <h1>Menú 3D<small>Panel del administrador</small></h1>
-  <button class="b" id="instalar" hidden>📲 Instalar app</button>
+<div class="barra barra-admin"><div class="wrap">
+  <h1>Menú 3D<small>Administrador</small></h1>
   <a class="b p" href="../panel/?nuevo">+ Nuevo local</a>
-  <a class="b" href="../precios/" target="_blank" rel="noopener">💲 Precios</a>
-  <button class="b" id="cuenta" hidden>👤 Mi cuenta</button>
-  <div class="vista" id="vista-ctrl"></div>
-</div></div>
+</div>
+<nav class="admin-nav" aria-label="Secciones"><div class="wrap" id="nav-botones"></div></nav>
+</div>
 <dialog id="dlg-eliminar" style="max-width:460px"><div class="cuerpo form">
   <h2 style="font-size:1.15rem">Eliminar local</h2>
   <p style="color:var(--suave)">Se borra su menú, sus fotos y su usuario, y su link deja de funcionar (su QR también). El menú queda guardado en el historial de GitHub por si hay que recuperarlo.</p>
@@ -55,14 +53,16 @@
 </div></dialog>
 
 <div class="wrap">
-  <p class="aviso-demo" id="aviso"></p>
+  <div id="contenido" class="contenido"><p class="suave">Cargando…</p></div>
 
-  <div class="kpis" id="kpis"></div>
-
-  <div class="caja pendientes" id="pendientes" hidden></div>
-
-  <div class="seccion"><h2>Locales</h2><p>Cada local tiene su link, su QR y su panel.</p></div>
-  <div class="grilla" id="locales"><p>Cargando…</p></div>
+  <!-- Ajustes: queda fijo en la página porque vista.js pone acá los selectores de diseño y colores -->
+  <div id="ajustes" class="contenido" hidden>
+    <div class="titulo-seccion"><h2>Ajustes</h2></div>
+    <section class="caja panel-caja"><h3>👤 Mi cuenta</h3><p class="suave">Entraste como <b id="mi-mail"></b></p><div class="botones"><button class="b" id="cuenta" hidden>Cambiar contraseña o cerrar sesión</button></div></section>
+    <section class="caja panel-caja"><h3>🎨 Cómo se ve este panel</h3><div class="vista" id="vista-ctrl"></div></section>
+    <section class="caja panel-caja"><h3>🔗 Páginas</h3><div class="botones"><a class="b" href="../precios/" target="_blank" rel="noopener">💲 Planes y precios</a><a class="b" href="../terminos/" target="_blank" rel="noopener">Términos</a><a class="b" href="../privacidad/" target="_blank" rel="noopener">Privacidad</a></div></section>
+    <section class="caja panel-caja" id="caja-instalar"><h3>📲 App en el celular</h3><p class="suave">Instalá este panel como app.</p><div class="botones"><button class="b" id="instalar" hidden>📲 Instalar app</button></div></section>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -89,11 +89,11 @@
     if (!d.admin) { location.replace('../panel/'); return; }
     sesion = d;
     document.getElementById('cuenta').hidden = false;
-    document.getElementById('aviso').innerHTML = 'Entraste como <b>' + esc(d.email) + '</b>. Desde acá creás locales, les das su usuario y ves cuánto se usa cada menú.';
+    document.getElementById('mi-mail').textContent = d.email;
     cargarLocales();
   }).catch(function (e) {
     console.error(e);
-    document.getElementById('locales').innerHTML = '<p>No se pudo conectar para iniciar sesión. Revisá tu conexión y recargá la página.</p>';
+    document.getElementById('contenido').innerHTML = '<p>No se pudo conectar para iniciar sesión. Revisá tu conexión y recargá la página.</p>';
   });
 
   /* ---------- crear el usuario de un local ---------- */
@@ -252,19 +252,6 @@
     if (!x) { alertar('Primero cargale el plan con "💳 Plan".'); return; }
     ventanaMensaje(l, 'Aviso de pago para ' + nombreDe(l), textoPago(l, x), 'aviso_enviado');
   }
-  /* lo que hay que mandar hoy: avisos de pago (7 días antes o vencidos) y el resumen cada 4 semanas */
-  function pintarPendientes() {
-    var filas = [];
-    LOCS.forEach(function (l, i) {
-      var pl = PLANES && PLANES[l.carpeta], x = pl && infoPlan(pl); if (!x) return;
-      if (x.dias <= 7 && diasDesde(leerEnviado(l.carpeta, 'aviso_enviado')) >= 7) filas.push('<div class="pendiente"><span>💳 <b>' + esc(nombreDe(l)) + '</b> · ' + (x.dias < 0 ? 'venció hace ' + (-x.dias) + (x.dias === -1 ? ' día' : ' días') : x.dias === 0 ? 'vence hoy' : 'vence en ' + x.dias + (x.dias === 1 ? ' día' : ' días')) + '</span><button class="b p" data-aviso="' + i + '">Aviso de pago</button></div>');
-      var base = leerEnviado(l.carpeta, 'resumen_enviado') || pl.desde;
-      if (EST && EST[l.carpeta] && diasDesde(base) >= 28) filas.push('<div class="pendiente"><span>📊 <b>' + esc(nombreDe(l)) + '</b> · resumen del mes</span><button class="b p" data-resumen="' + i + '">Resumen</button></div>');
-    });
-    var c = document.getElementById('pendientes');
-    c.hidden = !filas.length;
-    c.innerHTML = '<h2>📨 Para enviar hoy</h2>' + filas.join('');
-  }
   function alertar(t) { var p = document.createElement('div'); p.className = 'toast'; p.textContent = t; document.body.appendChild(p); setTimeout(function () { p.remove(); }, 4000); }
 
   /* ---------- instalar como app ---------- */
@@ -333,23 +320,11 @@
       pintar();
     }).catch(function (e) {
       console.error(e);
-      document.getElementById('locales').innerHTML = '<p>No se pudo leer locales.json.</p>';
+      document.getElementById('contenido').innerHTML = '<p>No se pudo leer locales.json.</p>';
     });
   }
 
   function fecha(t) { return new Date(t).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
-  /* quién entra al panel de ese local, con sus botones */
-  function bloqueUsuarios(l) {
-    if (!USUARIOS) return '';
-    var suyos = USUARIOS.filter(function (u) { return u.carpeta === l.carpeta; });
-    if (!suyos.length) return '<div class="usuarios"><p class="sin">👤 Todavía no tiene usuario para su panel.</p></div>';
-    return '<div class="usuarios">' + suyos.map(function (u) {
-      return '<div class="usuario"><div class="quien">👤 <b>' + esc(u.email) + '</b>' +
-        '<small>' + (u.ultimoIngreso ? 'Entró por última vez el ' + esc(fecha(u.ultimoIngreso)) : 'Todavía no entró a su panel') + '</small></div>' +
-        '<button class="b" data-clave="' + esc(u.id) + '">🔑 Nueva contraseña</button>' +
-        '<button class="b mal" data-borrar-u="' + esc(u.id) + '">Borrar</button></div>';
-    }).join('') + '</div>';
-  }
 
   /* ---------- plan de cada local: qué contrató, cuánto se cobra y cuándo vence ---------- */
   function pesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
@@ -360,15 +335,6 @@
     var d = String(pl.desde).split('-'), vence = new Date(+d[0], +d[1] - 1 + f.dura, +d[2]);
     var dias = Math.ceil((vence - new Date(new Date().toDateString())) / 864e5);
     return { nombre: p.nombre, forma: f.nombre, cobro: p.mes * f.cobra, porMes: p.mes * f.cobra / f.dura, vence: vence, dias: dias };
-  }
-  function bloquePlan(l) {
-    if (!PLANES) return '';
-    var pl = PLANES[l.carpeta], x = pl && infoPlan(pl);
-    if (!x) return '<p class="plan-local">💳 <span style="color:var(--suave)">Sin plan cargado</span></p>';
-    var f = x.vence.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
-    var estado = x.dias < 0 ? '<span class="vence-mal">⚠ Venció el ' + f + '</span>'
-      : x.dias <= 7 ? '<span class="vence-pronto">Vence pronto: ' + f + '</span>' : '<span>Próximo pago: ' + f + '</span>';
-    return '<p class="plan-local">💳 <b>' + esc(x.nombre) + '</b><span>' + esc(x.forma) + ' · ' + pesos(x.cobro) + '</span>' + estado + '</p>';
   }
   /* ventana para cargar o cambiar el plan (también para registrar una renovación: se cambia la fecha del pago) */
   function editarPlan(l) {
@@ -400,66 +366,166 @@
     document.body.appendChild(d); d.showModal();
   }
 
-  function pintar() {
-    var locs = LOCS, e = EST, platos = 0, con3d = 0, abiertos = 0, vistos3d = 0, abonos = 0, vencidos = 0;
-    locs.forEach(function (l) { (l.menu ? l.menu.platos : []).forEach(function (p) { platos++; if (p.modelo) con3d++; }); });
-    if (e) Object.keys(e).forEach(function (c) { abiertos += e[c].menu; vistos3d += e[c].d3 + e[c].ar; });
-    if (PLANES) locs.forEach(function (l) { var x = PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]); if (x) { abonos += x.porMes; if (x.dias < 0) vencidos++; } });
-    document.getElementById('kpis').innerHTML = [[locs.length, 'locales'], [platos, 'platos cargados'], [con3d, 'platos con 3D']]
-      .concat(PLANES ? [[pesos(abonos), 'por mes en abonos (promedio)']].concat(vencidos ? [[vencidos, vencidos === 1 ? 'pago vencido' : 'pagos vencidos']] : []) : [])
-      .concat(e ? [[Estadisticas.num(abiertos), 'menús abiertos (30 días)'], [Estadisticas.num(vistos3d), 'platos vistos en 3D o AR (30 días)']] : [])
-      .map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('');
-    function lineaEst(c) {
-      if (!e) return '';
-      var x = e[c]; if (!x) return '<p class="est">📊 Sin visitas en los últimos 30 días</p>';
-      return '<p class="est">📊 Menú abierto ' + Estadisticas.num(x.menu7) + ' veces esta semana · ' + Estadisticas.num(x.menu) + ' en 30 días · ' + Estadisticas.num(x.d3 + x.ar) + ' platos vistos en 3D</p>';
-    }
-
-    document.getElementById('locales').innerHTML = locs.map(function (l, i) {
-      var link = raiz + l.carpeta + '/', m = l.menu, color = m && m.colores && m.colores.claro && m.colores.claro.acento;
-      var tieneUsuario = USUARIOS && USUARIOS.some(function (u) { return u.carpeta === l.carpeta; });
-      return '<article class="caja local"' + (color ? ' style="border-top:4px solid ' + esc(color) + '"' : '') + '><div><h3>' + esc(m ? m.nombre : l.nombre) + '<span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></h3>' +
-        (m && m.identidad || l.nota ? '<p class="nota">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
-        '<p class="datos">' + (m ? m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías' : '⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos)') + '</p>' +
-        '<p class="datos"><a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a></p>' + lineaEst(l.carpeta) + '</div>' +
-        '<button type="button" class="qr" data-qr="' + i + '" aria-label="Ver el QR del menú en grande">' + QR.svg(link) + '</button>' +
-        bloquePlan(l) +
-        bloqueUsuarios(l) +
-        '<div class="acciones"><a class="b p" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' +
-        '<a class="b" href="../panel/?local=' + encodeURIComponent(l.carpeta) + '">Editar local</a>' +
-        '<button class="b" data-qr="' + i + '">🔳 QR para imprimir</button>' +
-        '<button class="b" data-copiar="' + i + '">Copiar link</button>' +
-        '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
-        '<button class="b" data-resumen="' + i + '">📊 Resumen</button>' +
-        (PLANES ? '<button class="b" data-plan="' + i + '">💳 Plan</button>' : '') +
-        (PLANES && PLANES[l.carpeta] ? '<button class="b" data-aviso="' + i + '">📨 Aviso de pago</button>' : '') +
-        '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
-    }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
-    pintarPendientes();
+  /* ---------- secciones del administrador ----------
+     Barra de arriba: #inicio, #locales, #cobros, #mensajes, #estadisticas, #ajustes. La ficha de un local es #local/carpeta. */
+  var SECCIONES = [['inicio', '🏠 Inicio'], ['locales', '🍽 Locales'], ['cobros', '💳 Cobros'], ['mensajes', '📨 Mensajes'], ['estadisticas', '📊 Estadísticas'], ['ajustes', '⚙ Ajustes']];
+  var seccion = 'inicio', fichaDe = null, buscar = '';
+  var C = document.getElementById('contenido');
+  function leerRuta() {
+    var h = location.hash.replace(/^#/, '').split('/');
+    fichaDe = h[0] === 'local' ? decodeURIComponent(h[1] || '') : null;
+    seccion = fichaDe ? 'locales' : (SECCIONES.some(function (s) { return s[0] === h[0]; }) ? h[0] : 'inicio');
   }
-  document.getElementById('pendientes').onclick = function (e) {
-    var a = e.target.closest('[data-aviso]'), r = e.target.closest('[data-resumen]');
-    if (a) enviarAvisoPago(LOCS[a.dataset.aviso]);
-    if (r) enviarResumen(LOCS[r.dataset.resumen], r);
+  addEventListener('hashchange', function () { leerRuta(); pintar(); scrollTo(0, 0); });
+  function locDe(c) { return LOCS.filter(function (l) { return l.carpeta === c; })[0]; }
+  function planDe(l) { return PLANES && PLANES[l.carpeta] ? infoPlan(PLANES[l.carpeta]) : null; }
+  function usuariosDe(l) { return (USUARIOS || []).filter(function (u) { return u.carpeta === l.carpeta; }); }
+  function fechaCorta(d) { return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function fechaISO(s) { if (!s) return 'Nunca'; var p = s.split('-'); return fechaCorta(new Date(+p[0], +p[1] - 1, +p[2])); }
+  function kpis(l) { return '<div class="kpis">' + l.map(function (k) { return '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span></div>'; }).join('') + '</div>'; }
+  function boton(accion, c, texto, clase, extra) { return '<button type="button" class="b' + (clase ? ' ' + clase : '') + '" data-accion="' + accion + '" data-c="' + esc(c) + '"' + (extra || '') + '>' + texto + '</button>'; }
+  function vence(x) {
+    var f = fechaCorta(x.vence);
+    return x.dias < 0 ? '<span class="vence-mal">⚠ Venció el ' + f + '</span>' : x.dias <= 7 ? '<span class="vence-pronto">Vence el ' + f + '</span>' : '<span>' + f + '</span>';
+  }
+  function dato(k, v) { return '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>'; }
+  function telTexto(t) { t = String(t || ''); return /^549\d{10}$/.test(t) ? '+54 9 ' + t.slice(3, 5) + ' ' + t.slice(5, 9) + '-' + t.slice(9) : t; }
+
+  /* lo que hay que mandar hoy: avisos de pago (7 días antes o vencidos) y el resumen cada 4 semanas */
+  function tareas() {
+    var filas = [];
+    LOCS.forEach(function (l) {
+      var pl = PLANES && PLANES[l.carpeta], x = pl && infoPlan(pl); if (!x) return;
+      if (x.dias <= 7 && diasDesde(leerEnviado(l.carpeta, 'aviso_enviado')) >= 7) filas.push('<div class="pendiente"><span>💳 <b>' + esc(nombreDe(l)) + '</b> · ' + (x.dias < 0 ? 'venció hace ' + (-x.dias) + (x.dias === -1 ? ' día' : ' días') : x.dias === 0 ? 'vence hoy' : 'vence en ' + x.dias + (x.dias === 1 ? ' día' : ' días')) + '</span>' + boton('aviso', l.carpeta, 'Aviso de pago', 'p') + '</div>');
+      var base = leerEnviado(l.carpeta, 'resumen_enviado') || pl.desde;
+      if (EST && EST[l.carpeta] && diasDesde(base) >= 28) filas.push('<div class="pendiente"><span>📊 <b>' + esc(nombreDe(l)) + '</b> · resumen del mes</span>' + boton('resumen', l.carpeta, 'Resumen', 'p') + '</div>');
+    });
+    return filas;
+  }
+  function cajaTareas() {
+    var t = tareas();
+    return '<div class="caja panel-caja"><h3>📨 Para enviar hoy</h3>' + (t.length ? '<div class="lista">' + t.join('') + '</div>' : '<p class="suave">No hay mensajes pendientes. ✓</p>') + '</div>';
+  }
+  function numeros() {
+    var r = { platos: 0, con3d: 0, abiertos: 0, vistos: 0, abonos: 0, vencidos: 0, pronto: 0 };
+    LOCS.forEach(function (l) {
+      (l.menu ? l.menu.platos : []).forEach(function (p) { r.platos++; if (p.modelo) r.con3d++; });
+      var x = planDe(l); if (x) { r.abonos += x.porMes; if (x.dias < 0) r.vencidos++; else if (x.dias <= 7) r.pronto++; }
+    });
+    if (EST) Object.keys(EST).forEach(function (c) { r.abiertos += EST[c].menu; r.vistos += EST[c].d3 + EST[c].ar; });
+    return r;
+  }
+
+  /* --- Inicio --- */
+  function vistaInicio() {
+    var n = numeros(), prox = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }).slice(0, 4);
+    return kpis([[LOCS.length, 'locales'], [pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [Estadisticas.num(n.abiertos), 'menús abiertos (30 días)']]) +
+      cajaTareas() +
+      '<div class="caja panel-caja"><h3>💳 Próximos vencimientos</h3>' + (prox.length ? '<div class="lista">' + prox.map(function (o) {
+        return '<a class="fila-link" href="#local/' + encodeURIComponent(o.l.carpeta) + '"><span><b>' + esc(nombreDe(o.l)) + '</b><small>' + esc(o.x.nombre) + ' · ' + esc(o.x.forma) + '</small></span>' + vence(o.x) + '</a>';
+      }).join('') + '</div>' : '<p class="suave">Todavía no cargaste planes. Se cargan en la ficha de cada local.</p>') + '</div>';
+  }
+
+  /* --- Locales --- */
+  function filasLocales() {
+    var t = buscar.toLowerCase(), l = LOCS.filter(function (x) { return !t || nombreDe(x).toLowerCase().indexOf(t) >= 0; });
+    return l.map(function (x) {
+      var p = planDe(x), color = x.menu && x.menu.colores && x.menu.colores.claro && x.menu.colores.claro.acento;
+      return '<a class="fila-link local-fila" href="#local/' + encodeURIComponent(x.carpeta) + '"' + (color ? ' style="border-left-color:' + esc(color) + '"' : '') + '><span><b>' + esc(nombreDe(x)) + '</b><span class="chip ' + esc(x.estado) + '">' + esc(ESTADOS[x.estado] || x.estado) + '</span>' +
+        '<small>' + (p ? esc(p.nombre) + ' · ' + esc(p.forma) : 'Sin plan') + ' · ' + (usuariosDe(x).length ? 'con usuario' : 'sin usuario') + '</small></span>' + (p ? vence(p) : '') + '<i aria-hidden="true">›</i></a>';
+    }).join('') || '<p class="suave">' + (LOCS.length ? 'No hay locales con ese nombre.' : 'Todavía no hay locales. Tocá <b>+ Nuevo local</b>.') + '</p>';
+  }
+  function vistaLocales() {
+    return '<div class="titulo-seccion"><h2>Locales</h2><input type="search" id="buscar" placeholder="Buscar local" aria-label="Buscar local" value="' + esc(buscar) + '"></div><div class="lista" id="lista-locales">' + filasLocales() + '</div>';
+  }
+
+  /* --- Ficha de un local --- */
+  function vistaFicha(l) {
+    var c = l.carpeta, m = l.menu, i = (m && m.info) || {}, us = usuariosDe(l), x = planDe(l), e = EST && EST[c], link = raiz + c + '/';
+    var mail = (us[0] && us[0].email) || i.email || '', wa = (us[0] && us[0].whatsapp) || i.whatsapp || '';
+    var dir = [i.direccion, i.zona].filter(Boolean).join(', ');
+    var nada = '<span class="suave">Sin cargar</span>';
+    return '<p><a class="volver" href="#locales">← Locales</a></p>' +
+      '<div class="titulo-ficha"><h2>' + esc(nombreDe(l)) + '</h2><span class="chip ' + esc(l.estado) + '">' + esc(ESTADOS[l.estado] || l.estado) + '</span></div>' +
+      (m && m.identidad || l.nota ? '<p class="suave">' + esc(m && m.identidad || l.nota) + '</p>' : '') +
+      (!m ? '<p class="suave">⚠ Todavía no se puede leer su menú (si recién lo creaste, esperá 1 o 2 minutos).</p>' : '') +
+      '<div class="ficha-grilla">' +
+      '<section class="caja panel-caja"><h3>📇 Datos del local</h3><dl class="datos-local">' +
+        dato('Mail', mail ? esc(mail) : nada) + dato('WhatsApp', wa ? esc(telTexto(wa)) : nada) + dato('Dirección', dir ? esc(dir) : nada) + dato('Menú', '<a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//, '')) + '</a>') +
+        (m && m.muestra ? '<div><dt></dt><dd class="suave">Datos de muestra, inventados.</dd></div>' : '') + '</dl></section>' +
+      '<section class="caja panel-caja"><h3>💳 Plan y pagos</h3>' + (PLANES ? (x ? '<dl class="datos-local">' + dato('Plan', esc(x.nombre)) + dato('Forma de pago', esc(x.forma)) + dato('Cobro', pesos(x.cobro)) + dato('Próximo pago', vence(x)) + '</dl>' : '<p class="suave">Sin plan cargado.</p>') +
+        '<div class="botones">' + boton('plan', c, x ? 'Cambiar plan o registrar pago' : 'Cargar plan') + '</div>' : '<p class="suave">No se pudo leer el plan.</p>') + '</section>' +
+      '<section class="caja panel-caja"><h3>📨 Mensajes</h3><p class="suave nota-chica">Se abre su WhatsApp con el mensaje escrito y vos tocás enviar.</p><div class="lista">' +
+        '<div class="pendiente"><span><b>Resumen del mes</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'resumen_enviado'))) + '</small></span>' + boton('resumen', c, 'Preparar') + '</div>' +
+        '<div class="pendiente"><span><b>Aviso de pago</b><small>Último: ' + esc(fechaISO(leerEnviado(c, 'aviso_enviado'))) + '</small></span>' + boton('aviso', c, 'Preparar') + '</div>' +
+      '</div></section>' +
+      '<section class="caja panel-caja"><h3>👤 Acceso a su panel</h3>' + (USUARIOS ? (us.length ? '<div class="lista">' + us.map(function (u) {
+          return '<div class="usuario"><div class="quien"><b>' + esc(u.email) + '</b><small>' + (u.ultimoIngreso ? 'Entró por última vez el ' + esc(fecha(u.ultimoIngreso)) : 'Todavía no entró a su panel') + '</small></div>' +
+            '<div class="botones">' + boton('clave', c, '🔑 Nueva contraseña', '', ' data-u="' + esc(u.id) + '"') + boton('borrar-u', c, 'Borrar', 'mal', ' data-u="' + esc(u.id) + '"') + '</div></div>';
+        }).join('') + '</div>' : '<p class="suave">Todavía no tiene usuario.</p>') + '<div class="botones">' + boton('usuario', c, us.length ? 'Agregar otro usuario' : 'Crear usuario', us.length ? '' : 'p') + '</div>' : '<p class="suave">No se pudieron leer los usuarios.</p>') + '</section>' +
+      '<section class="caja panel-caja"><h3>🍽 Menú y QR</h3><div class="menu-qr"><button type="button" class="qr" data-accion="qr" data-c="' + esc(c) + '" aria-label="Ver el QR del menú en grande">' + QR.svg(link) + '</button><div class="botones">' +
+        '<a class="b p" href="../panel/?local=' + encodeURIComponent(c) + '">Editar menú</a><a class="b" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir menú</a>' + boton('qr', c, 'QR para imprimir') + boton('copiar', c, 'Copiar link') + '</div></div>' +
+        (m ? '<p class="suave nota-chica">' + m.platos.length + ' platos · ' + m.platos.filter(function (p) { return p.modelo; }).length + ' con 3D · ' + m.categorias.length + ' categorías</p>' : '') + '</section>' +
+      '<section class="caja panel-caja"><h3>📊 Estadísticas (30 días)</h3>' + (e ? '<dl class="datos-local">' + dato('Esta semana', Estadisticas.num(e.menu7) + ' aperturas') + dato('En 30 días', Estadisticas.num(e.menu) + ' aperturas') + dato('En 3D o AR', Estadisticas.num(e.d3 + e.ar) + ' platos vistos') + '</dl>' : '<p class="suave">Sin visitas en los últimos 30 días.</p>') + '</section>' +
+      '</div><p class="zona-peligro">' + boton('eliminar', c, 'Eliminar este local', 'mal') + '</p>';
+  }
+
+  /* --- Cobros --- */
+  function vistaCobros() {
+    if (!PLANES) return '<p class="suave">No se pudieron leer los planes.</p>';
+    var n = numeros(), con = LOCS.map(function (l) { return { l: l, x: planDe(l) }; }).filter(function (o) { return o.x; }).sort(function (a, b) { return a.x.dias - b.x.dias; }), sin = LOCS.filter(function (l) { return !planDe(l); });
+    return '<div class="titulo-seccion"><h2>Cobros</h2></div>' + kpis([[pesos(n.abonos), 'por mes en abonos (promedio)'], [n.vencidos, n.vencidos === 1 ? 'pago vencido' : 'pagos vencidos'], [n.pronto, 'vencen esta semana']]) +
+      '<div class="caja panel-caja"><h3>Planes activos</h3>' + (con.length ? '<div class="lista">' + con.map(function (o) {
+        return '<div class="pendiente"><span><a href="#local/' + encodeURIComponent(o.l.carpeta) + '"><b>' + esc(nombreDe(o.l)) + '</b></a><small>' + esc(o.x.nombre) + ' · ' + esc(o.x.forma) + ' · ' + pesos(o.x.cobro) + '</small><small>' + vence(o.x) + '</small></span><span class="botones">' + boton('plan', o.l.carpeta, 'Registrar pago') + boton('aviso', o.l.carpeta, 'Aviso') + '</span></div>';
+      }).join('') + '</div>' : '<p class="suave">Todavía no hay planes cargados.</p>') + '</div>' +
+      (sin.length ? '<div class="caja panel-caja"><h3>Sin plan</h3><div class="lista">' + sin.map(function (l) { return '<div class="pendiente"><span><b>' + esc(nombreDe(l)) + '</b></span>' + boton('plan', l.carpeta, 'Cargar plan') + '</div>'; }).join('') + '</div></div>' : '');
+  }
+
+  /* --- Mensajes --- */
+  function vistaMensajes() {
+    return '<div class="titulo-seccion"><h2>Mensajes</h2></div><p class="suave">Quedan listos para cada local: tocás, se abre su WhatsApp con el texto escrito y lo mandás.</p>' + cajaTareas() +
+      '<div class="caja panel-caja"><h3>Por local</h3><div class="lista">' + LOCS.map(function (l) {
+        return '<div class="pendiente"><span><a href="#local/' + encodeURIComponent(l.carpeta) + '"><b>' + esc(nombreDe(l)) + '</b></a><small>Resumen: ' + esc(fechaISO(leerEnviado(l.carpeta, 'resumen_enviado'))) + ' · Aviso: ' + esc(fechaISO(leerEnviado(l.carpeta, 'aviso_enviado'))) + '</small></span><span class="botones">' + boton('resumen', l.carpeta, 'Resumen') + boton('aviso', l.carpeta, 'Aviso') + '</span></div>';
+      }).join('') + '</div></div>';
+  }
+
+  /* --- Estadísticas --- */
+  function vistaEstadisticas() {
+    if (!EST) return '<p class="suave">No se pudieron leer las estadísticas.</p>';
+    var n = numeros(), filas = LOCS.map(function (l) { return { l: l, e: EST[l.carpeta] || { menu: 0, menu7: 0, d3: 0, ar: 0 } }; }).sort(function (a, b) { return b.e.menu - a.e.menu; }), max = Math.max.apply(null, filas.map(function (f) { return f.e.menu; }).concat([1]));
+    return '<div class="titulo-seccion"><h2>Estadísticas</h2></div>' + kpis([[Estadisticas.num(n.abiertos), 'menús abiertos (30 días)'], [Estadisticas.num(n.vistos), 'platos vistos en 3D o AR'], [n.con3d, 'platos con 3D'], [n.platos, 'platos cargados']]) +
+      '<div class="caja panel-caja"><h3>Por local (30 días)</h3>' + filas.map(function (f) {
+        return '<div class="est-plato"><a class="n" href="#local/' + encodeURIComponent(f.l.carpeta) + '">' + esc(nombreDe(f.l)) + '</a><span class="v">' + Estadisticas.num(f.e.menu) + ' aperturas · ' + Estadisticas.num(f.e.d3 + f.e.ar) + ' en 3D</span><span class="barra-h"><i style="width:' + (f.e.menu / max * 100) + '%"></i></span></div>';
+      }).join('') + '</div>';
+  }
+
+  function pintar() {
+    var n = LOCS.length ? numeros() : { vencidos: 0 }, t = LOCS.length ? tareas().length : 0;
+    document.getElementById('nav-botones').innerHTML = SECCIONES.map(function (s) {
+      var marca = s[0] === 'mensajes' && t ? t : s[0] === 'cobros' && n.vencidos ? n.vencidos : 0;
+      return '<a href="#' + s[0] + '"' + (seccion === s[0] ? ' aria-current="page"' : '') + '>' + s[1] + (marca ? '<em>' + marca + '</em>' : '') + '</a>';
+    }).join('');
+    var ajustes = document.getElementById('ajustes'); ajustes.hidden = seccion !== 'ajustes'; C.hidden = seccion === 'ajustes';
+    if (seccion === 'ajustes') return;
+    if (fichaDe) { var l = locDe(fichaDe); C.innerHTML = l ? vistaFicha(l) : '<p class="suave">No se encontró ese local. <a href="#locales">Volver a Locales</a></p>'; return; }
+    C.innerHTML = { inicio: vistaInicio, locales: vistaLocales, cobros: vistaCobros, mensajes: vistaMensajes, estadisticas: vistaEstadisticas }[seccion]();
+    var b = document.getElementById('buscar');
+    if (b) b.oninput = function () { buscar = b.value; document.getElementById('lista-locales').innerHTML = filasLocales(); };
+  }
+  C.onclick = function (e) {
+    var b = e.target.closest('[data-accion]'); if (!b) return;
+    var a = b.dataset.accion, l = locDe(b.dataset.c), u = b.dataset.u && USUARIOS.filter(function (z) { return z.id === b.dataset.u; })[0]; if (!l) return;
+    if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/', nombreDe(l), 'qr-' + l.carpeta);
+    if (a === 'copiar') navigator.clipboard.writeText(raiz + l.carpeta + '/').then(function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar link'; }, 1500); });
+    if (a === 'plan') editarPlan(l);
+    if (a === 'aviso') enviarAvisoPago(l);
+    if (a === 'resumen') enviarResumen(l, b);
+    if (a === 'usuario') crearUsuario(l);
+    if (a === 'clave' && u) crearUsuario(l, u);
+    if (a === 'borrar-u' && u) borrarUsuario(u, b);
+    if (a === 'eliminar') eliminar(l);
   };
-  document.getElementById('locales').onclick = function (e) {
-    var locs = LOCS, q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
-    if (q) { var l = locs[q.dataset.qr]; QR.mostrar(raiz + l.carpeta + '/', (l.menu && l.menu.nombre) || l.nombre || l.carpeta, 'qr-' + l.carpeta); }
-    if (c) { var l2 = locs[c.dataset.copiar]; navigator.clipboard.writeText(raiz + l2.carpeta + '/').then(function () { c.textContent = '¡Copiado!'; setTimeout(function () { c.textContent = 'Copiar link'; }, 1500); }); }
-    var x = e.target.closest('[data-eliminar]'); if (x) eliminar(locs[x.dataset.eliminar]);
-    var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
-    var rs = e.target.closest('[data-resumen]'); if (rs) enviarResumen(locs[rs.dataset.resumen], rs);
-    var pp = e.target.closest('[data-plan]'); if (pp) editarPlan(locs[pp.dataset.plan]);
-    var av = e.target.closest('[data-aviso]'); if (av) enviarAvisoPago(locs[av.dataset.aviso]);
-    /* botones de cada usuario */
-    var k = e.target.closest('[data-clave]'), b = e.target.closest('[data-borrar-u]'), id = k ? k.dataset.clave : b ? b.dataset.borrarU : null;
-    if (id) {
-      var usuario = USUARIOS.filter(function (z) { return z.id === id; })[0];
-      var suLocal = usuario && locs.filter(function (z) { return z.carpeta === usuario.carpeta; })[0];
-      if (!usuario || !suLocal) return;
-      if (k) crearUsuario(suLocal, usuario); else borrarUsuario(usuario, b);
-    }
-  };
+  leerRuta();
 })();
 </script>
 </body>

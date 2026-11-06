@@ -222,3 +222,46 @@ html.modo-celu .fila.elegible{grid-template-columns:22px 1fr auto}
 .pendientes{margin-top:16px;display:grid;gap:10px;border-left:4px solid var(--acento)}
 .pendientes h2{font-size:1.05rem}
 .pendiente{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:.9rem}
+/* administrador: barra de secciones, listas y ficha de cada local */
+.barra-admin h1{flex-basis:auto!important}
+.admin-nav{border-top:1px solid var(--linea)}
+.admin-nav .wrap{flex-wrap:nowrap;gap:2px;min-height:0;padding-top:0;padding-bottom:0;overflow-x:auto;scrollbar-width:none}
+.admin-nav .wrap::-webkit-scrollbar{display:none}
+.admin-nav a{flex:none;padding:11px 12px;font-weight:600;font-size:.9rem;color:var(--suave);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+.admin-nav a[aria-current=page]{color:var(--texto);border-color:var(--acento)}
+.admin-nav em{font-style:normal;background:var(--mal);color:#fff;border-radius:999px;font-size:.7rem;padding:1px 6px;margin-left:5px}
+.contenido{padding-top:16px;display:grid;gap:14px}
+.contenido .kpis{margin-top:0}
+.suave{color:var(--suave)}
+.nota-chica{font-size:.82rem}
+.titulo-seccion{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.titulo-seccion h2{font-size:1.35rem}
+.titulo-seccion input{flex:1;min-width:150px;max-width:300px;padding:9px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--tarjeta);color:var(--texto);font-size:16px}
+.panel-caja{display:grid;gap:12px;align-content:start}
+.panel-caja h3{font-size:1.02rem}
+.lista{display:grid;gap:8px}
+.botones{display:flex;gap:8px;flex-wrap:wrap}
+.pendiente span small,.fila-link small,.usuario small{display:block;color:var(--suave);font-size:.8rem;font-weight:400}
+.fila-link{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--linea);border-radius:12px;background:var(--tarjeta);color:var(--texto);text-decoration:none}
+.fila-link > span:first-child{flex:1;min-width:0}
+.fila-link i{font-style:normal;color:var(--suave);font-size:1.3rem}
+.local-fila{border-left:4px solid var(--acento)}
+.vence-mal{color:var(--mal);font-weight:700;font-size:.85rem}
+.vence-pronto{color:#b45309;font-weight:700;font-size:.85rem}
+.volver{font-weight:700;text-decoration:none}
+.titulo-ficha{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.titulo-ficha h2{font-size:1.5rem}
+.titulo-ficha .chip{margin-left:0}
+.ficha-grilla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){html:not(.modo-compu) .ficha-grilla{grid-template-columns:1fr}}
+html.modo-celu .ficha-grilla{grid-template-columns:1fr}
+.datos-local{display:grid;gap:8px;margin:0}
+.datos-local > div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;font-size:.92rem}
+.datos-local dt{color:var(--suave)}
+.datos-local dd{margin:0;overflow-wrap:anywhere}
+.menu-qr{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.menu-qr .botones{flex:1;min-width:170px}
+.usuario{display:grid;gap:8px;font-size:.9rem}
+.usuario .quien{overflow-wrap:anywhere}
+.zona-peligro{margin-top:4px;text-align:right}
+#caja-instalar:has(#instalar[hidden]){display:none}
