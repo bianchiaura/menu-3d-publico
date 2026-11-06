@@ -121,3 +121,30 @@ body.con-mascota .info{padding-bottom:96px}
 .ft .antes{color:var(--suave);font-size:.95rem;margin-left:8px}
 .promo-3d{display:flex;flex-wrap:wrap;gap:8px}
 .promo-3d .btn-sec{margin-top:0;padding:9px 14px;font-size:.88rem;min-height:40px}
+/* reservas y pedidos */
+.reservar{width:100%;padding:12px 14px;border-radius:14px;background:var(--acento);color:var(--sobre-acento);font-weight:700}
+.ft-botones{display:flex;align-items:center;gap:8px;flex:none}
+.btn-mas{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--acento);color:var(--acento2);font-size:1.3rem;font-weight:700;line-height:1;flex:none}
+.btn-mas.con{background:var(--acento);color:var(--sobre-acento);font-size:1rem}
+.pedido-barra{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:25;width:min(608px,calc(100vw - 32px));display:flex;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:14px;background:var(--acento);color:var(--sobre-acento);font-weight:700;box-shadow:0 6px 20px rgba(40,20,5,.3)}
+body.con-pedido{padding-bottom:90px}
+body.con-pedido .mascota{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.hoja-cuerpo{gap:12px;padding-top:14px}
+.hoja-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--linea)}
+.hoja-item small{display:block;color:var(--suave)}
+.hoja-cant{display:flex;align-items:center;gap:10px;flex:none}
+.hoja-cant button{width:40px;height:40px;border-radius:10px;border:1px solid var(--linea);background:var(--tarjeta);font-size:1.15rem;font-weight:700}
+.hoja-total{display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;padding:4px 0 8px}
+.hoja-form{display:grid;gap:12px}
+.hoja-form label{display:grid;gap:4px;font-weight:500;font-size:.92rem}
+.hoja-form label[hidden]{display:none}
+.hoja-form input[type=text],.hoja-form input[type=date],.hoja-form input[type=time],.hoja-form select{font:inherit;color:inherit;width:100%;min-height:44px;padding:9px 12px;border-radius:10px;border:1px solid var(--linea);background:var(--tarjeta)}
+.hoja-form fieldset{border:0;padding:0;display:grid;gap:6px}
+.hoja-form legend{font-weight:500;font-size:.92rem;margin-bottom:4px}
+.hoja-form fieldset label{display:flex;align-items:center;gap:8px;min-height:32px}
+.hoja-dos{display:grid;grid-template-columns:1fr 110px;gap:10px}
+.hoja-error{color:#b42318;font-size:.88rem}
+.hoja-error:empty{display:none}
+.hoja-form .btn,.hoja-cuerpo>.btn{width:100%;min-height:48px}
+.hoja-cuerpo .suave{color:var(--suave);font-size:.85rem}
+.hoja-mensaje{white-space:pre-wrap;font:inherit;font-size:.9rem;padding:12px;border-radius:12px;background:var(--tarjeta);border:1px solid var(--linea)}

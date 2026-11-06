@@ -169,13 +169,15 @@
     };
     $('#list').onclick = function (ev) {
       if (ev.target.closest('[data-ver-promos]')) { setCat(PROMOS); return; }
+      if (ev.target.closest('[data-reservar]')) { abrirReserva(); return; }
+      var ag = ev.target.closest('[data-agregar]'); if (ag) { cambiarPedido(ag.dataset.agregar, 1); return; }
       var b = ev.target.closest('[data-3d]'); if (b && window.open3D) window.open3D(b.dataset['3d']);
     };
   }
   /* dibuja (o vuelve a dibujar, al cambiar de idioma) todo el menú */
   function pintar() {
     ['header', '#list', 'footer.info', '#ficha'].forEach(function (s) { var x = $(s); if (x) x.remove(); });
-    esqueleto(); tabs(); list();
+    esqueleto(); tabs(); list(); pintarBarra();
   }
 
   function categorias() {
@@ -222,7 +224,7 @@
       (sinStock ? '<span class="sin">' + t('sinStock') + '</span>' : '') +
       '</div><div class="bd"><h3>' + esc(x.titulo) + '</h3>' + (x.descripcion ? '<p>' + esc(x.descripcion) + '</p>' : '') +
       (x.vigencia ? '<p class="promo-vig">🕒 ' + esc(x.vigencia) + '</p>' : '') +
-      (p.precio ? '<div class="ft"><span><b>' + precio(p.precio) + '</b>' + (p.precioAntes ? '<s class="antes">' + precio(p.precioAntes) + '</s>' : '') + '</span></div>' : '') +
+      (p.precio ? '<div class="ft"><span><b>' + precio(p.precio) + '</b>' + (p.precioAntes ? '<s class="antes">' + precio(p.precioAntes) + '</s>' : '') + '</span>' + (sinStock ? '' : botonAgregar('x' + p.id, x.titulo)) + '</div>' : '') +
       (con3d.length ? '<div class="promo-3d">' + con3d.map(function (d) {
         var n = textoPlato(d).nombre;
         return '<button class="btn-sec" data-3d="' + esc(d.id) + '">' + esc(t('ver3dDe', n)) + '</button>';
@@ -230,8 +232,9 @@
   }
   function listaPromos() {
     var l = promos();
-    $('#list').innerHTML = '<h2>' + t('promociones') + '</h2>' + (l.length ? l.map(tarjetaPromo).join('') : '<p class="aviso">' + t('sinPromos') + '</p>');
+    $('#list').innerHTML = botonReservar() + '<h2>' + t('promociones') + '</h2>' + (l.length ? l.map(tarjetaPromo).join('') : '<p class="aviso">' + t('sinPromos') + '</p>');
   }
+  function botonReservar() { return puedeReservar() ? '<button class="reservar" data-reservar>📅 ' + ta('reservar') + '</button>' : ''; }
   function avisoPromos() {
     var n = promos().length, primera = categorias()[0];
     if (!n || !primera || primera.id !== cat) return '';
@@ -249,16 +252,166 @@
     var C = M.categorias.filter(function (c) { return c.id === cat; })[0];
     if (!C) { $('#list').innerHTML = '<p class="aviso">' + t('sinPlatos') + '</p>'; return; }
     var ps = visibles().filter(function (d) { return d.categoria === cat && (!filtro || (d.etiquetas || []).indexOf(filtro) >= 0); });
-    $('#list').innerHTML = avisoPromos() + '<h2>' + esc(nombreCat(C)) + '</h2>' + (ps.length ? '' : '<p class="aviso">' + esc(t('ningunoFiltro', t('etiquetas')[filtro])) + '</p>') + ps.map(function (d) {
+    $('#list').innerHTML = botonReservar() + avisoPromos() + '<h2>' + esc(nombreCat(C)) + '</h2>' + (ps.length ? '' : '<p class="aviso">' + esc(t('ningunoFiltro', t('etiquetas')[filtro])) + '</p>') + ps.map(function (d) {
       var x = textoPlato(d);
       return '<article class="card' + (d.agotado ? ' agotado' : '') + '" id="plato-' + esc(d.id) + '"><div class="ph"' + (C.fondo ? ' style="background:' + esc(C.fondo) + '"' : '') + '>' +
         (d.foto ? '<img src="' + esc(url(d.foto)) + '" alt="' + esc(x.nombre) + '" loading="lazy">' : '<span aria-hidden="true">' + esc(d.emoji || '🍽') + '</span>') +
         (d.agotado ? '<span class="sin">' + t('sinStock') + '</span>' : '') +
         '</div><div class="bd"><div class="tg">' + (d.etiquetas || []).map(etiqueta).join('') + '</div>' +
         '<h3>' + esc(x.nombre) + '</h3><p>' + esc(x.descripcion) + '</p><div class="ft"><b>' + precio(d.precio) + '</b>' +
-        (d.modelo ? '<button class="btn" data-3d="' + esc(d.id) + '" aria-label="' + esc(t('ver3dDe', x.nombre)) + '">' + t('ver3d') + '</button>' : '') +
+        '<span class="ft-botones">' + (d.modelo ? '<button class="btn" data-3d="' + esc(d.id) + '" aria-label="' + esc(t('ver3dDe', x.nombre)) + '">' + t('ver3d') + '</button>' : '') + (d.agotado ? '' : botonAgregar('p' + d.id, x.nombre)) + '</span>' +
         '</div></div></article>';
     }).join('');
+  }
+
+  /* ---------- reservas y pedidos por WhatsApp ----------
+     "atencion": { reservas, pedidos, retiro, delivery, whatsapp } (lo elige el local en su panel; si no hay whatsapp, se usa el de info).
+     El link del QR de las mesas lleva ?mesa: ahí no se ofrece reservar y el pedido es una lista para mostrarle al mozo.
+     No se guarda nada del cliente: el mensaje se escribe acá y sale desde su propio WhatsApp al del local.
+     Con "muestra": true (locales inventados) no se abre WhatsApp: se muestra el mensaje que le llegaría al local. */
+  var TXT_AT = {
+    es: {
+      reservar: 'Reservar mesa', agregar: 'Agregar {x} al pedido', verPedido: 'Ver pedido', tuPedido: 'Tu pedido', tuLista: 'Tu lista', total: 'Total', vacio: 'Tu pedido está vacío.', vaciar: 'Vaciar',
+      mozo: 'Mostrale esta lista al mozo para hacer tu pedido.', como: 'Cómo lo querés', retiro: 'Retiro en el local', delivery: 'Delivery', nombre: 'Tu nombre', direccion: 'Dirección de entrega', aclaracion: 'Aclaración (opcional)',
+      enviar: 'Enviar por WhatsApp', pagoAparte: 'El pago se arregla con el local.', quitar: 'Quitar uno', sumar: 'Sumar uno', falta: 'Completá los datos que faltan.',
+      dia: 'Día', hora: 'Hora', personas: 'Personas', cerradoDia: 'Ese día el local no abre o ya no quedan horarios.', confirman: 'El local te confirma por WhatsApp. La reserva queda hecha cuando te responden.',
+      demo: 'Este restaurante es un ejemplo, así que no se envía nada. Esto es lo que le llegaría al local por WhatsApp:', listo: 'Listo'
+    },
+    en: {
+      reservar: 'Book a table', agregar: 'Add {x} to your order', verPedido: 'View order', tuPedido: 'Your order', tuLista: 'Your list', total: 'Total', vacio: 'Your order is empty.', vaciar: 'Clear',
+      mozo: 'Show this list to your waiter to place your order.', como: 'How do you want it', retiro: 'Pick up', delivery: 'Delivery', nombre: 'Your name', direccion: 'Delivery address', aclaracion: 'Notes (optional)',
+      enviar: 'Send by WhatsApp', pagoAparte: 'You pay the restaurant directly.', quitar: 'Remove one', sumar: 'Add one', falta: 'Please fill in the missing details.',
+      dia: 'Date', hora: 'Time', personas: 'People', cerradoDia: 'The restaurant is closed that day or there are no times left.', confirman: 'The restaurant will confirm by WhatsApp. Your booking is set once they reply.',
+      demo: 'This restaurant is a sample, so nothing is sent. This is what the restaurant would receive on WhatsApp:', listo: 'Done'
+    }
+  };
+  function ta(k, x) { var v = (TXT_AT[idioma] || TXT_AT.es)[k]; return x == null ? v : v.replace('{x}', x); }
+  var enMesa = /[?&]mesa\b/.test(location.search), pedido = {};
+  function at() { return M.atencion || {}; }
+  function numeroLocal() {
+    var n = String(at().whatsapp || (M.info || {}).whatsapp || '').replace(/\D/g, '').replace(/^0/, '');
+    return !n ? '' : /^54/.test(n) ? n : '549' + n;
+  }
+  function incluido() { return !(M.incluye && M.incluye.pedidos === false); }
+  function hayContacto() { return !!(M.muestra || numeroLocal()); }
+  function puedeReservar() { return incluido() && !!at().reservas && !enMesa && hayContacto(); }
+  function puedePedir() { return incluido() && !!at().pedidos && (enMesa || (!!(at().retiro || at().delivery) && hayContacto())); }
+  function clavePedido() { return 'menu3d-pedido:' + src; }
+  function cargarPedido() { try { pedido = JSON.parse(sessionStorage.getItem(clavePedido())) || {}; } catch (e) { pedido = {}; } }
+  function guardarPedido() { try { sessionStorage.setItem(clavePedido(), JSON.stringify(pedido)); } catch (e) {} }
+  /* "p3" es el plato 3 y "x2" la promoción 2 */
+  function itemDe(k) {
+    var id = k.slice(1), promo = k.charAt(0) === 'x', l = promo ? M.promociones || [] : visibles();
+    var d = l.filter(function (x) { return String(x.id) === id; })[0]; if (!d) return null;
+    return { clave: k, base: promo ? d.titulo : d.nombre, nombre: promo ? textoPromo(d).titulo : textoPlato(d).nombre, precio: Number(d.precio) || 0 };
+  }
+  function itemsPedido() { return Object.keys(pedido).map(function (k) { var i = itemDe(k); if (i) i.n = pedido[k]; return i; }).filter(Boolean); }
+  function totalPedido(l) { return l.reduce(function (a, i) { return a + i.precio * i.n; }, 0); }
+  function botonAgregar(k, nombre) {
+    if (!puedePedir()) return '';
+    return '<button class="btn-mas' + (pedido[k] ? ' con' : '') + '" data-agregar="' + esc(k) + '" aria-label="' + esc(ta('agregar', nombre)) + '">' + (pedido[k] || '+') + '</button>';
+  }
+  function pintarBarra() {
+    var b = $('#pedido-barra'), l = itemsPedido(), n = l.reduce(function (a, i) { return a + i.n; }, 0);
+    if (b) b.remove();
+    document.body.classList.toggle('con-pedido', !!n);
+    [].forEach.call(document.querySelectorAll('[data-agregar]'), function (x) { var c = pedido[x.dataset.agregar]; x.textContent = c || '+'; x.classList.toggle('con', !!c); });
+    if (!n) return;
+    document.body.insertAdjacentHTML('beforeend', '<button class="pedido-barra" id="pedido-barra"><span>🧾 ' + ta('verPedido') + ' · ' + n + '</span><b>' + precio(totalPedido(l)) + '</b></button>');
+    $('#pedido-barra').onclick = abrirPedido;
+  }
+  function cambiarPedido(k, d) {
+    pedido[k] = (pedido[k] || 0) + d; if (pedido[k] <= 0) delete pedido[k];
+    guardarPedido(); pintarBarra();
+  }
+  /* ventana de abajo, con el mismo aspecto que la ficha del local */
+  function hoja(titulo, cuerpo) {
+    var v = $('#hoja'); if (v) v.remove();
+    document.body.insertAdjacentHTML('beforeend', '<dialog class="ficha" id="hoja" aria-labelledby="hoja-t"><div class="ficha-cab"><h2 id="hoja-t">' + esc(titulo) + '</h2>' +
+      '<button class="ficha-x" data-cerrar-hoja aria-label="' + t('cerrar') + '">✕</button></div><div class="ficha-cuerpo hoja-cuerpo">' + cuerpo + '</div></dialog>');
+    var d = $('#hoja');
+    d.addEventListener('click', function (e) { if (e.target === d || e.target.closest('[data-cerrar-hoja]')) d.close(); });
+    d.addEventListener('close', function () { d.remove(); });
+    d.showModal(); return d;
+  }
+  function salir(d, tipo, texto, alEnviar) {
+    if (M.muestra) { /* restaurante inventado: su número no es real */
+      d.querySelector('.hoja-cuerpo').innerHTML = '<p>' + ta('demo') + '</p><pre class="hoja-mensaje"></pre><button type="button" class="btn" data-cerrar-hoja>' + ta('listo') + '</button>';
+      d.querySelector('pre').textContent = texto; return;
+    }
+    window.open('https://wa.me/' + numeroLocal() + '?text=' + encodeURIComponent(texto), '_blank', 'noopener');
+    contar(tipo); if (alEnviar) alEnviar(); d.close();
+  }
+  function abrirPedido() {
+    var l = itemsPedido();
+    var filas = l.map(function (i) {
+      return '<div class="hoja-item"><span>' + esc(i.nombre) + (i.precio ? '<small>' + precio(i.precio * i.n) + '</small>' : '') + '</span><span class="hoja-cant">' +
+        '<button type="button" data-cant="-1" data-k="' + esc(i.clave) + '" aria-label="' + ta('quitar') + '">−</button><b>' + i.n + '</b><button type="button" data-cant="1" data-k="' + esc(i.clave) + '" aria-label="' + ta('sumar') + '">+</button></span></div>';
+    }).join('');
+    var opciones = [at().retiro && 'retiro', at().delivery && 'delivery'].filter(Boolean);
+    var form = enMesa ? '<p class="suave">' + ta('mozo') + '</p><button type="button" class="btn-sec" data-vaciar>' + ta('vaciar') + '</button>' :
+      '<form class="hoja-form" novalidate>' +
+      (opciones.length > 1 ? '<fieldset><legend>' + ta('como') + '</legend>' + opciones.map(function (o, n) { return '<label><input type="radio" name="como" value="' + o + '"' + (n ? '' : ' checked') + '> ' + ta(o) + '</label>'; }).join('') + '</fieldset>' : '<input type="hidden" name="como" value="' + opciones[0] + '"><p class="suave">' + ta(opciones[0]) + '</p>') +
+      '<label>' + ta('nombre') + '<input type="text" name="nombre" maxlength="60" autocomplete="name"></label>' +
+      '<label data-dir' + (opciones[0] === 'delivery' ? '' : ' hidden') + '>' + ta('direccion') + '<input type="text" name="direccion" maxlength="120" autocomplete="street-address"></label>' +
+      '<label>' + ta('aclaracion') + '<input type="text" name="nota" maxlength="140"></label><p class="hoja-error" role="alert"></p>' +
+      '<button class="btn">' + ta('enviar') + '</button><p class="suave">' + ta('pagoAparte') + '</p></form>';
+    var d = hoja(enMesa ? ta('tuLista') : ta('tuPedido'), filas + '<div class="hoja-total"><span>' + ta('total') + '</span><b>' + precio(totalPedido(l)) + '</b></div>' + form);
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cant]');
+      if (b) { cambiarPedido(b.dataset.k, +b.dataset.cant); d.close(); if (itemsPedido().length) abrirPedido(); return; }
+      if (e.target.closest('[data-vaciar]')) { pedido = {}; guardarPedido(); pintarBarra(); d.close(); }
+    });
+    var f = d.querySelector('form'); if (!f) return;
+    f.addEventListener('change', function () { d.querySelector('[data-dir]').hidden = f.como.value !== 'delivery'; });
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var delivery = f.como.value === 'delivery', nom = f.nombre.value.trim(), dir = f.direccion.value.trim(), nota = f.nota.value.trim();
+      if (!nom || (delivery && !dir)) { d.querySelector('.hoja-error').textContent = ta('falta'); return; }
+      var txt = ['Hola, quiero hacer un pedido para ' + (delivery ? 'delivery' : 'retirar') + ' en ' + M.nombre + ':', ''].concat(itemsPedido().map(function (i) {
+        return '• ' + i.n + ' x ' + i.base + (i.precio ? ' (' + precio(i.precio * i.n) + ')' : '');
+      }), ['', 'Total: ' + precio(totalPedido(itemsPedido())), 'Nombre: ' + nom]);
+      if (delivery) txt.push('Dirección: ' + dir);
+      if (nota) txt.push('Aclaración: ' + nota);
+      salir(d, 'pedido', txt.join('\n'), function () { pedido = {}; guardarPedido(); pintarBarra(); });
+    };
+  }
+  /* horarios para reservar ese día: cada media hora, hasta una hora antes de cerrar. null = el local no cargó ese día */
+  function horasDe(iso) {
+    var s = (M.info || {}).semana, p = iso.split('-'), f = new Date(+p[0], +p[1] - 1, +p[2]), x = s && s.length === 7 && s[f.getDay()];
+    if (!x || !x.m) return null;
+    if (x.m === 'cerrado') return [];
+    var ahora = new Date(), hoy = isoDe(ahora) === iso, min = ahora.getHours() * 60 + ahora.getMinutes() + 30, l = [];
+    [[x.a1, x.c1]].concat(x.m === 'cortado' ? [[x.a2, x.c2]] : []).forEach(function (tu) {
+      var a = minutos(tu[0]), c = minutos(tu[1]); if (a == null || c == null) return;
+      if (c <= a) c += 1440;
+      for (var h = a; h <= c - 60; h += 30) if (!hoy || h >= min) l.push(('0' + Math.floor(h / 60) % 24).slice(-2).replace(/^(\d)$/, '0$1') + ':' + ('0' + h % 60).slice(-2));
+    });
+    return l;
+  }
+  function abrirReserva() {
+    var hoy = new Date(), hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 60), personas = '';
+    for (var i = 1; i <= 12; i++) personas += '<option' + (i === 2 ? ' selected' : '') + '>' + i + '</option>';
+    var d = hoja(ta('reservar'), '<form class="hoja-form" novalidate><div class="hoja-dos"><label>' + ta('dia') + '<input type="date" name="dia" min="' + isoDe(hoy) + '" max="' + isoDe(hasta) + '" value="' + isoDe(hoy) + '"></label>' +
+      '<label>' + ta('personas') + '<select name="personas">' + personas + '</select></label></div><div data-horas></div>' +
+      '<label>' + ta('nombre') + '<input type="text" name="nombre" maxlength="60" autocomplete="name"></label>' +
+      '<label>' + ta('aclaracion') + '<input type="text" name="nota" maxlength="140"></label><p class="hoja-error" role="alert"></p>' +
+      '<button class="btn">' + ta('enviar') + '</button><p class="suave">' + ta('confirman') + '</p></form>');
+    var f = d.querySelector('form'), caja = d.querySelector('[data-horas]');
+    function horas() {
+      var l = f.dia.value ? horasDe(f.dia.value) : null;
+      caja.innerHTML = l && !l.length ? '<p class="suave">' + ta('cerradoDia') + '</p>' : '<label>' + ta('hora') + (l ? '<select name="hora">' + l.map(function (h) { return '<option>' + h + '</option>'; }).join('') + '</select>' : '<input type="time" name="hora" step="900">') + '</label>';
+    }
+    horas(); f.dia.addEventListener('change', horas);
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var nom = f.nombre.value.trim(), nota = f.nota.value.trim(), hora = f.hora && f.hora.value, dia = f.dia.value, n = Number(f.personas.value);
+      if (!nom || !hora || !dia) { d.querySelector('.hoja-error').textContent = ta('falta'); return; }
+      var p = dia.split('-'), fecha = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+      var txt = ['Hola, quiero reservar una mesa en ' + M.nombre + ':', '', 'Día: ' + fecha, 'Hora: ' + hora + ' h', 'Personas: ' + n, 'A nombre de: ' + nom];
+      if (nota) txt.push('Aclaración: ' + nota);
+      salir(d, 'reserva', txt.join('\n'));
+    };
   }
 
   function error(tx) {
@@ -274,6 +427,7 @@
     idioma = m.en ? (guardado || (/^es\b/i.test(navigator.language || 'es') ? 'es' : 'en')) : 'es';
     window.idiomaMenu = idioma;
     colores(m.colores); tipografia(m.tipografia);
+    cargarPedido();
     cat = categorias()[0] ? categorias()[0].id : (promos().length ? PROMOS : undefined);
     pintar();
     document.addEventListener('click', function (ev) {

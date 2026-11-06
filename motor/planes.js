@@ -7,15 +7,15 @@ window.PRECIOS = {
   mesesGratisAnual: 2,          /* anual: se pagan 12 - 2 = 10 meses */
   planes: [
     { id: 'esencial', nombre: 'Esencial', para: 'Para sumar el 3D a tu carta', mes: 60000,
-      funciones: { platos3d: 20, ingles: false, mascota: false, estadisticas: 'basicas', resumen: false },
+      funciones: { platos3d: 20, ingles: false, mascota: false, estadisticas: 'basicas', resumen: false, pedidos: false },
       incluye: ['Diseño y carga del menú incluidos', 'Hasta 20 platos en 3D (sin contar bebidas)', 'Platos sobre la mesa con realidad aumentada', 'Códigos QR listos para imprimir', 'Panel propio para gestionar precios, platos, categorías y promociones', 'Estadísticas básicas: visitas y platos vistos'],
-      no: ['Menú en inglés', 'Mascota del local', 'Estadísticas completas', 'Resumen mensual por WhatsApp'] },
+      no: ['Menú en inglés', 'Mascota del local', 'Reservas y pedidos por WhatsApp', 'Estadísticas completas', 'Resumen mensual por WhatsApp'] },
     { id: 'completo', nombre: 'Completo', para: 'Para destacarte y entender qué buscan tus clientes', mes: 75000, destacado: true,
-      funciones: { platos3d: 40, ingles: true, mascota: true, estadisticas: 'completas', resumen: false },
-      incluye: ['Todo lo del plan Esencial', 'Hasta 40 platos en 3D (sin contar bebidas)', 'Menú en inglés para turistas', 'Mascota que recomienda platos de tu carta', 'Estadísticas completas: horas pico, turistas y platos más vistos'],
+      funciones: { platos3d: 40, ingles: true, mascota: true, estadisticas: 'completas', resumen: false, pedidos: true },
+      incluye: ['Todo lo del plan Esencial', 'Hasta 40 platos en 3D (sin contar bebidas)', 'Menú en inglés para turistas', 'Mascota que recomienda platos de tu carta', 'Reservas y pedidos por WhatsApp desde el menú', 'Estadísticas completas: horas pico, turistas y platos más vistos'],
       no: ['Resumen mensual por WhatsApp'] },
     { id: 'premium', nombre: 'Premium', para: 'Para cartas extensas, cadenas y varias sucursales', mes: 85000,
-      funciones: { platos3d: 0, ingles: true, mascota: true, estadisticas: 'completas', resumen: true }, /* platos3d: 0 = sin límite */
+      funciones: { platos3d: 0, ingles: true, mascota: true, estadisticas: 'completas', resumen: true, pedidos: true }, /* platos3d: 0 = sin límite */
       incluye: ['Todo lo del plan Completo', 'Platos en 3D sin límite', 'Un menú por sucursal, cada uno con su QR', 'Mascota a medida, con la personalidad de tu marca', 'Resumen mensual por WhatsApp', 'Atención prioritaria por WhatsApp'] }
   ]
 };

@@ -806,7 +806,7 @@
     if (clicDifusion(e)) return;
     var b = e.target.closest('[data-accion]'); if (!b) return;
     var a = b.dataset.accion, l = locDe(b.dataset.c), u = b.dataset.u && USUARIOS.filter(function (z) { return z.id === b.dataset.u; })[0]; if (!l) return;
-    if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/', nombreDe(l), 'qr-' + l.carpeta);
+    if (a === 'qr') QR.mostrar(raiz + l.carpeta + '/?mesa', nombreDe(l), 'qr-' + l.carpeta); /* ?mesa: el menú sabe que el cliente está sentado en el local */
     if (a === 'copiar') navigator.clipboard.writeText(raiz + l.carpeta + '/').then(function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar link'; }, 1500); });
     if (a === 'plan') editarPlan(l);
     if (a === 'pago') registrarPago(l);

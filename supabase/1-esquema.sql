@@ -135,3 +135,7 @@ create policy "solo el administrador" on public.prospectos
   for all to authenticated
   using (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'))
   with check (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'));
+
+-- 10) Estadísticas: también se cuenta cuando alguien envía una reserva o un pedido por WhatsApp (sin datos de quién)
+alter table public.vistas drop constraint if exists vistas_tipo_check;
+alter table public.vistas add constraint vistas_tipo_check check (tipo in ('menu', '3d', 'ar', 'reserva', 'pedido'));

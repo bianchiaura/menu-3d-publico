@@ -548,6 +548,12 @@
       '<label>Reservas<small>Cómo se reserva y condiciones</small><input type="text" name="reservas" value="' + esc(i.reservas) + '"></label>' +
       '<div><b style="font-size:.88rem">Medios de pago</b><div class="checks" style="margin-top:6px">' + casillas('pago', PAGOS, i.pagos) + '</div></div>' +
       '<div><b style="font-size:.88rem">Servicios</b><div class="checks" style="margin-top:6px">' + casillas('servicio', SERVICIOS, i.servicios) + '</div></div>' +
+      (M.incluye && M.incluye.pedidos === false ? '' : '<h3 style="font-size:1.05rem;margin-top:6px">Reservas y pedidos</h3>' +
+        '<p style="color:var(--suave);font-size:.85rem;margin-top:-8px">Tus clientes reservan o piden desde el menú y el mensaje te llega por WhatsApp. Lo confirmás vos.</p>' +
+        '<div class="checks">' + [['at_reservas', 'reservas', 'Reservas de mesa'], ['at_pedidos', 'pedidos', 'Pedidos'], ['at_retiro', 'retiro', 'Retiro en el local'], ['at_delivery', 'delivery', 'Delivery']].map(function (x) {
+          return '<label><input type="checkbox" name="' + x[0] + '"' + (M.atencion && M.atencion[x[1]] ? ' checked' : '') + '> ' + x[2] + '</label>';
+        }).join('') + '</div>' +
+        '<label>WhatsApp que recibe los mensajes<small>Con código de país. Si lo dejás vacío, se usa el WhatsApp de arriba</small><input type="text" name="at_whatsapp" value="' + esc(M.atencion && M.atencion.whatsapp) + '" placeholder="+54 9 11 2233-4455"></label>') +
       '<h3 style="font-size:1.05rem;margin-top:6px">Categorías</h3><div style="display:grid;gap:8px">' +
       M.categorias.map(function (k, n) {
         return '<div class="cat-fila"><input type="text" data-cat="' + n + '" value="' + esc(k.nombre) + '" aria-label="Nombre de categoría">' +
@@ -570,6 +576,7 @@
       if (n === '_plan' || n === '_pago' || n === '_desde' || n === '_mascota') { M[n] = t.value; elegirPlan(); guardar(); return; }
       if (t.dataset.cat != null) M.categorias[t.dataset.cat].nombre = t.value;
       else if (n === 'nombre' || n === 'subtitulo' || n === 'identidad' || n === 'tipografia' || n === '_estado') M[n] = t.value;
+      else if (/^at_/.test(n)) { M.atencion = M.atencion || {}; M.atencion[n.slice(3)] = t.type === 'checkbox' ? t.checked : t.value.trim(); }
       else if (n === '_carpeta') { M._carpeta = slug(t.value); $('#slug-ej').textContent = M._carpeta; }
       else if (n === 'prototipo' || n === 'muestra') M[n] = t.checked;
       else if (n === 'pago' || n === 'servicio') {
@@ -1084,7 +1091,7 @@
 
   $('#cuenta').onclick = function () { Sesion.cuenta(); };
   /* el QR chiquito de arriba abre el QR grande, para guardarlo o imprimirlo */
-  $('#qr').onclick = function () { if (M && !nuevo) QR.mostrar(link(), M.nombre, 'qr-' + (M._carpeta || carpeta)); };
+  $('#qr').onclick = function () { if (M && !nuevo) QR.mostrar(link() + '?mesa', M.nombre, 'qr-' + (M._carpeta || carpeta)); }; /* ?mesa: el menú sabe que el cliente está sentado en el local */
 
   /* ---------- carga ---------- */
   function arrancar(m, estado) {

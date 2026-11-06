@@ -7,6 +7,12 @@
   "prototipo": false,
   "moneda": "$",
   "muestra": true,
+  "atencion": {
+    "reservas": true,
+    "pedidos": true,
+    "retiro": true,
+    "delivery": true
+  },
   "mascota": {
     "nombre": "Brasita",
     "frases": [

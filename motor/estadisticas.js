@@ -14,13 +14,15 @@ window.Estadisticas = (function () {
   function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
 
   function sumar(filas) {
-    var dias = ultimosDias(DIAS), semana = dias.slice(-7), r = { menu: 0, menu7: 0, d3: 0, ar: 0, porDia: {}, platos: {} };
+    var dias = ultimosDias(DIAS), semana = dias.slice(-7), r = { menu: 0, menu7: 0, d3: 0, ar: 0, reserva: 0, pedido: 0, porDia: {}, platos: {} };
     dias.forEach(function (d) { r.porDia[d] = 0; });
     filas.forEach(function (f) {
       var c = Number(f.cantidad) || 0;
       if (f.tipo === 'menu') {
         r.menu += c; if (semana.indexOf(f.dia) >= 0) r.menu7 += c;
         if (f.dia in r.porDia) r.porDia[f.dia] += c;
+      } else if (f.tipo === 'reserva' || f.tipo === 'pedido') {
+        r[f.tipo] += c;
       } else {
         if (f.tipo === '3d') r.d3 += c; else r.ar += c;
         if (f.plato != null) { var p = r.platos[f.plato] = r.platos[f.plato] || { d3: 0, ar: 0 }; p[f.tipo === '3d' ? 'd3' : 'ar'] += c; }
@@ -106,6 +108,7 @@ window.Estadisticas = (function () {
             : '<p class="est-dato">Tu menú todavía no tiene inglés. Si cargás la traducción de tus platos (en "Editar" → "Inglés"), a los turistas les aparece sola.</p>') + '</div>';
         }
 
+        if (M && M.atencion && (M.atencion.reservas || M.atencion.pedidos)) h += '<div class="caja est-caja"><h3>Reservas y pedidos</h3><p class="est-dato">Tocaron enviar <b>' + num(r.reserva) + '</b> ' + (r.reserva === 1 ? 'reserva' : 'reservas') + ' y <b>' + num(r.pedido) + '</b> ' + (r.pedido === 1 ? 'pedido' : 'pedidos') + ' por WhatsApp.</p></div>';
         h += '<div class="caja est-caja"><h3>Platos más mirados en 3D</h3>' + (platos.length ? platos.map(function (p) {
           return '<div class="est-plato"><span class="n">' + esc(p.nombre) + '</span><span class="v">' + num(p.d3) + ' en 3D' + (p.ar ? ' · ' + num(p.ar) + ' en AR' : '') + '</span>' +
             '<span class="barra-h"><i style="width:' + ((p.d3 + p.ar) / maxP * 100) + '%"></i></span></div>';
@@ -142,6 +145,8 @@ window.Estadisticas = (function () {
       var l = ['¡Hola! Te compartimos el resumen de tu menú de ' + nombre + ' de los últimos 30 días 📊', ''];
       l.push('📱 Abrieron el menú ' + num(r.menu) + (r.menu === 1 ? ' vez' : ' veces'));
       if (r.d3 + r.ar) l.push('🧊 Vieron platos en 3D ' + num(r.d3 + r.ar) + (r.d3 + r.ar === 1 ? ' vez' : ' veces'));
+      if (r.reserva) l.push('📅 Tocaron enviar ' + num(r.reserva) + (r.reserva === 1 ? ' reserva' : ' reservas') + ' por WhatsApp');
+      if (r.pedido) l.push('🧾 Tocaron enviar ' + num(r.pedido) + (r.pedido === 1 ? ' pedido' : ' pedidos') + ' por WhatsApp');
       if (top) l.push('⭐ Plato más visto: ' + top.nombre);
       if (a.total && horaPico(a)) l.push('⏰ Horario con más visitas: ' + horaPico(a));
       if (a.total && M && M.en && a.en) l.push('🌎 ' + pct(a.en, a.total) + ' % lo vio en inglés');
