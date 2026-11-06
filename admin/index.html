@@ -59,6 +59,8 @@
 
   <div class="kpis" id="kpis"></div>
 
+  <div class="caja pendientes" id="pendientes" hidden></div>
+
   <div class="seccion"><h2>Locales</h2><p>Cada local tiene su link, su QR y su panel.</p></div>
   <div class="grilla" id="locales"><p>Cargando…</p></div>
 </div>
@@ -184,29 +186,84 @@
       alertar('No se pudo borrar el usuario: ' + err.message);
     });
   }
-  /* resumen del último mes para mandarle al local: se arma el texto y se abre su WhatsApp con el mensaje escrito */
+  /* ---------- mensajes para cada local: resumen del mes y aviso de pago ----------
+     WhatsApp no deja mandar mensajes solos: se arma el texto y se abre el chat del local, y vos tocás enviar.
+     Queda anotado cuándo se mandó, para que el administrador sepa qué falta. */
+  function telDe(l) {
+    /* a quién: el WhatsApp de su usuario o el de su ficha; si no hay, WhatsApp pregunta a quién mandarlo */
+    var u = (USUARIOS || []).filter(function (x) { return x.carpeta === l.carpeta && x.whatsapp; })[0];
+    var ficha = l.menu && !l.menu.muestra && l.menu.info && l.menu.info.whatsapp;
+    return (u && u.whatsapp) || numeroWhatsApp(ficha) || '';
+  }
+  function nombreDe(l) { return (l.menu && l.menu.nombre) || l.nombre || l.carpeta; }
+  function fechaLarga(d) { return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  function leerEnviado(c, campo) {
+    var p = PLANES && PLANES[c], v = p && p[campo];
+    try { v = v || localStorage.getItem('menu3d-enviado:' + c + ':' + campo); } catch (e) {}
+    return v || '';
+  }
+  function marcarEnviado(c, campo) {
+    var hoy = hoyISO();
+    if (PLANES && PLANES[c]) { PLANES[c][campo] = hoy; Sesion.marcarEnviado(c, campo, hoy).catch(function (e) { console.error(e); }); }
+    try { localStorage.setItem('menu3d-enviado:' + c + ':' + campo, hoy); } catch (e) {}
+    pintar();
+  }
+  function diasDesde(iso) { return iso ? Math.floor((new Date(hoyISO()) - new Date(iso)) / 864e5) : Infinity; }
+  function ventanaMensaje(l, titulo, texto, campo) {
+    var tel = telDe(l), d = document.createElement('dialog'); d.style.maxWidth = '460px';
+    d.innerHTML = '<div class="cuerpo" style="display:grid;gap:12px"><h2 style="font-size:1.15rem"></h2>' +
+      '<pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>' +
+      (tel ? '' : '<p style="color:var(--suave);font-size:.85rem">No tengo su WhatsApp guardado: al tocar el botón, WhatsApp te pregunta a quién mandarlo.</p>') +
+      '<p style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="b" data-cerrar>Cerrar</button><button type="button" class="b" data-copiar-r>Copiar</button>' +
+      '<a class="b p" target="_blank" rel="noopener">📲 Enviar por WhatsApp</a></p></div>';
+    d.querySelector('h2').textContent = titulo;
+    d.querySelector('pre').textContent = texto;
+    var a = d.querySelector('a'); a.href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
+    a.addEventListener('click', function () { marcarEnviado(l.carpeta, campo); setTimeout(function () { d.close(); }, 300); });
+    d.querySelector('[data-cerrar]').onclick = function () { d.close(); };
+    d.querySelector('[data-copiar-r]').onclick = function (ev) { var b = ev.target; navigator.clipboard.writeText(texto).then(function () { b.textContent = '¡Copiado!'; marcarEnviado(l.carpeta, campo); setTimeout(function () { b.textContent = 'Copiar'; }, 1500); }); };
+    d.addEventListener('close', function () { d.remove(); });
+    document.body.appendChild(d); d.showModal();
+  }
+  /* resumen del último mes, con la fecha de vencimiento de su plan */
   function enviarResumen(l, boton) {
     var antes = boton.textContent; boton.disabled = true; boton.textContent = 'Armando…';
     Estadisticas.resumen(l.carpeta, l.menu).then(function (texto) {
       if (!texto) { alertar('Este local todavía no tuvo visitas en los últimos 30 días.'); return; }
-      /* a quién: el WhatsApp de su usuario o el de su ficha; si no hay, WhatsApp pregunta a quién mandarlo */
-      var u = (USUARIOS || []).filter(function (x) { return x.carpeta === l.carpeta && x.whatsapp; })[0];
-      var ficha = l.menu && !l.menu.muestra && l.menu.info && l.menu.info.whatsapp;
-      var tel = (u && u.whatsapp) || numeroWhatsApp(ficha) || '';
-      var d = document.createElement('dialog'); d.style.maxWidth = '460px';
-      d.innerHTML = '<div class="cuerpo" style="display:grid;gap:12px"><h2 style="font-size:1.15rem">Resumen para ' + esc((l.menu && l.menu.nombre) || l.carpeta) + '</h2>' +
-        '<pre class="caja" style="white-space:pre-wrap;font:inherit;font-size:.88rem"></pre>' +
-        (tel ? '' : '<p style="color:var(--suave);font-size:.85rem">No tengo su WhatsApp guardado: al tocar el botón, WhatsApp te pregunta a quién mandarlo.</p>') +
-        '<p style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="b" data-cerrar>Cerrar</button><button type="button" class="b" data-copiar-r>Copiar</button>' +
-        '<a class="b p" target="_blank" rel="noopener">📲 Enviar por WhatsApp</a></p></div>';
-      d.querySelector('pre').textContent = texto;
-      d.querySelector('a').href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(texto);
-      d.querySelector('[data-cerrar]').onclick = function () { d.close(); };
-      d.querySelector('[data-copiar-r]').onclick = function (ev) { var b = ev.target; navigator.clipboard.writeText(texto).then(function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar'; }, 1500); }); };
-      d.addEventListener('close', function () { d.remove(); });
-      document.body.appendChild(d); d.showModal();
+      var x = PLANES && PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]);
+      if (x) texto += '\n\n💳 Tu plan ' + x.nombre + ' ' + (x.dias < 0 ? 'venció' : 'vence') + ' el ' + fechaLarga(x.vence) + '.';
+      ventanaMensaje(l, 'Resumen para ' + nombreDe(l), texto, 'resumen_enviado');
     }).catch(function (err) { alertar('No se pudo armar el resumen: ' + err.message); })
       .then(function () { boton.disabled = false; boton.textContent = antes; });
+  }
+  /* aviso de vencimiento con el monto y los datos para pagar */
+  function textoPago(l, x) {
+    var c = window.PRECIOS.cobro || {}, l1 = '¡Hola! Te escribo por tu plan ' + x.nombre + ' de Menú 3D para ' + nombreDe(l) + '.';
+    var estado = x.dias < 0 ? 'Venció el ' + fechaLarga(x.vence) + '.' : x.dias === 0 ? 'Vence hoy.' : 'Vence el ' + fechaLarga(x.vence) + '.';
+    var pago = [];
+    if (c.link) pago.push('Link de pago: ' + c.link);
+    if (c.alias) pago.push('Alias: ' + c.alias + (c.titular ? ' (a nombre de ' + c.titular + ')' : ''));
+    return l1 + ' ' + estado + '\n\n💳 Para renovar (' + x.forma.toLowerCase() + '): ' + pesos(x.cobro) + '\n' +
+      (pago.length ? pago.join('\n') : 'Ahora te paso los datos para el pago.') +
+      '\n\nCuando pagues, mandame el comprobante por acá y te dejo todo al día. ¡Gracias!';
+  }
+  function enviarAvisoPago(l) {
+    var x = PLANES && PLANES[l.carpeta] && infoPlan(PLANES[l.carpeta]);
+    if (!x) { alertar('Primero cargale el plan con "💳 Plan".'); return; }
+    ventanaMensaje(l, 'Aviso de pago para ' + nombreDe(l), textoPago(l, x), 'aviso_enviado');
+  }
+  /* lo que hay que mandar hoy: avisos de pago (7 días antes o vencidos) y el resumen cada 4 semanas */
+  function pintarPendientes() {
+    var filas = [];
+    LOCS.forEach(function (l, i) {
+      var pl = PLANES && PLANES[l.carpeta], x = pl && infoPlan(pl); if (!x) return;
+      if (x.dias <= 7 && diasDesde(leerEnviado(l.carpeta, 'aviso_enviado')) >= 7) filas.push('<div class="pendiente"><span>💳 <b>' + esc(nombreDe(l)) + '</b> · ' + (x.dias < 0 ? 'venció hace ' + (-x.dias) + (x.dias === -1 ? ' día' : ' días') : x.dias === 0 ? 'vence hoy' : 'vence en ' + x.dias + (x.dias === 1 ? ' día' : ' días')) + '</span><button class="b p" data-aviso="' + i + '">Aviso de pago</button></div>');
+      var base = leerEnviado(l.carpeta, 'resumen_enviado') || pl.desde;
+      if (EST && EST[l.carpeta] && diasDesde(base) >= 28) filas.push('<div class="pendiente"><span>📊 <b>' + esc(nombreDe(l)) + '</b> · resumen del mes</span><button class="b p" data-resumen="' + i + '">Resumen</button></div>');
+    });
+    var c = document.getElementById('pendientes');
+    c.hidden = !filas.length;
+    c.innerHTML = '<h2>📨 Para enviar hoy</h2>' + filas.join('');
   }
   function alertar(t) { var p = document.createElement('div'); p.className = 'toast'; p.textContent = t; document.body.appendChild(p); setTimeout(function () { p.remove(); }, 4000); }
 
@@ -375,9 +432,16 @@
         '<button class="b" data-usuario="' + i + '">👤 ' + (tieneUsuario ? 'Otro usuario' : 'Crear usuario') + '</button>' +
         '<button class="b" data-resumen="' + i + '">📊 Resumen</button>' +
         (PLANES ? '<button class="b" data-plan="' + i + '">💳 Plan</button>' : '') +
+        (PLANES && PLANES[l.carpeta] ? '<button class="b" data-aviso="' + i + '">📨 Aviso de pago</button>' : '') +
         '<button class="b mal" data-eliminar="' + i + '">Eliminar</button></div></article>';
     }).join('') || '<p>Todavía no hay locales. Tocá <b>+ Nuevo local</b>.</p>';
+    pintarPendientes();
   }
+  document.getElementById('pendientes').onclick = function (e) {
+    var a = e.target.closest('[data-aviso]'), r = e.target.closest('[data-resumen]');
+    if (a) enviarAvisoPago(LOCS[a.dataset.aviso]);
+    if (r) enviarResumen(LOCS[r.dataset.resumen], r);
+  };
   document.getElementById('locales').onclick = function (e) {
     var locs = LOCS, q = e.target.closest('[data-qr]'), c = e.target.closest('[data-copiar]');
     if (q) { var l = locs[q.dataset.qr]; QR.mostrar(raiz + l.carpeta + '/', (l.menu && l.menu.nombre) || l.nombre || l.carpeta, 'qr-' + l.carpeta); }
@@ -386,6 +450,7 @@
     var u = e.target.closest('[data-usuario]'); if (u) crearUsuario(locs[u.dataset.usuario]);
     var rs = e.target.closest('[data-resumen]'); if (rs) enviarResumen(locs[rs.dataset.resumen], rs);
     var pp = e.target.closest('[data-plan]'); if (pp) editarPlan(locs[pp.dataset.plan]);
+    var av = e.target.closest('[data-aviso]'); if (av) enviarAvisoPago(locs[av.dataset.aviso]);
     /* botones de cada usuario */
     var k = e.target.closest('[data-clave]'), b = e.target.closest('[data-borrar-u]'), id = k ? k.dataset.clave : b ? b.dataset.borrarU : null;
     if (id) {

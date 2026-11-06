@@ -202,3 +202,23 @@ button.qr svg{display:block;width:100%;height:100%}
 .local .plan-local{grid-column:1/-1;font-size:.85rem;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .local .plan-local .vence-mal{color:var(--mal);font-weight:700}
 .local .plan-local .vence-pronto{color:#b45309;font-weight:700}
+/* precios en grupo */
+body.con-grupo{padding-bottom:190px}
+body.con-grupo .pie-fijo > .wrap{display:none}
+.aviso-grupo{margin-top:16px;font-size:.9rem;color:var(--suave)}
+.barra-grupo{border-bottom:1px solid var(--linea);background:var(--fondo)}
+.barra-grupo .wrap{padding-bottom:10px;align-items:flex-end}
+.barra-grupo .cuenta{flex:1;min-width:130px;font-size:.88rem;font-weight:700;align-self:center}
+.barra-grupo label{display:grid;gap:2px;font-size:.78rem;font-weight:600;color:var(--suave)}
+.barra-grupo .campo{display:inline-flex;align-items:center;gap:4px;font-size:.95rem;color:var(--texto)}
+.barra-grupo input{width:92px;padding:8px 10px;border:1px solid var(--linea);border-radius:10px;background:var(--tarjeta);color:var(--texto);font-size:16px}
+.fila.elegible{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;cursor:pointer;user-select:none}
+.fila.elegible input{width:20px;height:20px;accent-color:var(--acento);pointer-events:none}
+.fila.elegible.elegido{border-color:var(--acento);box-shadow:inset 0 0 0 1px var(--acento)}
+.fila.elegible .precios{display:flex;flex-direction:column;align-items:flex-end;font-size:.9rem;color:var(--suave)}
+.fila.elegible .precios b{color:var(--ok)}
+html.modo-celu .fila.elegible{grid-template-columns:22px 1fr auto}
+/* mensajes para enviar hoy (administrador) */
+.pendientes{margin-top:16px;display:grid;gap:10px;border-left:4px solid var(--acento)}
+.pendientes h2{font-size:1.05rem}
+.pendiente{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:.9rem}

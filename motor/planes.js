@@ -23,3 +23,9 @@ window.PRECIOS.formas = {
   semestral: { nombre: '6 meses', cobra: 5, dura: 6 },
   anual: { nombre: 'Anual', cobra: 12 - window.PRECIOS.mesesGratisAnual, dura: 12 }
 };
+/* cómo te pagan: aparece en el aviso de pago que le mandás a cada local. Vacío = el mensaje dice que le pasás los datos por ahí */
+window.PRECIOS.cobro = {
+  alias: '',                       /* alias de tu cuenta o de Mercado Pago, ej. 'menu3d.pagos' */
+  titular: 'Bautista Bianchimani', /* a nombre de quién está la cuenta */
+  link: ''                         /* link de pago, si tenés uno (opcional) */
+};

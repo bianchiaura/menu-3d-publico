@@ -30,7 +30,16 @@
   <div id="vista"></div>
 </div>
 
-<div class="pie-fijo"><div class="wrap">
+<div class="pie-fijo">
+<div class="barra-grupo" id="barra-grupo" hidden><div class="wrap">
+  <button type="button" class="b" id="grupo-todos">Seleccionar todos</button>
+  <span class="cuenta" id="grupo-cuenta">0 platos elegidos</span>
+  <label>Subir en pesos<span class="campo">$ <input type="number" id="grupo-monto" min="0" step="50" inputmode="numeric" placeholder="1000"></span></label>
+  <label>Subir en %<span class="campo"><input type="number" id="grupo-pct" min="0" step="0.5" inputmode="decimal" placeholder="3"> %</span></label>
+  <button type="button" class="b p" id="grupo-aplicar" disabled>Aplicar</button>
+  <button type="button" class="b" id="grupo-salir">Cancelar</button>
+</div></div>
+<div class="wrap">
   <span class="estado" id="estado">Sin cambios</span>
   <a class="b" id="previa" href="#" target="_blank" rel="noopener">Vista previa</a>
   <button class="b p" id="publicar" hidden>Publicar</button>
@@ -193,11 +202,19 @@
   /* ---------- vista: platos ---------- */
   function vistaPlatos() {
     var h = M.categorias.length ? '' : '<p style="margin-top:20px;color:var(--suave)">Todavía no hay categorías. Agregá la primera (por ejemplo "Principales").</p>';
+    if (M.platos.length) h += grupo
+      ? '<p class="aviso-grupo">Tocá los platos que querés cambiar, o <b>Seleccionar todos</b>. Abajo ponés cuánto suben.</p>'
+      : '<p style="margin-top:16px"><button class="b" data-grupo>💲 Cambiar precios en grupo</button></p>';
     h += M.categorias.map(function (c) {
       var ps = M.platos.filter(function (p) { return p.categoria === c.id; });
-      return '<section class="cat"><h3>' + esc(c.nombre) + ' <button class="b" data-nuevo="' + esc(c.id) + '">+ Agregar plato</button></h3>' +
+      return '<section class="cat"><h3>' + esc(c.nombre) + (grupo ? '' : ' <button class="b" data-nuevo="' + esc(c.id) + '">+ Agregar plato</button>') + '</h3>' +
         (ps.length ? '' : '<p style="color:var(--suave);font-size:.88rem">Sin platos.</p>') +
         ps.map(function (p) {
+          /* modo "precios en grupo": la fila entera se toca para elegir el plato y muestra cómo quedaría el precio */
+          if (grupo) return '<div class="fila elegible' + (elegidos[p.id] ? ' elegido' : '') + '" data-id="' + esc(p.id) + '">' +
+            '<input type="checkbox" tabindex="-1" aria-label="Elegir ' + esc(p.nombre) + '"' + (elegidos[p.id] ? ' checked' : '') + '>' +
+            '<div class="n">' + esc(p.nombre) + '</div>' +
+            '<div class="precios"><span>' + pesos(p.precio) + '</span><b data-nuevo-precio="' + esc(p.id) + '"></b></div></div>';
           return '<div class="fila' + (p.oculto ? ' off' : '') + '" data-id="' + esc(p.id) + '">' +
             '<div class="mini">' + (p.foto ? '<img src="' + esc(img(p.foto)) + '" alt="">' : esc(p.emoji || '🍽')) + '</div>' +
             '<div><div class="n">' + esc(p.nombre) + '</div><div class="s">' +
@@ -210,9 +227,52 @@
             '<button class="b" data-editar>Editar</button></div></div>';
         }).join('') + '</section>';
     }).join('');
-    h += '<p style="margin-top:18px"><button class="b" data-nueva-cat>+ Agregar categoría</button></p>';
+    if (!grupo) h += '<p style="margin-top:18px"><button class="b" data-nueva-cat>+ Agregar categoría</button></p>';
     $('#vista').innerHTML = h;
+    if (grupo) resumenGrupo();
   }
+
+  /* ---------- precios en grupo: elegir platos y subirlos en pesos, en porcentaje o las dos cosas ---------- */
+  var grupo = false, elegidos = {};
+  function modoGrupo(si) {
+    grupo = si; elegidos = {}; $('#grupo-monto').value = ''; $('#grupo-pct').value = '';
+    $('#barra-grupo').hidden = !si; document.body.classList.toggle('con-grupo', si);
+    vistaPlatos();
+  }
+  function cuantoSube() { return { monto: Math.max(0, Number($('#grupo-monto').value) || 0), pct: Math.max(0, Number($('#grupo-pct').value) || 0) }; }
+  /* primero el porcentaje, después los pesos. Con porcentaje se redondea a $10 para que no queden precios como $35.017 */
+  function precioNuevo(p, x) {
+    var v = Number(p.precio) || 0;
+    if (x.pct) v = Math.round(v * (1 + x.pct / 100) / 10) * 10;
+    return v + x.monto;
+  }
+  function resumenGrupo() {
+    var ids = Object.keys(elegidos).filter(function (k) { return elegidos[k]; }), x = cuantoSube(), hay = x.monto || x.pct;
+    $('#grupo-cuenta').textContent = ids.length + (ids.length === 1 ? ' plato elegido' : ' platos elegidos');
+    $('#grupo-todos').textContent = ids.length === M.platos.length ? 'Sacar todos' : 'Seleccionar todos';
+    $('#grupo-aplicar').disabled = !ids.length || !hay;
+    M.platos.forEach(function (p) {
+      var c = document.querySelector('[data-nuevo-precio="' + p.id + '"]');
+      if (c) c.textContent = elegidos[p.id] && hay ? '→ ' + pesos(precioNuevo(p, x)) : '';
+    });
+  }
+  $('#grupo-todos').onclick = function () {
+    var todos = M.platos.every(function (p) { return elegidos[p.id]; });
+    elegidos = {}; if (!todos) M.platos.forEach(function (p) { elegidos[p.id] = true; });
+    vistaPlatos();
+  };
+  $('#grupo-monto').oninput = $('#grupo-pct').oninput = resumenGrupo;
+  $('#grupo-salir').onclick = function () { modoGrupo(false); };
+  $('#grupo-aplicar').onclick = function () {
+    var x = cuantoSube(), lista = M.platos.filter(function (p) { return elegidos[p.id]; });
+    var cuanto = [x.pct ? x.pct + ' %' : '', x.monto ? pesos(x.monto) : ''].filter(Boolean).join(' y ');
+    preguntar('Subir ' + lista.length + (lista.length === 1 ? ' precio' : ' precios'), 'Van a subir ' + cuanto + '. Después los revisás y tocás "Publicar cambios" para que se vean en el menú.',
+      [{ texto: 'Cancelar', valor: 'no' }, { texto: 'Subir precios', valor: 'si', p: true }]).then(function (r) {
+        if (r !== 'si') return;
+        lista.forEach(function (p) { p.precio = precioNuevo(p, x); });
+        guardar(); modoGrupo(false); toast('Listo: cambiaste ' + lista.length + (lista.length === 1 ? ' precio' : ' precios'));
+      });
+  };
   function plato(el) { var f = el.closest('[data-id]'); return f && M.platos.filter(function (p) { return String(p.id) === f.dataset.id; })[0]; }
   /* el nombre se escribe en la misma página (algunos navegadores bloquean las ventanitas de prompt) */
   function pedirCategoria(boton) {
@@ -571,7 +631,13 @@
   /* ---------- eventos de la lista ---------- */
   $('#vista').addEventListener('click', function (e) {
     var t = e.target;
-    if (t.closest('[data-nueva-cat]')) pedirCategoria(t.closest('[data-nueva-cat]'));
+    if (grupo) {
+      var fg = t.closest('.fila.elegible');
+      if (fg) { e.preventDefault(); elegidos[fg.dataset.id] = !elegidos[fg.dataset.id]; vistaPlatos(); }
+      return;
+    }
+    if (t.closest('[data-grupo]')) modoGrupo(true);
+    else if (t.closest('[data-nueva-cat]')) pedirCategoria(t.closest('[data-nueva-cat]'));
     else if (t.closest('[data-ok-cat]')) nuevaCategoria(t.closest('span').querySelector('[data-cat-nueva]').value);
     else if (t.closest('[data-cancel-cat]')) mostrar();
     else if (t.closest('[data-nuevo]')) abrir(null, t.closest('[data-nuevo]').dataset.nuevo);
@@ -620,6 +686,7 @@
   });
   document.querySelector('.tabs').onclick = function (e) {
     var b = e.target.closest('[data-vista]'); if (!b) return;
+    if (grupo) { grupo = false; elegidos = {}; $('#barra-grupo').hidden = true; document.body.classList.remove('con-grupo'); }
     vista = b.dataset.vista; marcarTab(); mostrar();
   };
   function marcarTab() { [].forEach.call(document.querySelectorAll('.tabs [data-vista]'), function (x) { x.setAttribute('aria-selected', x.dataset.vista === vista); }); }

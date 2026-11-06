@@ -152,7 +152,7 @@ window.Sesion = (function () {
 
   /* plan de cada local (tabla "planes": solo el administrador la ve) → { carpeta: { plan, pago, desde } } */
   function planes() {
-    return sb.from('planes').select('carpeta,plan,pago,desde').then(function (r) {
+    return sb.from('planes').select('*').then(function (r) {
       if (r.error) throw new Error(r.error.message);
       var o = {}; (r.data || []).forEach(function (p) { o[p.carpeta] = p; }); return o;
     });
@@ -160,6 +160,11 @@ window.Sesion = (function () {
   function guardarPlan(carpeta, p) {
     return sb.from('planes').upsert({ carpeta: carpeta, plan: p.plan, pago: p.pago, desde: p.desde, actualizado: new Date().toISOString() })
       .then(function (r) { if (r.error) throw new Error(r.error.message); });
+  }
+  /* anota cuándo se mandó el resumen o el aviso de pago (si la columna todavía no existe, no pasa nada) */
+  function marcarEnviado(carpeta, campo, fecha) {
+    var cambios = {}; cambios[campo] = fecha;
+    return sb.from('planes').update(cambios).eq('carpeta', carpeta).then(function (r) { if (r.error) console.error(r.error); });
   }
   function borrarPlan(carpeta) {
     return sb.from('planes').delete().eq('carpeta', carpeta).then(function (r) { if (r.error) throw new Error(r.error.message); });
@@ -178,5 +183,5 @@ window.Sesion = (function () {
     return s.slice(0, 5) + '-' + s.slice(5);
   }
 
-  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, guardarPlan: guardarPlan, borrarPlan: borrarPlan };
+  return { actual: actual, entrar: entrar, salir: salir, pedirLogin: pedirLogin, funcion: funcion, estadisticas: estadisticas, aperturas: aperturas, cuenta: cuenta, claveNueva: claveNueva, bienvenidaVista: bienvenidaVista, planes: planes, guardarPlan: guardarPlan, borrarPlan: borrarPlan, marcarEnviado: marcarEnviado };
 })();

@@ -77,3 +77,7 @@ create policy "solo el administrador" on public.planes
   for all to authenticated
   using (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'))
   with check (exists (select 1 from public.usuarios_locales u where u.user_id = auth.uid() and u.rol = 'admin'));
+
+-- 6) Cuándo se le mandó a cada local el último resumen del mes y el último aviso de pago
+alter table public.planes add column if not exists resumen_enviado date;
+alter table public.planes add column if not exists aviso_enviado date;
