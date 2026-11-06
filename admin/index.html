@@ -658,11 +658,19 @@
     if (matchMedia('(pointer:coarse)').matches) return 'mailto:' + p.mail + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
     return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(p.mail) + '&su=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
   }
+  /* el chat se abre en WhatsApp Business: en Android se le pide esa app (si no está, sigue con wa.me);
+     en la compu va a WhatsApp Web, que usa la cuenta vinculada ahí; en iPhone, el sistema elige qué app abre el link */
+  function linkWhatsApp(p) {
+    var t = encodeURIComponent(textoDif(p)), web = 'https://wa.me/' + p.whatsapp + '?text=' + t;
+    if (/android/i.test(navigator.userAgent)) return 'intent://send?phone=' + p.whatsapp + '&text=' + t + '#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+    if (!matchMedia('(pointer:coarse)').matches) return 'https://web.whatsapp.com/send?phone=' + p.whatsapp + '&text=' + t;
+    return web;
+  }
   /* un solo botón por local: WhatsApp si tiene; si no, mail */
   function botonEnviar(p) {
     var via = p.whatsapp ? 'whatsapp' : p.mail ? 'mail' : ''; if (!via) return '<span class="suave">Sin contacto</span>';
-    var href = via === 'whatsapp' ? 'https://wa.me/' + p.whatsapp + '?text=' + encodeURIComponent(textoDif(p)) : linkMail(p);
-    return '<a class="b p" target="_blank" rel="noopener" data-dif-enviar="' + p.id + '" data-via="' + via + '" href="' + esc(href) + '">Enviar</a>';
+    var href = via === 'whatsapp' ? linkWhatsApp(p) : linkMail(p), android = /^intent:/.test(href);
+    return '<a class="b p"' + (android ? '' : ' target="_blank" rel="noopener"') + ' data-dif-enviar="' + p.id + '" data-via="' + via + '" href="' + esc(href) + '">Enviar</a>';
   }
   function accionDif(id, a, texto, clase) { return '<button type="button" class="b' + (clase ? ' ' + clase : '') + '" data-dif-accion="' + a + '" data-id="' + id + '">' + texto + '</button>'; }
   function proDe(id) { return (PROSPECTOS || []).filter(function (p) { return String(p.id) === String(id); })[0]; }
